@@ -1,3 +1,4 @@
+#include "CommandQueue.h"
 #include "Entity.h"
 #include "Player.h"
 #include "ResourceNodeComponent.h"
@@ -11,6 +12,8 @@
 #include <thread>
 #include <unordered_map>
 
+  std::unordered_map<EntityID, std::shared_ptr<Entity>> Entities;
+
 void GetInput(std::atomic<bool>& running, std::atomic<int>& inputval) {
   int a = 0;
   while (running && std::cin >> a) {
@@ -19,10 +22,43 @@ void GetInput(std::atomic<bool>& running, std::atomic<int>& inputval) {
   }
 }
 
+void InputThread(CommandQueue& queue, std::atomic<bool>& running) {
+    int input;
+    while (running) {
+        std::cin >> input;
+        queue.Push([input]() {
+            if (input == 1) {
+                std::cout << "User pressed 1: Stop mining.\n";
+                // resourceNode->RemoveMiner();
+            }
+        });
+    }
+}
+
+
+void GameLoop(CommandQueue& queue, std::atomic<bool>& running) {
+    using namespace std::chrono_literals;
+    while (running) {
+        auto start = std::chrono::steady_clock::now();
+
+        // 커맨드 처리
+        while (!queue.Empty()) {
+            auto cmd = queue.Pop();
+            if (cmd) cmd();  // 실행
+        }
+
+        // 컴포넌트 업데이트
+        for (auto& [id, entity] : Entities) {
+            entity->update();
+        }
+
+        std::this_thread::sleep_until(start + 100ms);
+    }
+}
+
+
 int main() {
   World::Instance().ChangeState(std::make_unique<MainMenuState>());
-
-  std::unordered_map<EntityID, std::shared_ptr<Entity>> Entities;
   std::shared_ptr<Entity> resourceNode = std::make_shared<Entity>();
   std::shared_ptr<Entity> refinery = std::make_shared<Entity>();
   std::shared_ptr<Player> player = std::make_shared<Player>();
@@ -42,24 +78,8 @@ int main() {
   std::atomic<int> inputval = 0;
   std::thread inputThread(GetInput, std::ref(running), std::ref(inputval));
 
-  while (running) {
-    auto start = std::chrono::system_clock::now();
-    for (auto& [id, e] : Entities) e->update();
-
-    if(inputval > 0){
-      switch(inputval){
-        case 1: 
-          rcn->RemoveMiner();
-        break;
-        case 2: 
-          rfc->DisconnectMiner();
-        break;
-      }
-      inputval = 0;
-    }
-
-    std::this_thread::sleep_until(start + tick);
-  }
+  CommandQueue commandQueue;
+  GameLoop(commandQueue, running);
 
   inputThread.join();
   return 0;
