@@ -1,6 +1,9 @@
-#include "ResourceNodeComponent.h"
+﻿#include "ResourceNodeComponent.h"
 #include "World.h"
 #include "Event.h"
+
+#include <iostream>
+#include <typeinfo>
 
 ResourceNodeComponent::ResourceNodeComponent(int totalResource) {
   leftResource = totalResource;

@@ -1,62 +1,58 @@
-#include "CommandQueue.h"
-#include "Entity.h"
-#include "Player.h"
-#include "ResourceNodeComponent.h"
-#include "RefineryComponent.h"
-#include "Event.h"
-#include "World.h"
-
-#include <atomic>
+﻿#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <unordered_map>
 
-  std::unordered_map<EntityID, std::shared_ptr<Entity>> Entities;
+#include "CommandQueue.h"
+#include "Entity.h"
+#include "Event.h"
+#include "Player.h"
+#include "RefineryComponent.h"
+#include "ResourceNodeComponent.h"
+#include "World.h"
+
+std::unordered_map<EntityID, std::shared_ptr<Entity>> Entities;
 
 void GetInput(std::atomic<bool>& running, std::atomic<int>& inputval) {
   int a = 0;
   while (running && std::cin >> a) {
-    if(a == -1) running = false;
+    if (a == -1) running = false;
     inputval = a;
   }
 }
 
 void InputThread(CommandQueue& queue, std::atomic<bool>& running) {
-    int input;
-    while (running) {
-        std::cin >> input;
-        queue.Push([input]() {
-            if (input == 1) {
-                std::cout << "User pressed 1: Stop mining.\n";
-                // resourceNode->RemoveMiner();
-            }
-        });
-    }
+  int input;
+  while (running) {
+    std::cin >> input;
+    queue.Push([input]() {
+      if (input == 1) {
+        std::cout << "User pressed 1: Stop mining.\n";
+      }
+    });
+  }
 }
-
 
 void GameLoop(CommandQueue& queue, std::atomic<bool>& running) {
-    using namespace std::chrono_literals;
-    while (running) {
-        auto start = std::chrono::steady_clock::now();
+  using namespace std::chrono_literals;
+  while (running) {
+    auto start = std::chrono::steady_clock::now();
 
-        // 커맨드 처리
-        while (!queue.Empty()) {
-            auto cmd = queue.Pop();
-            if (cmd) cmd();  // 실행
-        }
-
-        // 컴포넌트 업데이트
-        for (auto& [id, entity] : Entities) {
-            entity->update();
-        }
-
-        std::this_thread::sleep_until(start + 100ms);
+    // 커맨드 처리
+    while (!queue.Empty()) {
+      auto cmd = queue.Pop();
+      if (cmd) cmd();  // 실행
     }
+
+    // 컴포넌트 업데이트
+    for (auto& [id, entity] : Entities) {
+      entity->update();
+    }
+
+    std::this_thread::sleep_until(start + 100ms);
+  }
 }
-
-
 int main() {
   World::Instance().ChangeState(std::make_unique<MainMenuState>());
   std::shared_ptr<Entity> resourceNode = std::make_shared<Entity>();
@@ -82,5 +78,7 @@ int main() {
   GameLoop(commandQueue, running);
 
   inputThread.join();
+  
+
   return 0;
 }

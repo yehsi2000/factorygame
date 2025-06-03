@@ -1,4 +1,4 @@
-#include "Inventory.h"
+﻿#include "Inventory.h"
 
 bool Inventory::consume(Item it, int n) {
   if (counts.find(it) != counts.end() && counts[it] >= n) {

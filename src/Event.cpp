@@ -1,4 +1,4 @@
-#include "Event.h"
+﻿#include "Event.h"
 
 void EventDispatcher::Dispatch(const Event& event) const{
     auto it = listeners.find(typeid(event));

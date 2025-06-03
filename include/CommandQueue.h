@@ -1,4 +1,4 @@
-#include <mutex>
+﻿#include <mutex>
 #include <queue>
 #include <functional>
 #include <condition_variable>
@@ -18,7 +18,7 @@ public:
 
     std::function<void()> Pop() {
         std::unique_lock<std::mutex> lock(mtx);
-        if (queue.empty()) return nullptr;
+        cv.wait(lock, [&] {return !queue.empty();});
         auto cmd = std::move(queue.front());
         queue.pop();
         return cmd;

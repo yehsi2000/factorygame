@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include <exception>
 #include <functional>
@@ -19,6 +19,7 @@ struct OreMinedEvent : public Event {
   int amount;
   OreMinedEvent(EntityID id, int amt) : playerID(id), amount(amt) {}
 };
+
 
 class EventDispatcher {
   using Callback = std::function<void(const Event&)>;
