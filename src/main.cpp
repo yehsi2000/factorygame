@@ -6,79 +6,58 @@
 
 #include "CommandQueue.h"
 #include "Entity.h"
+#include "Item.h"
 #include "Event.h"
-#include "Player.h"
+#include "InputSystem.h"
 #include "RefineryComponent.h"
 #include "ResourceNodeComponent.h"
 #include "World.h"
 
-std::unordered_map<EntityID, std::shared_ptr<Entity>> Entities;
-
-void GetInput(std::atomic<bool>& running, std::atomic<int>& inputval) {
-  int a = 0;
-  while (running && std::cin >> a) {
-    if (a == -1) running = false;
-    inputval = a;
-  }
-}
-
-void InputThread(CommandQueue& queue, std::atomic<bool>& running) {
-  int input;
+void InputThread(std::atomic<bool>& running, World* world, CommandQueue* queue) {
+  InputSystem inputSystem(world, queue);
+  inputSystem.RegisterInputBindings();
   while (running) {
-    std::cin >> input;
-    queue.Push([input]() {
-      if (input == 1) {
-        std::cout << "User pressed 1: Stop mining.\n";
-      }
-    });
+    inputSystem.Update();
   }
 }
 
-void GameLoop(CommandQueue& queue, std::atomic<bool>& running) {
-  using namespace std::chrono_literals;
+void GameLoop(World* world, CommandQueue* queue, std::atomic<bool>& running) {
+    const auto tick = std::chrono::milliseconds(1000);
   while (running) {
     auto start = std::chrono::steady_clock::now();
 
     // 커맨드 처리
-    while (!queue.Empty()) {
-      auto cmd = queue.Pop();
-      if (cmd) cmd();  // 실행
+    auto commands = queue->PopAll();
+    while (!commands.empty()) {
+      auto cmd = std::move(commands.front());
+      commands.pop();
+      if (cmd) cmd();
     }
 
-    // 컴포넌트 업데이트
-    for (auto& [id, entity] : Entities) {
-      entity->update();
-    }
+    world->Update();
 
-    std::this_thread::sleep_until(start + 100ms);
+    std::this_thread::sleep_until(start + tick);
   }
 }
-int main() {
-  World::Instance().ChangeState(std::make_unique<MainMenuState>());
-  std::shared_ptr<Entity> resourceNode = std::make_shared<Entity>();
-  std::shared_ptr<Entity> refinery = std::make_shared<Entity>();
-  std::shared_ptr<Player> player = std::make_shared<Player>();
 
-  auto rcn = resourceNode->AddComponent<ResourceNodeComponent>(1000);
-  auto rfc = refinery->AddComponent<RefineryComponent>();
+int main(int argc, char* argv[]) {
+  std::unique_ptr<World> world = std::make_unique<World>();
+  world->ChangeState(std::make_unique<MainMenuState>());
 
-  rcn->AddMiner(player);
-  rfc->ConnectMiner(player);
+  EntityID resourceNode = world->registry->createEntity();
+  EntityID refinery = world->registry->createEntity();
+  EntityID player = world->registry->createEntity();
+  world->registry->addComponent<ResourceNodeComponent>(resourceNode, 1000, OreType::Iron);
+  world->registry->addComponent<RefineryComponent>(refinery);
 
-  Entities.insert({resourceNode->getID(), resourceNode});
-  Entities.insert({refinery->getID(), refinery});
-  Entities.insert({player->getID(), player});
-
-  const auto tick = std::chrono::milliseconds(1000);
   std::atomic<bool> running = true;
-  std::atomic<int> inputval = 0;
-  std::thread inputThread(GetInput, std::ref(running), std::ref(inputval));
 
-  CommandQueue commandQueue;
-  GameLoop(commandQueue, running);
+  std::unique_ptr<CommandQueue> commandQueue = std::make_unique<CommandQueue>();
+
+  std::thread inputThread(InputThread, std::ref(running), world.get(), commandQueue.get());
+  GameLoop(world.get(), commandQueue.get(), running);
 
   inputThread.join();
-  
 
   return 0;
 }

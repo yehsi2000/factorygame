@@ -1,38 +1,63 @@
 ﻿#pragma once
 
-#include "GameState.h"
-
-#include <vector>
 #include <memory>
 #include <utility>
+#include <vector>
+#include <cassert>
 
+// #include "ComponentManager.h"
+#include "Event.h"
+#include "Registry.h"
+#include "GameState.h"
+#include "Item.h"
+#include "InventoryComponent.h"
+#include "InventorySystem.h"
+#include "RefineryComponent.h"
+#include "RefinerySystem.h"
+#include "ResourceNodeComponent.h"
+#include "ResourceNodeSystem.h"
 
-class World{
-    class EventDispatcher* dispatcher;
-    std::vector<std::shared_ptr<class Entity>> entities;
-    std::unique_ptr<GameState> currentState;
+class World {
+  std::unique_ptr<EventDispatcher> dispatcher;
+  EntityID player;
+  std::vector<EntityID> entities;
+  std::unique_ptr<GameState> currentState;
 
-    World(const World&) = delete;
-    World& operator=(const World&) = delete;
-    World(World &&) = delete;
-    World& operator=(World&&)= delete;
+  EntityID nextID = 1;
 
-public: 
-    World();
-    static World& Instance(){
-        static World instance;
-        return instance;
-    }
+  World(const World&) = delete;
+  World& operator=(const World&) = delete;
+  World(World&&) = delete;
+  World& operator=(World&&) = delete;
 
-    void ChangeState(std::unique_ptr<GameState> newState);
-    void Update();
+ public:
+  // ComponentManager<ResourceNodeComponent> resourceNodes;
+  // ComponentManager<RefineryComponent> refineryManager;
+  // ComponentManager<InventoryComponent> inventoryManager;
+  std::shared_ptr<ItemDatabase> itemDatabase;
+  std::unique_ptr<ResourceNodeSystem> resourceNodeSystem;
+  std::unique_ptr<RefinerySystem> refinerySystem;
+  std::unique_ptr<InventorySystem> inventorySystem;
+  std::unique_ptr<Registry> registry;
+  
 
-    inline EventDispatcher* GetDispatcher() {return dispatcher;}
+  World() {
+    itemDatabase = std::make_shared<ItemDatabase>();
+    resourceNodeSystem = std::make_unique<ResourceNodeSystem>(itemDatabase);
+    refinerySystem = std::make_unique<RefinerySystem>();
+    inventorySystem = std::make_unique<InventorySystem>(itemDatabase);
+    dispatcher = std::make_unique<EventDispatcher>();
+    registry = std::make_unique<Registry>();
+    assert(registry && "Fail to initialize registry");
+    registry->registerComponent<InventoryComponent>();
+    registry->registerComponent<ResourceNodeComponent>();
+    registry->registerComponent<RefineryComponent>();
+    player = registry->createEntity();
+  }
 
-    template<typename T, typename... Args>
-    std::shared_ptr<T> CreateEntity(Args&&... args){
-        auto ent = std::make_shared<T>(std::forward<Args>(args)...);
-        entities.push_back(ent);
-        return ent;
-    }
+  void ChangeState(std::unique_ptr<GameState> newState);
+  void Update();
+
+  inline EventDispatcher* GetDispatcher() { return dispatcher.get(); }
+  inline EntityID GetPlayer() { return player; }
 };

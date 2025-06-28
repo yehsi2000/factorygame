@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-class Component {
- public:
+struct Component {
   virtual ~Component() = default;
-  virtual void Update() = 0;
 };

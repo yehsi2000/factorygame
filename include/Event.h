@@ -1,12 +1,9 @@
 ﻿#pragma once
 #include <algorithm>
-#include <exception>
 #include <functional>
 #include <iostream>
 #include <typeindex>
 #include <unordered_map>
-
-#include "Entity.h"
 
 using CallbackID = std::size_t;
 
@@ -14,46 +11,51 @@ struct Event {
   virtual ~Event() = default;
 };
 
-struct OreMinedEvent : public Event {
-  EntityID playerID;
-  int amount;
-  OreMinedEvent(EntityID id, int amt) : playerID(id), amount(amt) {}
-};
+struct StartMiningEvent : public Event {};
 
+struct StopMiningEvent : public Event {};
 
 class EventDispatcher {
   using Callback = std::function<void(const Event&)>;
-  std::unordered_map<std::type_index, std::vector<std::pair<CallbackID, Callback>>> listeners;
-  CallbackID nextID = 1;
+  std::unordered_map<std::type_index,
+                     std::vector<std::pair<CallbackID, Callback>>>
+      listeners;
+  CallbackID nextCallbackID = 1;
 
  public:
   EventDispatcher() = default;
   EventDispatcher(const EventDispatcher&) = delete;
   EventDispatcher& operator=(const EventDispatcher&) = delete;
+
   template <typename EventType>
   CallbackID Subscribe(std::function<void(const EventType&)> callback) {
-    CallbackID id = nextID++;
-    try {
-      listeners[typeid(EventType)].push_back(
-        {id, 
-          [cb = std::move(callback)](const Event& evt) {
-            auto e = dynamic_cast<const EventType&>(evt);
-            cb(e);
+    CallbackID id = nextCallbackID++;
+    listeners[typeid(EventType)].emplace_back(
+        id, [cb = std::move(callback)](const Event& evt) {
+          if (auto e = dynamic_cast<const EventType*>(&evt)) {
+            cb(*e);
+          } else {
+            std::cerr << "[EventDispatcher] Bad cast on event dispatch\n";
           }
-        }
-      );
-    } catch (std::bad_cast) {
-      std::cout << "wrong event type is passed" << std::endl;
-      return 0;
-    }
+        });
     return id;
   }
 
-  template <typename EventType>
-  void Unsubscribe(CallbackID id) {
-    auto& vec = listeners[typeid(EventType)];
-    vec.erase(std::remove_if(vec.begin(), vec.end(), [id](const auto& pair) { return pair.first == id; }), vec.end());
+  void Unsubscribe(const std::type_index& ti, CallbackID id) {
+    auto& vec = listeners[ti];
+    vec.erase(
+        std::remove_if(vec.begin(), vec.end(),
+                       [id](const auto& pair) { return pair.first == id; }),
+        vec.end());
   }
 
-  void Dispatch(const Event& event) const;
+  void Dispatch(const Event& event) const {
+    auto it = listeners.find(typeid(event));
+    if (it != listeners.end()) {
+      auto callbacks = it->second;
+      for (const auto& [_, cb] : callbacks) {
+        cb(event);
+      }
+    }
+  }
 };
