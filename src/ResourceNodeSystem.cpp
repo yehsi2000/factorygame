@@ -4,6 +4,7 @@
 #include "World.h"
 
 void ResourceNodeSystem::Update(World& world) {
+  //TODO : Interact Event가 발생했을 때 1초가 지날 때 마다 연결된 Miner에 ResourceNodeComponent의 Ore를 추가
 }
 
 void ResourceNodeSystem::AddMiner(ResourceNodeComponent& resNode,

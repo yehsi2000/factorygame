@@ -16,6 +16,8 @@
 #include "RefinerySystem.h"
 #include "ResourceNodeComponent.h"
 #include "ResourceNodeSystem.h"
+#include "PositionComponent.h"
+#include "InteractableComponent.h"
 
 class World {
   std::unique_ptr<EventDispatcher> dispatcher;
@@ -43,16 +45,25 @@ class World {
 
   World() {
     itemDatabase = std::make_shared<ItemDatabase>();
+    itemDatabase->initialize();
     resourceNodeSystem = std::make_unique<ResourceNodeSystem>(itemDatabase);
     refinerySystem = std::make_unique<RefinerySystem>();
     inventorySystem = std::make_unique<InventorySystem>(itemDatabase);
     dispatcher = std::make_unique<EventDispatcher>();
     registry = std::make_unique<Registry>();
     assert(registry && "Fail to initialize registry");
+
+    //컴포넌트 등록
     registry->registerComponent<InventoryComponent>();
     registry->registerComponent<ResourceNodeComponent>();
     registry->registerComponent<RefineryComponent>();
+    registry->registerComponent<PositionComponent>();
+    registry->registerComponent<InteractableComponent>();
+
+    //플레이어 생성 및 컴포넌트 등록
     player = registry->createEntity();
+    registry->addComponent<InventoryComponent>(player);
+    registry->addComponent<PositionComponent>(player);
   }
 
   void ChangeState(std::unique_ptr<GameState> newState);

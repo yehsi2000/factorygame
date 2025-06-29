@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <unordered_map>
+#include <atomic>
 
 #include "SDL.h"
 #include "World.h"
@@ -13,7 +14,8 @@ enum class InputAction {
   MoveUp,
   MoveDown,
   MoveRight,
-  MoveLeft
+  MoveLeft,
+  Quit
 };
 
 struct KeyEvent {
@@ -43,10 +45,13 @@ class InputSystem {
   std::unordered_map<KeyEvent, InputAction, KeyEventHasher> keyBindings;
   World* world;
   CommandQueue* commandQueue;
+  std::atomic<bool>& running;
+  SDL_Event event;
 
  public:
-  InputSystem(World* w, CommandQueue* q) : world(w), commandQueue(q) {}
+  InputSystem(World* w, CommandQueue* q, std::atomic<bool>& r) : world(w), commandQueue(q), running(r) {}
   void Update();
   void RegisterInputBindings();
   void HandleInputAction(InputAction action);
+  void HandleInputAxis(const Uint8* keyState);
 };

@@ -32,14 +32,14 @@ private:
 public:
     Registry() {
         // 사용 가능한 엔티티 ID 풀을 미리 생성
-        for (EntityID entity = 0; entity < (1<<30); ++entity) {
+        for (EntityID entity = 0; entity < 5000; ++entity) {
             m_availableEntities.push(entity);
         }
     }
 
     // 엔티티 생성
     EntityID createEntity() {
-        assert(m_livingEntityCount < (1<<30) && "Too many entities in existence.");
+        assert(m_livingEntityCount < 5000 && "Too many entities in existence.");
         EntityID id = m_availableEntities.front();
         m_availableEntities.pop();
         m_livingEntityCount++;

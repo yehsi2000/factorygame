@@ -83,7 +83,7 @@ class ComponentArray : public IComponentArray {
     return false;
   }
 
-  std::vector<EntityID> getAllEntity() {
+  std::vector<EntityID> getAllEntities() {
     std::vector<EntityID> res;
     for (auto& [id, _] : m_entityToIndexMap) {
       res.push_back(id);

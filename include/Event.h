@@ -11,9 +11,9 @@ struct Event {
   virtual ~Event() = default;
 };
 
-struct StartMiningEvent : public Event {};
+struct StartInteractEvent : public Event {};
 
-struct StopMiningEvent : public Event {};
+struct StopInteractEvent : public Event {};
 
 class EventDispatcher {
   using Callback = std::function<void(const Event&)>;
