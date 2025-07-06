@@ -6,31 +6,43 @@
 #include <unordered_map>
 
 #include "CommandQueue.h"
+#include "Engine.h"
 #include "Entity.h"
 #include "Event.h"
+#include "GameState.h"
 #include "InputSystem.h"
 #include "Item.h"
-#include "World.h"
+#include "PositionComponent.h"
+#include "RefineryComponent.h"
+#include "Registry.h"
+#include "ResourceNodeComponent.h"
 
-// void InputThread(std::atomic<bool>& running, World* world,
-//                  CommandQueue* queue) {
-//   InputSystem inputSystem(world, queue, running);
-//   inputSystem.RegisterInputBindings();
-//   while (running) {
-//     inputSystem.Update();
-//   }
-// }
-
-void GameLoop(World* world, CommandQueue* queue, std::atomic<bool>& running) {
-  //const auto tick = std::chrono::milliseconds(100);
-  InputSystem inputSystem(world, queue, running);
+void GameLoop(Engine* engine, CommandQueue* queue, std::atomic<bool>& running) {
+  // const auto tick = std::chrono::milliseconds(100);
+  InputSystem inputSystem(engine, queue, running);
   inputSystem.RegisterInputBindings();
-  
+  double currentTime;
+  double deltaTime;
+  std::chrono::steady_clock::time_point startTimeChrono;
+  std::chrono::steady_clock::time_point currentTimeChrono;
+  std::chrono::steady_clock::time_point prevTimeChrono;
+  startTimeChrono = std::chrono::high_resolution_clock::now();
+  currentTimeChrono = prevTimeChrono = startTimeChrono;
   while (running) {
-    //auto start = std::chrono::steady_clock::now();
+    currentTimeChrono = std::chrono::high_resolution_clock::now();
+    deltaTime =
+        std::chrono::duration<double, std::chrono::milliseconds::period>(
+            currentTimeChrono - prevTimeChrono)
+            .count();
+    deltaTime /= 1000.f;
+    prevTimeChrono = currentTimeChrono;
+    currentTime =
+        std::chrono::duration<double, std::chrono::milliseconds::period>(
+            currentTimeChrono - startTimeChrono)
+            .count();
+    currentTime /= 1000.f;
 
     inputSystem.Update();
-
     // 커맨드 처리
     auto commands = queue->PopAll();
     while (!commands.empty()) {
@@ -39,45 +51,46 @@ void GameLoop(World* world, CommandQueue* queue, std::atomic<bool>& running) {
       if (cmd) cmd();
     }
 
-    world->Update();
-
-    //std::this_thread::sleep_until(start + tick);
+    engine->Update(deltaTime);
   }
 }
 
 int main(int argc, char* argv[]) {
   if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1)) {
-    std::cout<<"Could not initialize SDL:"<< SDL_GetError() << ".\n";
+    std::cout << "Could not initialize SDL:" << SDL_GetError() << ".\n";
     exit(-1);
   }
 
-  std::cout<<"SDL initialized.\n";
+  std::cout << "SDL initialized.\n";
 
-  SDL_Window* window = SDL_CreateWindow("Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
+  SDL_Window* window = SDL_CreateWindow("Test", SDL_WINDOWPOS_CENTERED,
+                                        SDL_WINDOWPOS_CENTERED, 640, 480, 0);
 
-  std::unique_ptr<World> world = std::make_unique<World>();
-  world->ChangeState(std::make_unique<MainMenuState>());
+  std::unique_ptr<Engine> engine = std::make_unique<Engine>();
+  engine->ChangeState(std::make_unique<MainMenuState>());
 
-  EntityID resourceNode = world->registry->createEntity();
-  EntityID refinery = world->registry->createEntity();
-  EntityID player = world->registry->createEntity();
-  world->registry->addComponent<ResourceNodeComponent>(resourceNode, 1000,
-                                                       OreType::Iron);
-  world->registry->addComponent<PositionComponent>(resourceNode, 100., 200.);
-  world->registry->addComponent<RefineryComponent>(refinery);
-  world->registry->addComponent<PositionComponent>(refinery, 300., 100.);
-  world->GetDispatcher()->Subscribe<StartInteractEvent>(
+  EntityID resourceNode = engine->GetRegistry()->createEntity();
+  EntityID refinery = engine->GetRegistry()->createEntity();
+  EntityID player = engine->GetRegistry()->createEntity();
+  engine->GetRegistry()->addComponent<ResourceNodeComponent>(resourceNode, 1000,
+                                                             OreType::Iron);
+  engine->GetRegistry()->addComponent<PositionComponent>(resourceNode, 100.,
+                                                         200.);
+  engine->GetRegistry()->addComponent<RefineryComponent>(refinery);
+  engine->GetRegistry()->addComponent<PositionComponent>(refinery, 300., 100.);
+  engine->GetDispatcher()->Subscribe<StartInteractEvent>(
       [](StartInteractEvent e) { std::cout << "start input\n"; });
-  world->GetDispatcher()->Subscribe<StopInteractEvent>(
+  engine->GetDispatcher()->Subscribe<StopInteractEvent>(
       [](StopInteractEvent e) { std::cout << "stop input\n"; });
   std::atomic<bool> running = true;
 
   std::unique_ptr<CommandQueue> commandQueue = std::make_unique<CommandQueue>();
 
-  //std::thread inputThread(InputThread, std::ref(running), world.get(), commandQueue.get());
-  GameLoop(world.get(), commandQueue.get(), running);
+  // std::thread inputThread(InputThread, std::ref(running), engine.get(),
+  // commandQueue.get());
+  GameLoop(engine.get(), commandQueue.get(), running);
 
-  //inputThread.join();
+  // inputThread.join();
   SDL_DestroyWindow(window);
   SDL_Quit();
   exit(0);

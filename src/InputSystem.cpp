@@ -1,10 +1,30 @@
 ﻿#include "InputSystem.h"
 
+#include "CommandQueue.h"
+#include "Engine.h"
 #include "Event.h"
+#include "Registry.h"
+#include "TimerComponent.h"
+#include "boost/functional/hash.hpp"
+
+std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
+  using boost::hash_combine;
+  using boost::hash_value;
+
+  std::size_t seed = 0;
+
+  hash_combine(seed, hash_value(k.Scancode));
+  hash_combine(seed, hash_value(k.EventType));
+
+  // Return the result.
+  return seed;
+}
 
 void InputSystem::RegisterInputBindings() {
-  keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYDOWN}] = InputAction::StartMining;
-  keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYUP}] = InputAction::CancelMining;
+  keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYDOWN}] =
+      InputAction::StartInteraction;
+  keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYUP}] =
+      InputAction::StopInteraction;
   keyBindings[KeyEvent{SDL_SCANCODE_W, SDL_KEYDOWN}] = InputAction::MoveUp;
   keyBindings[KeyEvent{SDL_SCANCODE_S, SDL_KEYDOWN}] = InputAction::MoveDown;
   keyBindings[KeyEvent{SDL_SCANCODE_A, SDL_KEYDOWN}] = InputAction::MoveLeft;
@@ -18,7 +38,8 @@ void InputSystem::Update() {
       running = false;
       return;
     }
-    if ((event.type == SDL_KEYDOWN && event.key.repeat ==0) || event.type == SDL_KEYUP) {
+    if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
+        event.type == SDL_KEYUP) {
       auto scancode = event.key.keysym.scancode;
       auto it = keyBindings.find(
           KeyEvent{scancode, static_cast<SDL_EventType>(event.type)});
@@ -33,11 +54,17 @@ void InputSystem::Update() {
 
 void InputSystem::HandleInputAction(InputAction action) {
   switch (action) {
-    case InputAction::StartMining:
-      commandQueue->PushEvent(world->GetDispatcher(), StartInteractEvent{});
+    case InputAction::StartInteraction:
+      engine->GetRegistry()->addComponent<TimerComponent>(
+          engine->GetPlayer(), TimerComponent(1.0, true, [this]() {
+            commandQueue->PushEvent(engine->GetDispatcher(),
+                                    StartInteractEvent{});
+          }));
       break;
-    case InputAction::CancelMining:
-      commandQueue->PushEvent(world->GetDispatcher(), StopInteractEvent{});
+    case InputAction::StopInteraction:
+      engine->GetRegistry()->removeComponent<TimerComponent>(
+          engine->GetPlayer());
+      commandQueue->PushEvent(engine->GetDispatcher(), StopInteractEvent{});
       break;
     case InputAction::Quit:
       running = false;
@@ -45,6 +72,6 @@ void InputSystem::HandleInputAction(InputAction action) {
   }
 }
 
-void InputSystem::HandleInputAxis(const Uint8* keyState){
-  if(keyState[SDL_SCANCODE_W]) std::cout<<"move up\n";
+void InputSystem::HandleInputAxis(const Uint8* keyState) {
+  if (keyState[SDL_SCANCODE_W]) std::cout << "move up\n";
 }

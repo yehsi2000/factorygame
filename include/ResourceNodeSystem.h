@@ -1,16 +1,21 @@
-﻿#pragma once
-#include "Item.h"
-#include "ResourceNodeComponent.h"
+﻿#include <memory>
+
+#include "Entity.h"
+
+class ItemDatabase;
+struct ResourceNodeComponent;
+class Registry;
 
 class ResourceNodeSystem {
-
  public:
-  ResourceNodeSystem(std::shared_ptr<ItemDatabase> db)
-      : itemDatabase(db) {}
-  void Update(class World& world);
+  ResourceNodeSystem(std::shared_ptr<ItemDatabase> db, Registry* r);
+  void Update();
   void AddMiner(ResourceNodeComponent& resNode, EntityID player);
   void RemoveMiner(ResourceNodeComponent& resNode);
   long long leftcount(ResourceNodeComponent& resNode);
-  private:
-    std::shared_ptr<ItemDatabase> itemDatabase;
+  ~ResourceNodeSystem();
+
+ private:
+  std::shared_ptr<ItemDatabase> itemDatabase;
+  Registry* registry;
 };

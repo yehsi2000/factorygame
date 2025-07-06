@@ -1,5 +1,3 @@
 ﻿#include "InteractionSystem.h"
 
-void InteractionSystem::Update(InteractableComponent interactable) {
-
-}
+void InteractionSystem::Update() {}

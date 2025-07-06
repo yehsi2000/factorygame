@@ -1,8 +1,6 @@
-﻿#pragma once
-
-#include <map>
-#include <unordered_map>
+﻿#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 enum class ItemID {
@@ -66,7 +64,7 @@ class OreToItemMapper {
   std::unordered_map<OreType, ItemID> mapping;
 };
 
-// 3. 아이템 데이터베이스 클래스
+// 아이템 데이터베이스 클래스
 class ItemDatabase {
  public:
   void initialize() {

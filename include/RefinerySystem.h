@@ -1,11 +1,14 @@
-﻿#pragma once
-#include "RefineryComponent.h"
+﻿#include "Entity.h"
+
+class Registry;
+struct RefineryComponent;
 
 class RefinerySystem {
+  Registry* registry;
 
  public:
-  RefinerySystem();
-  void Update(class World& world);
+  RefinerySystem(Registry* r);
+  void Update();
   void ConnectMiner(RefineryComponent& refinery, EntityID player);
   void DisconnectMiner(RefineryComponent& refinery);
 };

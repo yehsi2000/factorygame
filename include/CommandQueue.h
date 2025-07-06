@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#ifndef __COMMANDQUEUE__
+#define __COMMANDQUEUE__
 
 #include <condition_variable>
 #include <functional>
@@ -47,3 +48,5 @@ class CommandQueue {
     return queue.empty();
   }
 };
+
+#endif

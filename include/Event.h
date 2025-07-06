@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿#ifndef __EVENT__
+#define __EVENT__
+
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -59,3 +61,5 @@ class EventDispatcher {
     }
   }
 };
+
+#endif

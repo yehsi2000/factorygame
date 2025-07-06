@@ -1,7 +1,6 @@
-﻿#pragma once
-#include <unordered_map>
+﻿#include <unordered_map>
 
-#include "Item.h"
+enum class ItemID;
 
 struct InventoryComponent {
   std::unordered_map<ItemID, int> items;

@@ -1,8 +1,8 @@
-﻿#pragma once
-#include <memory>
+﻿#include <memory>
 
 #include "Entity.h"
-#include "Item.h"
+
+enum class OreType;
 
 struct ResourceNodeComponent {
   ResourceNodeComponent(int totalResource, OreType oreType)

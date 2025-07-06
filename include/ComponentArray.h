@@ -1,5 +1,6 @@
-﻿// core/ComponentArray.h
-#pragma once
+﻿#ifndef __COMPONENT_ARRAY__
+#define __COMPONENT_ARRAY__
+
 #include <cassert>
 #include <memory>
 #include <unordered_map>
@@ -7,85 +8,98 @@
 
 #include "Entity.h"
 
-// 1. 공통 인터페이스
+// 공통 인터페이스
 class IComponentArray {
  public:
   virtual ~IComponentArray() = default;
   virtual void entityDestroyed(EntityID entity) = 0;
+  virtual bool hasEntity(EntityID entity) = 0;
 };
 
-// 2. 실제 컴포넌트 데이터를 담을 템플릿 클래스
+// 실제 컴포넌트 데이터를 담을 템플릿 클래스
 template <typename T>
 class ComponentArray : public IComponentArray {
  private:
   // 컴포넌트 데이터를 연속된 메모리에 저장 (캐시 효율)
-  std::vector<T> m_componentArray;
+  std::vector<T> componentArray;
 
   // 엔티티 ID -> 데이터 배열의 인덱스
-  std::unordered_map<EntityID, size_t> m_entityToIndexMap;
+  std::unordered_map<EntityID, size_t> entityToIndexMap;
   // 데이터 배열의 인덱스 -> 엔티티 ID (빠른 삭제를 위함)
-  std::unordered_map<size_t, EntityID> m_indexToEntityMap;
+  std::unordered_map<size_t, EntityID> indexToEntityMap;
 
  public:
   void addData(EntityID entity, T component) {
-    assert(m_entityToIndexMap.find(entity) == m_entityToIndexMap.end() &&
+    assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
 
-    size_t newIndex = m_componentArray.size();
-    m_entityToIndexMap[entity] = newIndex;
-    m_indexToEntityMap[newIndex] = entity;
-    m_componentArray.push_back(component);
+    size_t newIndex = componentArray.size();
+    entityToIndexMap[entity] = newIndex;
+    indexToEntityMap[newIndex] = entity;
+    componentArray.push_back(component);
   }
 
   void removeData(EntityID entity) {
-    assert(m_entityToIndexMap.find(entity) != m_entityToIndexMap.end() &&
+    assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
            "Removing non-existent component.");
 
-    // 빠른 삭제 기법:
-    // 1. 삭제할 요소의 인덱스를 찾는다.
-    size_t indexOfRemovedEntity = m_entityToIndexMap[entity];
-    // 2. 배열의 맨 마지막 요소를 삭제할 위치로 옮긴다.
-    size_t indexOfLastElement = m_componentArray.size() - 1;
-    m_componentArray[indexOfRemovedEntity] =
-        m_componentArray[indexOfLastElement];
+    // 삭제할 요소의 인덱스 찾기
+    size_t indexOfRemovedEntity = entityToIndexMap[entity];
+    // 배열의 마지막을 삭제할 위치로 옮김
+    size_t indexOfLastElement = componentArray.size() - 1;
+    componentArray[indexOfRemovedEntity] = componentArray[indexOfLastElement];
 
-    // 3. 맵 정보를 업데이트한다.
-    EntityID entityOfLastElement = m_indexToEntityMap[indexOfLastElement];
-    m_entityToIndexMap[entityOfLastElement] = indexOfRemovedEntity;
-    m_indexToEntityMap[indexOfRemovedEntity] = entityOfLastElement;
+    // 맵 정보 업데이트
+    EntityID entityOfLastElement = indexToEntityMap[indexOfLastElement];
+    entityToIndexMap[entityOfLastElement] = indexOfRemovedEntity;
+    indexToEntityMap[indexOfRemovedEntity] = entityOfLastElement;
 
-    // 4. 맨 뒤의 요소와 맵을 삭제한다.
-    m_componentArray.pop_back();
-    m_entityToIndexMap.erase(entity);
-    m_indexToEntityMap.erase(indexOfLastElement);
+    // 맨 뒤의 요소와 맵 삭제
+    componentArray.pop_back();
+    entityToIndexMap.erase(entity);
+    indexToEntityMap.erase(indexOfLastElement);
   }
 
   template <typename... Args>
   void emplaceData(EntityID entity, Args&&... args) {
-    assert(m_entityToIndexMap.find(entity) == m_entityToIndexMap.end() &&
+    assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
-    size_t newIndex = m_componentArray.size();
-    m_entityToIndexMap[entity] = newIndex;
-    m_indexToEntityMap[newIndex] = entity;
-    m_componentArray.push_back(T{std::forward<Args>(args)...});
+    size_t newIndex = componentArray.size();
+    entityToIndexMap[entity] = newIndex;
+    indexToEntityMap[newIndex] = entity;
+    componentArray.push_back(T{std::forward<Args>(args)...});
   }
 
   T& getData(EntityID entity) {
-    assert(m_entityToIndexMap.find(entity) != m_entityToIndexMap.end() &&
+    assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
            "Retrieving non-existent component.");
-    return m_componentArray[m_entityToIndexMap[entity]];
+    return componentArray[entityToIndexMap[entity]];
   }
 
-  bool hasEntity(EntityID entity) {
-    for (auto& [e, _] : m_entityToIndexMap) {
-      if (e == entity) return true;
+  bool hasEntity(EntityID entity) override {
+    // map의 count 메서드를 사용하여 O(1) 시간 복잡도로 확인
+    return entityToIndexMap.count(entity) > 0;
+  }
+
+  template <typename Func>
+  void forEach(Func func) {
+    for (int i = static_cast<int>(componentArray.size()) - 1; i >= 0; --i) {
+      func(indexToEntityMap.at(i), componentArray[i]);
     }
-    return false;
+  }
+
+  std::vector<std::pair<EntityID, const T&>> getAll() const {
+    std::vector<std::pair<EntityID, const T&>> result;
+    result.reserve(componentArray.size());
+    for (size_t i = 0; i < componentArray.size(); ++i) {
+      result.emplace_back(indexToEntityMap[i], componentArray[i]);
+    }
+    return result;
   }
 
   std::vector<EntityID> getAllEntities() {
     std::vector<EntityID> res;
-    for (auto& [id, _] : m_entityToIndexMap) {
+    for (auto& [id, _] : entityToIndexMap) {
       res.push_back(id);
     }
     return res;
@@ -93,8 +107,10 @@ class ComponentArray : public IComponentArray {
 
   // 엔티티가 파괴될 때 호출되는 콜백
   void entityDestroyed(EntityID entity) override {
-    if (m_entityToIndexMap.count(entity)) {
+    if (entityToIndexMap.count(entity)) {
       removeData(entity);
     }
   }
 };
+
+#endif

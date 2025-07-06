@@ -1,5 +1,9 @@
 ﻿#include "InventorySystem.h"
 
+#include "InventoryComponent.h"
+
+InventorySystem::~InventorySystem() = default;
+
 bool InventorySystem::consume(InventoryComponent& inv, ItemID itemID, int n) {
   if (inv.items.find(itemID) != inv.items.end() && inv.items[itemID] >= n) {
     inv.items[itemID] -= n;

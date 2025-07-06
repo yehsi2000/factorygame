@@ -1,6 +1,4 @@
-﻿#pragma once
-
-#include "Entity.h"
+﻿#include "Entity.h"
 
 struct RefineryComponent {
   RefineryComponent() : connectedMiner(0) {};

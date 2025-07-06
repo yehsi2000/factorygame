@@ -1,6 +1,4 @@
-﻿#pragma once
-
-class GameState {
+﻿class GameState {
  public:
   virtual ~GameState() = default;
   virtual void Enter() = 0;
