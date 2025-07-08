@@ -1,10 +1,12 @@
-﻿#include <memory>
+﻿#ifndef SYSTEM_RESOURCENODESYSTEM_
+#define SYSTEM_RESOURCENODESYSTEM_
 
+#include <memory>
+
+#include "Components/ResourceNodeComponent.h"
 #include "Entity.h"
-
-class ItemDatabase;
-struct ResourceNodeComponent;
-class Registry;
+#include "Item.h"
+#include "Registry.h"
 
 class ResourceNodeSystem {
  public:
@@ -19,3 +21,5 @@ class ResourceNodeSystem {
   std::shared_ptr<ItemDatabase> itemDatabase;
   Registry* registry;
 };
+
+#endif /* SYSTEM_RESOURCENODESYSTEM_ */

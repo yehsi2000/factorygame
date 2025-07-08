@@ -1,6 +1,6 @@
-﻿#ifndef __ENTITY__
-#define __ENTITY__
+﻿#ifndef ENTITY_
+#define ENTITY_
 
 using EntityID = unsigned long long;
 
-#endif
+#endif /* ENTITY_ */

@@ -1,5 +1,5 @@
-﻿#ifndef __COMMANDQUEUE__
-#define __COMMANDQUEUE__
+﻿#ifndef COMMANDQUEUE_
+#define COMMANDQUEUE_
 
 #include <condition_variable>
 #include <functional>
@@ -49,4 +49,4 @@ class CommandQueue {
   }
 };
 
-#endif
+#endif /* COMMANDQUEUE_ */

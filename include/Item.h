@@ -1,4 +1,7 @@
-﻿#include <map>
+﻿#ifndef ITEM_
+#define ITEM_
+
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -90,3 +93,5 @@ class ItemDatabase {
  private:
   std::map<ItemID, ItemData> db;
 };
+
+#endif /* ITEM_ */

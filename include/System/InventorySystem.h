@@ -1,8 +1,11 @@
-﻿#include <memory>
+﻿#ifndef SYSTEM_INVENTORYSYSTEM_
+#define SYSTEM_INVENTORYSYSTEM_
 
-class ItemDatabase;
-struct InventoryComponent;
-enum class ItemID;
+#include <memory>
+
+#include "InventorySystem.h"
+#include "Components/InventoryComponent.h"
+#include "Item.h"
 
 class InventorySystem {
  public:
@@ -15,3 +18,5 @@ class InventorySystem {
  private:
   std::shared_ptr<ItemDatabase> itemDB;
 };
+
+#endif /* SYSTEM_INVENTORYSYSTEM_ */

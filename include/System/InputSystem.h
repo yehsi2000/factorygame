@@ -1,10 +1,13 @@
-﻿#include <atomic>
+﻿#ifndef SYSTEM_INPUTSYSTEM_
+#define SYSTEM_INPUTSYSTEM_
+
+#include <atomic>
+#include <cstddef>
 #include <unordered_map>
 
 #include "CommandQueue.h"
+#include "GEngine.h"
 #include "SDL.h"
-
-class Engine;
 
 enum class InputAction {
   StartInteraction,
@@ -30,16 +33,18 @@ struct KeyEventHasher {
 
 class InputSystem {
   std::unordered_map<KeyEvent, InputAction, KeyEventHasher> keyBindings;
-  Engine* engine;
+  GEngine* engine;
   CommandQueue* commandQueue;
   std::atomic<bool>& running;
   SDL_Event event;
 
  public:
-  InputSystem(Engine* e, CommandQueue* q, std::atomic<bool>& r)
+  InputSystem(GEngine* e, CommandQueue* q, std::atomic<bool>& r)
       : engine(e), commandQueue(q), running(r) {}
   void Update();
   void RegisterInputBindings();
   void HandleInputAction(InputAction action);
   void HandleInputAxis(const Uint8* keyState);
 };
+
+#endif /* SYSTEM_INPUTSYSTEM_ */

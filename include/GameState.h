@@ -1,4 +1,7 @@
-﻿class GameState {
+﻿#ifndef GAMESTATE_
+#define GAMESTATE_
+
+class GameState {
  public:
   virtual ~GameState() = default;
   virtual void Enter() = 0;
@@ -15,3 +18,5 @@ class PlayState : public GameState {
   virtual void Enter() override;
   virtual void Exit() override;
 };
+
+#endif /* GAMESTATE_ */

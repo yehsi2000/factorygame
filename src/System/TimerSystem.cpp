@@ -1,13 +1,13 @@
-﻿#include "TimerSystem.h"
+﻿#include "System/TimerSystem.h"
 
+#include "Components/TimerComponent.h"
 #include "Registry.h"
-#include "TimerComponent.h"
 
-void TimerSystem::Update(double dt) {
+void TimerSystem::Update(float dt) {
   registry->forEach<TimerComponent>([&](EntityID id, TimerComponent& timer) {
-    if (timer.remaining <= 0.0f) return;
+    if (timer.remaining <= 0.f) return;
     timer.remaining -= dt;
-    if (timer.remaining <= 0.0f) {
+    if (timer.remaining <= 0.f) {
       timer.onExpire();
       if (timer.bIsRepeating) {
         timer.remaining = timer.duration;

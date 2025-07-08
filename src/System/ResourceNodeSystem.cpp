@@ -1,8 +1,8 @@
-﻿#include "ResourceNodeSystem.h"
+﻿#include "System/ResourceNodeSystem.h"
 
+#include "Components/ResourceNodeComponent.h"
 #include "Item.h"
 #include "Registry.h"
-#include "ResourceNodeComponent.h"
 
 ResourceNodeSystem::ResourceNodeSystem(std::shared_ptr<ItemDatabase> db,
                                        Registry* r) {

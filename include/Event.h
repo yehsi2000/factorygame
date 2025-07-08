@@ -1,5 +1,5 @@
-﻿#ifndef __EVENT__
-#define __EVENT__
+﻿#ifndef EVENT_
+#define EVENT_
 
 #include <algorithm>
 #include <functional>
@@ -16,6 +16,16 @@ struct Event {
 struct StartInteractEvent : public Event {};
 
 struct StopInteractEvent : public Event {};
+
+struct XAxisEvent : public Event {
+  XAxisEvent(float i) { val = i; }
+  float val;
+};
+
+struct YAxisEvent : public Event {
+  YAxisEvent(float i) { val = i; }
+  float val;
+};
 
 class EventDispatcher {
   using Callback = std::function<void(const Event&)>;
@@ -62,4 +72,4 @@ class EventDispatcher {
   }
 };
 
-#endif
+#endif /* EVENT_ */

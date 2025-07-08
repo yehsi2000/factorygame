@@ -1,6 +1,7 @@
-﻿#ifndef __REGISTRY__
-#define __REGISTRY__
+﻿#ifndef REGISTRY_
+#define REGISTRY_
 
+#include <algorithm>
 #include <queue>
 #include <string>
 #include <typeinfo>
@@ -10,13 +11,13 @@
 class Registry {
  private:
   // 엔티티 관리
-  std::queue<EntityID> m_availableEntities{};
-  uint32_t m_livingEntityCount = 0;
+  std::queue<EntityID> availableEntities{};
+  uint32_t livingEntityCount = 0;
 
   // 컴포넌트 관리
   // 컴포넌트 타입 이름 -> 해당 타입의 ComponentArray
   std::unordered_map<const char*, std::shared_ptr<IComponentArray>>
-      m_componentArrays{};
+      componentArrays{};
 
   // 컴포넌트 타입별로 유니크한 ID를 부여하는 헬퍼
   template <typename T>
@@ -28,55 +29,68 @@ class Registry {
   template <typename T>
   std::shared_ptr<ComponentArray<T>> getComponentArray() {
     const char* typeName = getComponentTypeName<T>();
-    assert(m_componentArrays.count(typeName) &&
+    assert(componentArrays.count(typeName) &&
            "Component type not registered before use.");
     return std::static_pointer_cast<ComponentArray<T>>(
-        m_componentArrays[typeName]);
+        componentArrays[typeName]);
+  }
+
+  // 컴포넌트 배열의 크기를 가져오는 헬퍼
+  template <typename T>
+  std::size_t getComponentSize() {
+    const char* typeName = getComponentTypeName<T>();
+    if (componentArrays.count(typeName) == 0) return 0;
+    return componentArrays.at(typeName)->getSize();
   }
 
  public:
   Registry() {
     // 사용 가능한 엔티티 ID 풀을 미리 생성
     for (EntityID entity = 0; entity < 5000; ++entity) {
-      m_availableEntities.push(entity);
+      availableEntities.push(entity);
     }
   }
 
   // 엔티티 생성
   EntityID createEntity() {
-    assert(m_livingEntityCount < 5000 && "Too many entities in existence.");
-    EntityID id = m_availableEntities.front();
-    m_availableEntities.pop();
-    m_livingEntityCount++;
+    assert(livingEntityCount < 5000 && "Too many entities in existence.");
+    EntityID id = availableEntities.front();
+    availableEntities.pop();
+    livingEntityCount++;
     return id;
   }
 
   // 엔티티 파괴
   void destroyEntity(EntityID entity) {
-    assert(m_livingEntityCount > 0 && "Destroying non-existent entity.");
+    assert(livingEntityCount > 0 && "Destroying non-existent entity.");
 
     // 이 엔티티에 연결된 모든 컴포넌트를 삭제
-    for (auto const& pair : m_componentArrays) {
+    for (auto const& pair : componentArrays) {
       pair.second->entityDestroyed(entity);
     }
 
-    m_availableEntities.push(entity);
-    m_livingEntityCount--;
+    availableEntities.push(entity);
+    livingEntityCount--;
   }
 
   // 컴포넌트 등록 (최초 한번만 호출)
   template <typename T>
   void registerComponent() {
     const char* typeName = getComponentTypeName<T>();
-    if (m_componentArrays.find(typeName) == m_componentArrays.end()) {
-      m_componentArrays[typeName] = std::make_shared<ComponentArray<T>>();
+    if (componentArrays.find(typeName) == componentArrays.end()) {
+      componentArrays[typeName] = std::make_shared<ComponentArray<T>>();
     }
   }
 
   // 엔티티에 컴포넌트 추가
+  template <typename T>
+  void addComponent(EntityID entity, T&& component) {
+    getComponentArray<T>()->addData(entity, std::move(component));
+  }
+
   // 엔티티에 컴포넌트 추가 (Emplace 방식)
   template <typename T, typename... Args>
-  void addComponent(EntityID entity, Args&&... args) {
+  void emplaceComponent(EntityID entity, Args&&... args) {
     getComponentArray<T>()->emplaceData(entity, std::forward<Args>(args)...);
   }
 
@@ -95,8 +109,8 @@ class Registry {
   template <typename T>
   bool hasComponent(EntityID entity) {
     const char* typeName = getComponentTypeName<T>();
-    auto it = m_componentArrays.find(typeName);
-    if (it == m_componentArrays.end()) {
+    auto it = componentArrays.find(typeName);
+    if (it == componentArrays.end()) {
       return false;
     }
     // IComponentArray의 가상 함수를 통해 바로 호출
@@ -105,9 +119,38 @@ class Registry {
 
   // 시스템을 위한 뷰 제공
   // 특정 컴포넌트를 가진 모든 엔티티를 순회하고 싶을 때 사용
-  template <typename T>
+  template <typename... TComponent>
   std::vector<EntityID> view() {
-    return getComponentArray<T>()->getAllEntities();
+    // 요청된 컴포넌트가 없으면 빈 벡터를 반환합니다.
+    if constexpr (sizeof...(TComponent) == 0) {
+      return {};
+    }
+
+    // 1. 모든 관련 컴포넌트 배열을 가져옵니다.
+    std::vector<std::shared_ptr<IComponentArray>> arrays;
+    // C++17 fold expression을 사용하여 배열을 채웁니다.
+    (arrays.push_back(getComponentArray<TComponent>()), ...);
+
+    // 2. 크기순으로 정렬하여 가장 작은 배열을 찾습니다. (성능 최적화)
+    std::sort(arrays.begin(), arrays.end(), [](const auto& a, const auto& b) {
+      return a->getSize() < b->getSize();
+    });
+
+    // 3. 가장 작은 컴포넌트 배열의 엔티티 목록으로 결과 집합을 초기화합니다.
+    std::vector<EntityID> result = arrays[0]->getAllEntities();
+
+    // 4. 나머지 컴포넌트 배열들을 순회하며 결과 집합을 필터링합니다.
+    for (size_t i = 1; i < arrays.size(); ++i) {
+      result.erase(
+          std::remove_if(result.begin(), result.end(),
+                         [&](EntityID entity) {
+                           // 이 엔티티가 현재 검사하는 컴포넌트 배열에 없으면 제거 대상입니다.
+                           return !arrays[i]->hasEntity(entity);
+                         }),
+          result.end());
+    }
+
+    return result;
   }
 
   // 모든 component에 함수 적용
@@ -117,4 +160,4 @@ class Registry {
   }
 };
 
-#endif
+#endif /* REGISTRY_ */

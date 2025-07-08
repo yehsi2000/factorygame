@@ -1,7 +1,7 @@
-﻿#include "RefinerySystem.h"
+﻿#include "System/RefinerySystem.h"
 
+#include "Components/RefineryComponent.h"
 #include "Item.h"
-#include "RefineryComponent.h"
 #include "Registry.h"
 
 RefinerySystem::RefinerySystem(Registry* r) {

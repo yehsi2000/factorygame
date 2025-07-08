@@ -1,6 +1,6 @@
-﻿#include "InventorySystem.h"
+﻿#include "System/InventorySystem.h"
 
-#include "InventoryComponent.h"
+#include "Components/InventoryComponent.h"
 
 InventorySystem::~InventorySystem() = default;
 

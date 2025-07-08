@@ -1,7 +1,9 @@
-﻿#include "Entity.h"
+﻿#ifndef SYSTEM_REFINERYSYSTEM_
+#define SYSTEM_REFINERYSYSTEM_
 
-class Registry;
-struct RefineryComponent;
+#include "Components/RefineryComponent.h"
+#include "Entity.h"
+#include "Registry.h"
 
 class RefinerySystem {
   Registry* registry;
@@ -12,3 +14,5 @@ class RefinerySystem {
   void ConnectMiner(RefineryComponent& refinery, EntityID player);
   void DisconnectMiner(RefineryComponent& refinery);
 };
+
+#endif /* SYSTEM_REFINERYSYSTEM_ */

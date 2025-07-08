@@ -1,10 +1,10 @@
-﻿#include "InputSystem.h"
+﻿#include "System/InputSystem.h"
 
 #include "CommandQueue.h"
-#include "Engine.h"
+#include "Components/TimerComponent.h"
 #include "Event.h"
+#include "GEngine.h"
 #include "Registry.h"
-#include "TimerComponent.h"
 #include "boost/functional/hash.hpp"
 
 std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
@@ -55,11 +55,11 @@ void InputSystem::Update() {
 void InputSystem::HandleInputAction(InputAction action) {
   switch (action) {
     case InputAction::StartInteraction:
-      engine->GetRegistry()->addComponent<TimerComponent>(
-          engine->GetPlayer(), TimerComponent(1.0, true, [this]() {
+      engine->GetRegistry()->emplaceComponent<TimerComponent>(
+          engine->GetPlayer(), 1.f, 1.f, true, [this]() {
             commandQueue->PushEvent(engine->GetDispatcher(),
                                     StartInteractEvent{});
-          }));
+          });
       break;
     case InputAction::StopInteraction:
       engine->GetRegistry()->removeComponent<TimerComponent>(
@@ -73,5 +73,11 @@ void InputSystem::HandleInputAction(InputAction action) {
 }
 
 void InputSystem::HandleInputAxis(const Uint8* keyState) {
-  if (keyState[SDL_SCANCODE_W]) std::cout << "move up\n";
+  if (keyState[SDL_SCANCODE_W]) commandQueue->PushEvent(engine->GetDispatcher(), YAxisEvent(-1.f));
+  else if (keyState[SDL_SCANCODE_S]) commandQueue->PushEvent(engine->GetDispatcher(), YAxisEvent(1.f));
+  else commandQueue->PushEvent(engine->GetDispatcher(), YAxisEvent(0.f));
+  
+  if (keyState[SDL_SCANCODE_A]) commandQueue->PushEvent(engine->GetDispatcher(), XAxisEvent(-1.f));
+  else if (keyState[SDL_SCANCODE_D]) commandQueue->PushEvent(engine->GetDispatcher(), XAxisEvent(1.f));
+  else commandQueue->PushEvent(engine->GetDispatcher(), XAxisEvent(0.f));
 }
