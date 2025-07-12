@@ -7,8 +7,6 @@
 #include <mutex>
 #include <queue>
 
-#include "Event.h"
-
 class CommandQueue {
   std::queue<std::function<void()>> queue;
   std::mutex mtx;
@@ -19,13 +17,6 @@ class CommandQueue {
     std::lock_guard<std::mutex> lock(mtx);
     queue.push(std::move(cmd));
     cv.notify_one();
-  }
-
-  template <typename EventType>
-  void PushEvent(EventDispatcher* dispatcher, EventType&& event) {
-    Push([dispatcher, event = std::forward<EventType>(event)]() {
-      dispatcher->Dispatch(event);
-    });
   }
 
   std::function<void()> Pop() {

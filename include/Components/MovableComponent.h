@@ -1,0 +1,6 @@
+﻿#ifndef COMPONENTS_MOVABLECOMPONENT_
+#define COMPONENTS_MOVABLECOMPONENT_
+
+struct MovableComponent {};
+
+#endif /* COMPONENTS_MOVABLECOMPONENT_ */

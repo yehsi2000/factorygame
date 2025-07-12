@@ -12,7 +12,7 @@ void TimerSystem::Update(float dt) {
       if (timer.bIsRepeating) {
         timer.remaining = timer.duration;
       } else {
-        registry->removeComponent<TimerComponent>(id);
+        registry->RemoveComponent<TimerComponent>(id);
       }
     }
   });

@@ -10,8 +10,8 @@ void AnimationSystem::Update(float deltaTime) {
   // AnimationComponent와 SpriteComponent를 모두 가진 엔티티를 순회
   for (EntityID entity :
        registry->view<AnimationComponent, SpriteComponent>()) {
-    auto& anim = registry->getComponent<AnimationComponent>(entity);
-    auto& sprite = registry->getComponent<SpriteComponent>(entity);
+    auto& anim = registry->GetComponent<AnimationComponent>(entity);
+    auto& sprite = registry->GetComponent<SpriteComponent>(entity);
 
     // 애니메이션이 재생 중이 아닐 경우 아무것도 하지 않음
     if (!anim.isPlaying) {

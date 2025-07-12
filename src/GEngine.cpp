@@ -7,6 +7,7 @@
 #include "Components/AnimationComponent.h"
 #include "Components/InteractableComponent.h"
 #include "Components/InventoryComponent.h"
+#include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
 #include "Components/RefineryComponent.h"
 #include "Components/ResourceNodeComponent.h"
@@ -14,6 +15,7 @@
 #include "Components/TimerComponent.h"
 #include "Components/TransformComponent.h"
 #include "Event.h"
+#include "EventDispatcher.h"
 #include "GameState.h"
 #include "Item.h"
 #include "Registry.h"
@@ -27,8 +29,10 @@
 #include "System/TimerSystem.h"
 
 void GEngine::InitCoreSystem() {
+  commandQueue = std::make_unique<CommandQueue>();
   registry = std::make_unique<Registry>();
   dispatcher = std::make_unique<EventDispatcher>();
+  dispatcher->Init(GetCommandQueue());
 
   assert(registry && "Fail to initialize registry");
 
@@ -36,6 +40,8 @@ void GEngine::InitCoreSystem() {
   itemDatabase->initialize();
 
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
+  inputSystem = std::make_unique<InputSystem>(this);
+  inputSystem->RegisterInputBindings();
   inventorySystem = std::make_unique<InventorySystem>(itemDatabase);
   movementSystem = std::make_unique<MovementSystem>(registry.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
@@ -46,43 +52,38 @@ void GEngine::InitCoreSystem() {
 }
 
 void GEngine::RegisterComponent() {
-  registry->registerComponent<AnimationComponent>();
-  registry->registerComponent<InteractableComponent>();
-  registry->registerComponent<InventoryComponent>();
-  registry->registerComponent<MovementComponent>();
-  registry->registerComponent<RefineryComponent>();
-  registry->registerComponent<ResourceNodeComponent>();
-  registry->registerComponent<SpriteComponent>();
-  registry->registerComponent<TimerComponent>();
-  registry->registerComponent<TransformComponent>();
+  registry->RegisterComponent<AnimationComponent>();
+  registry->RegisterComponent<InteractableComponent>();
+  registry->RegisterComponent<InventoryComponent>();
+  registry->RegisterComponent<MovableComponent>();
+  registry->RegisterComponent<MovementComponent>();
+  registry->RegisterComponent<RefineryComponent>();
+  registry->RegisterComponent<ResourceNodeComponent>();
+  registry->RegisterComponent<SpriteComponent>();
+  registry->RegisterComponent<TimerComponent>();
+  registry->RegisterComponent<TransformComponent>();
 }
 
 void GEngine::GeneratePlayer() {
-  player = registry->createEntity();
-  registry->emplaceComponent<InventoryComponent>(player);
+  player = registry->CreateEntity();
+  registry->EmplaceComponent<InventoryComponent>(player);
 
   int w, h;
   SDL_GetWindowSize(gWindow, &w, &h);
-  registry->addComponent<TransformComponent>(
+  registry->AddComponent<TransformComponent>(
       player, TransformComponent{w / 2.f, h / 2.f, 5.f, 5.f});
 
   SDL_Texture* playerIdleSpritesheet = AssetManager::getInstance().getTexture(
       "assets/img/character/Miner_IdleAnimation.png", gRenderer);
-  registry->addComponent<SpriteComponent>(
+  registry->AddComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet, {0, 0, 16, 16}});
 
   AnimationComponent anim;
   anim.animations["PlayerIdle"] = {0, 12, 8.f, 16, 16, true};
   anim.currentAnimationName = "PlayerIdle";
-  registry->addComponent<AnimationComponent>(player, std::move(anim));
-
-  registry->emplaceComponent<MovementComponent>(player);
-
-  MovementComponent& pMove = registry->getComponent<MovementComponent>(player);
-  dispatcher->Subscribe<XAxisEvent>(
-      [&pMove](XAxisEvent e) { pMove.dx = e.val; });
-  dispatcher->Subscribe<YAxisEvent>(
-      [&pMove](YAxisEvent e) { pMove.dy = e.val; });
+  registry->AddComponent<AnimationComponent>(player, std::move(anim));
+  registry->EmplaceComponent<MovementComponent>(player);
+  registry->EmplaceComponent<MovableComponent>(player);
 }
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer) {
@@ -97,6 +98,11 @@ GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer) {
 
   // 플레이어 생성 및 컴포넌트 등록
   GeneratePlayer();
+
+  // 게임 종료 이벤트 구독
+  GameEndHandle = std::make_unique<EventHandle>(GetDispatcher()->Subscribe<QuitEvent>(
+      [this](const QuitEvent&) { this->bIsRunning = false; }));
+
 }
 
 void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
@@ -106,14 +112,27 @@ void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
 }
 
 void GEngine::Update(float deltaTime) {
-  timerSystem->Update(deltaTime);
+  inputSystem->Update();
 
-  animationSystem->Update(deltaTime);
+  // 2. Process all queued commands and events.
+  // This processes events from input polling immediately, reducing input lag.
+  CommandQueue* cq = GetCommandQueue();
+  auto commands = cq->PopAll();
+  while (!commands.empty()) {
+    auto command = commands.front();
+    command();
+    commands.pop();
+  }
+
+  timerSystem->Update(deltaTime);
+  movementSystem->Update(
+      deltaTime);  // Movement should be calculated before animation.
+  animationSystem->Update(
+      deltaTime);  // Animation can then reflect the current movement state.
   // inventorySystem->Update();
   refinerySystem->Update();
   resourceNodeSystem->Update();
 
-  movementSystem->Update(deltaTime);
-
+  // Render the final state of the world for this frame.
   renderSystem->Update();
 }

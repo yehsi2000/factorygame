@@ -3,7 +3,9 @@
 #include "CommandQueue.h"
 #include "Components/TimerComponent.h"
 #include "Event.h"
+#include "EventDispatcher.h"  // QuitEvent를 위해 EventDispatcher.h가 필요
 #include "GEngine.h"
+#include "InputState.h"
 #include "Registry.h"
 #include "boost/functional/hash.hpp"
 
@@ -25,18 +27,14 @@ void InputSystem::RegisterInputBindings() {
       InputAction::StartInteraction;
   keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYUP}] =
       InputAction::StopInteraction;
-  keyBindings[KeyEvent{SDL_SCANCODE_W, SDL_KEYDOWN}] = InputAction::MoveUp;
-  keyBindings[KeyEvent{SDL_SCANCODE_S, SDL_KEYDOWN}] = InputAction::MoveDown;
-  keyBindings[KeyEvent{SDL_SCANCODE_A, SDL_KEYDOWN}] = InputAction::MoveLeft;
-  keyBindings[KeyEvent{SDL_SCANCODE_D, SDL_KEYDOWN}] = InputAction::MoveRight;
   keyBindings[KeyEvent{SDL_SCANCODE_ESCAPE, SDL_KEYDOWN}] = InputAction::Quit;
 }
 
 void InputSystem::Update() {
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) {
-      running = false;
-      return;
+      engine->GetDispatcher()->Publish(std::make_shared<QuitEvent>());
+      return;  // 종료 이벤트 발생 시 추가 입력 처리를 중단
     }
     if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
         event.type == SDL_KEYUP) {
@@ -55,29 +53,35 @@ void InputSystem::Update() {
 void InputSystem::HandleInputAction(InputAction action) {
   switch (action) {
     case InputAction::StartInteraction:
-      engine->GetRegistry()->emplaceComponent<TimerComponent>(
+      engine->GetRegistry()->EmplaceComponent<TimerComponent>(
           engine->GetPlayer(), 1.f, 1.f, true, [this]() {
-            commandQueue->PushEvent(engine->GetDispatcher(),
-                                    StartInteractEvent{});
+            engine->GetDispatcher()->Publish(
+                std::make_shared<StartInteractEvent>());
           });
       break;
     case InputAction::StopInteraction:
-      engine->GetRegistry()->removeComponent<TimerComponent>(
+      engine->GetRegistry()->RemoveComponent<TimerComponent>(
           engine->GetPlayer());
-      commandQueue->PushEvent(engine->GetDispatcher(), StopInteractEvent{});
+      engine->GetDispatcher()->Publish(std::make_shared<StopInteractEvent>());
       break;
     case InputAction::Quit:
-      running = false;
+      engine->GetDispatcher()->Publish(std::make_shared<QuitEvent>());
       break;
   }
 }
 
 void InputSystem::HandleInputAxis(const Uint8* keyState) {
-  if (keyState[SDL_SCANCODE_W]) commandQueue->PushEvent(engine->GetDispatcher(), YAxisEvent(-1.f));
-  else if (keyState[SDL_SCANCODE_S]) commandQueue->PushEvent(engine->GetDispatcher(), YAxisEvent(1.f));
-  else commandQueue->PushEvent(engine->GetDispatcher(), YAxisEvent(0.f));
-  
-  if (keyState[SDL_SCANCODE_A]) commandQueue->PushEvent(engine->GetDispatcher(), XAxisEvent(-1.f));
-  else if (keyState[SDL_SCANCODE_D]) commandQueue->PushEvent(engine->GetDispatcher(), XAxisEvent(1.f));
-  else commandQueue->PushEvent(engine->GetDispatcher(), XAxisEvent(0.f));
+  if (keyState[SDL_SCANCODE_W])
+    engine->GetRegistry()->GetInputState().yAxis = -1.f;
+  else if (keyState[SDL_SCANCODE_S])
+    engine->GetRegistry()->GetInputState().yAxis = 1.f;
+  else
+    engine->GetRegistry()->GetInputState().yAxis = 0.f;
+
+  if (keyState[SDL_SCANCODE_A])
+    engine->GetRegistry()->GetInputState().xAxis = -1.f;
+  else if (keyState[SDL_SCANCODE_D])
+    engine->GetRegistry()->GetInputState().xAxis = 1.f;
+  else
+    engine->GetRegistry()->GetInputState().xAxis = 0.f;
 }

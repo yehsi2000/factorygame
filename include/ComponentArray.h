@@ -86,15 +86,6 @@ class ComponentArray : public IComponentArray {
     }
   }
 
-  // std::vector<std::pair<EntityID, const T&>> getAll() const {
-  //   std::vector<std::pair<EntityID, const T&>> result;
-  //   result.reserve(componentArray.size());
-  //   for (std::size_t i = 0; i < componentArray.size(); ++i) {
-  //     result.emplace_back(indexToEntityMap.at(i), componentArray[i]);
-  //   }
-  //   return result;
-  // }
-
   std::vector<EntityID> getAllEntities() override {
     std::vector<EntityID> res;
     res.reserve(entityToIndexMap.size());
