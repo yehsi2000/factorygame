@@ -12,6 +12,7 @@
 #include "Item.h"
 #include "Registry.h"
 #include "SDL.h"
+#include "World.h"
 #include "System/AnimationSystem.h"
 #include "System/InputSystem.h"
 #include "System/InventorySystem.h"
@@ -19,6 +20,7 @@
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
 #include "System/ResourceNodeSystem.h"
+#include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
 
 class GEngine {
@@ -40,9 +42,12 @@ class GEngine {
   std::unique_ptr<RenderSystem> renderSystem;
   std::unique_ptr<ResourceNodeSystem> resourceNodeSystem;
   std::unique_ptr<TimerSystem> timerSystem;
+  std::unique_ptr<TimerExpireSystem> timerExpireSystem;
 
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
+
+  World* world;
 
   bool bIsRunning = true;
 

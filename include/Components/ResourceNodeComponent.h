@@ -8,7 +8,6 @@
 
 struct ResourceNodeComponent {
   long long LeftResource;
-  EntityID Miner = 0;
   OreType Ore;
 };
 

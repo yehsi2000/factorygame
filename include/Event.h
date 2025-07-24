@@ -3,14 +3,11 @@
 
 #include <memory>
 
-// --- Event-related structs ---
 struct Event {
   virtual ~Event() = default;
 };
 
-struct StartInteractEvent : public Event {};
-
-struct StopInteractEvent : public Event {};
+struct InteractEvent : public Event {};
 
 struct XAxisEvent : public Event {
   XAxisEvent(float i) : val(i) {}

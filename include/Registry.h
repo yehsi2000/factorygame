@@ -5,9 +5,12 @@
 #include <queue>
 #include <string>
 #include <typeinfo>
+#include <iostream>
 
 #include "ComponentArray.h"
 #include "InputState.h"
+
+constexpr int MAX_ENTITIES = 100000000;
 
 class Registry {
  private:
@@ -49,17 +52,18 @@ class Registry {
  public:
   Registry() {
     // 사용 가능한 엔티티 ID 풀을 미리 생성
-    for (EntityID entity = 0; entity < 5000; ++entity) {
+    for (EntityID entity = 0; entity < MAX_ENTITIES; ++entity) {
       availableEntities.push(entity);
     }
   }
 
   // 엔티티 생성
   EntityID CreateEntity() {
-    assert(livingEntityCount < 5000 && "Too many entities in existence.");
+    assert(livingEntityCount < MAX_ENTITIES && "Too many entities in existence.");
     EntityID id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;
+    //std::cout<<"Created entity with ID:" << id << std::endl;
     return id;
   }
 

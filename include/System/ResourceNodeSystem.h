@@ -12,8 +12,6 @@ class ResourceNodeSystem {
  public:
   ResourceNodeSystem(std::shared_ptr<ItemDatabase> db, Registry* r);
   void Update();
-  void AddMiner(ResourceNodeComponent& resNode, EntityID player);
-  void RemoveMiner(ResourceNodeComponent& resNode);
   long long leftcount(ResourceNodeComponent& resNode);
   ~ResourceNodeSystem();
 

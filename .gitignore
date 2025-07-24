@@ -2,4 +2,7 @@ build
 .vscode
 vendored
 assets
-CMakePresets.json
+CMake*
+out
+.vs
+!CMakeLists.txt

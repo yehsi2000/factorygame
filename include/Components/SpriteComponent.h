@@ -7,6 +7,7 @@ struct SpriteComponent{
   SDL_Texture* texture = nullptr;
   SDL_Rect srcRect;
   SDL_RendererFlip flip = SDL_FLIP_NONE;
+  int renderOrder = 0;
 };
 
 #endif /* COMPONENTS_SPRITECOMPONENT_ */

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <type_traits>
+#include <easy/profiler.h>
 
 #include "AssetManager.h"
 #include "Components/AnimationComponent.h"
@@ -20,6 +21,7 @@
 #include "Item.h"
 #include "Registry.h"
 #include "SDL.h"
+#include "World.h"
 #include "System/AnimationSystem.h"
 #include "System/InventorySystem.h"
 #include "System/MovementSystem.h"
@@ -49,6 +51,9 @@ void GEngine::InitCoreSystem() {
   resourceNodeSystem =
       std::make_unique<ResourceNodeSystem>(itemDatabase, registry.get());
   timerSystem = std::make_unique<TimerSystem>(registry.get());
+  timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
+
+  world = new World(registry.get(), gRenderer);
 }
 
 void GEngine::RegisterComponent() {
@@ -61,6 +66,7 @@ void GEngine::RegisterComponent() {
   registry->RegisterComponent<ResourceNodeComponent>();
   registry->RegisterComponent<SpriteComponent>();
   registry->RegisterComponent<TimerComponent>();
+  registry->RegisterComponent<TimerExpiredTag>();
   registry->RegisterComponent<TransformComponent>();
 }
 
@@ -71,12 +77,12 @@ void GEngine::GeneratePlayer() {
   int w, h;
   SDL_GetWindowSize(gWindow, &w, &h);
   registry->AddComponent<TransformComponent>(
-      player, TransformComponent{w / 2.f, h / 2.f, 5.f, 5.f});
+      player, TransformComponent{{w / 2.f, h / 2.f}, {5.f, 5.f}});
 
   SDL_Texture* playerIdleSpritesheet = AssetManager::getInstance().getTexture(
       "assets/img/character/Miner_IdleAnimation.png", gRenderer);
   registry->AddComponent<SpriteComponent>(
-      player, SpriteComponent{playerIdleSpritesheet, {0, 0, 16, 16}});
+      player, SpriteComponent{playerIdleSpritesheet, {0, 0, 16, 16}, SDL_FLIP_NONE, 100});
 
   AnimationComponent anim;
   anim.animations["PlayerIdle"] = {0, 12, 8.f, 16, 16, true};
@@ -100,9 +106,9 @@ GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer) {
   GeneratePlayer();
 
   // 게임 종료 이벤트 구독
-  GameEndHandle = std::make_unique<EventHandle>(GetDispatcher()->Subscribe<QuitEvent>(
-      [this](const QuitEvent&) { this->bIsRunning = false; }));
-
+  GameEndHandle =
+      std::make_unique<EventHandle>(GetDispatcher()->Subscribe<QuitEvent>(
+          [this](const QuitEvent&) { this->bIsRunning = false; }));
 }
 
 void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
@@ -113,9 +119,9 @@ void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
 
 void GEngine::Update(float deltaTime) {
   inputSystem->Update();
+  timerSystem->Update(deltaTime);
+  timerExpireSystem->Update();
 
-  // 2. Process all queued commands and events.
-  // This processes events from input polling immediately, reducing input lag.
   CommandQueue* cq = GetCommandQueue();
   auto commands = cq->PopAll();
   while (!commands.empty()) {
@@ -124,15 +130,12 @@ void GEngine::Update(float deltaTime) {
     commands.pop();
   }
 
-  timerSystem->Update(deltaTime);
-  movementSystem->Update(
-      deltaTime);  // Movement should be calculated before animation.
-  animationSystem->Update(
-      deltaTime);  // Animation can then reflect the current movement state.
+  world->Update(registry->GetComponent<TransformComponent>(player).position);
+  movementSystem->Update(deltaTime);
+  animationSystem->Update(deltaTime);
   // inventorySystem->Update();
   refinerySystem->Update();
   resourceNodeSystem->Update();
-
-  // Render the final state of the world for this frame.
+  
   renderSystem->Update();
 }

@@ -7,6 +7,7 @@
 #include "GEngine.h"
 #include "InputState.h"
 #include "Registry.h"
+#include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
 
 std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
@@ -53,16 +54,14 @@ void InputSystem::Update() {
 void InputSystem::HandleInputAction(InputAction action) {
   switch (action) {
     case InputAction::StartInteraction:
-      engine->GetRegistry()->EmplaceComponent<TimerComponent>(
-          engine->GetPlayer(), 1.f, 1.f, true, [this]() {
-            engine->GetDispatcher()->Publish(
-                std::make_shared<StartInteractEvent>());
-          });
+      util::AddTimer(engine->GetRegistry()->GetComponent<TimerComponent>(
+                         engine->GetPlayer()),
+                     TimerId::Interact, 1.f, true);
       break;
     case InputAction::StopInteraction:
-      engine->GetRegistry()->RemoveComponent<TimerComponent>(
-          engine->GetPlayer());
-      engine->GetDispatcher()->Publish(std::make_shared<StopInteractEvent>());
+      util::RemoveTimer(engine->GetRegistry()->GetComponent<TimerComponent>(
+                            engine->GetPlayer()),
+                        TimerId::Interact);
       break;
     case InputAction::Quit:
       engine->GetDispatcher()->Publish(std::make_shared<QuitEvent>());
@@ -71,17 +70,19 @@ void InputSystem::HandleInputAction(InputAction action) {
 }
 
 void InputSystem::HandleInputAxis(const Uint8* keyState) {
-  if (keyState[SDL_SCANCODE_W])
+  if (keyState[SDL_SCANCODE_W]) {
     engine->GetRegistry()->GetInputState().yAxis = -1.f;
-  else if (keyState[SDL_SCANCODE_S])
+  } else if (keyState[SDL_SCANCODE_S]) {
     engine->GetRegistry()->GetInputState().yAxis = 1.f;
-  else
+  } else {
     engine->GetRegistry()->GetInputState().yAxis = 0.f;
+  }
 
-  if (keyState[SDL_SCANCODE_A])
+  if (keyState[SDL_SCANCODE_A]) {
     engine->GetRegistry()->GetInputState().xAxis = -1.f;
-  else if (keyState[SDL_SCANCODE_D])
+  } else if (keyState[SDL_SCANCODE_D]) {
     engine->GetRegistry()->GetInputState().xAxis = 1.f;
-  else
+  } else {
     engine->GetRegistry()->GetInputState().xAxis = 0.f;
+  }
 }

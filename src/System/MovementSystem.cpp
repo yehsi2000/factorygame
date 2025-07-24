@@ -25,9 +25,9 @@ void MovementSystem::Update(float deltaTime) {
     // 대각선 이동이 더 빨라지는 것을 막기 위해 방향 벡터를 정규화
     float length = std::sqrt(ix * ix + iy * iy);
 
-    trans.xPos +=
+    trans.position.x +=
         (ix / length) * move.speed * deltaTime;
-    trans.yPos +=
+    trans.position.y +=
         (iy / length) * move.speed * deltaTime;
   }
 }
