@@ -6,8 +6,10 @@
 #include "Entity.h"
 #include "Item.h"
 
+using rsrc_amt_t = unsigned long long;
+
 struct ResourceNodeComponent {
-  long long LeftResource;
+  rsrc_amt_t LeftResource;
   OreType Ore;
 };
 

@@ -23,6 +23,8 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdbs")
 
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
+add_subdirectory(vendored/SDL_ttf EXCLUDE_FROM_ALL)
+
 
 find_package(Boost REQUIRED)
 find_package(easy_profiler REQUIRED PATHS vendored/easy_profiler/lib/cmake/easy_profiler)
@@ -47,9 +49,9 @@ if(TARGET SDL2::SDL2main)
 endif()
 
 if(BUILD_STATIC)
-    target_link_libraries(FactoryGame PRIVATE SDL2_image::SDL2_image-static SDL2::SDL2-static)
+    target_link_libraries(FactoryGame PRIVATE SDL2_ttf::SDL2_ttf-static SDL2_image::SDL2_image-static SDL2::SDL2-static)
 else()
-    target_link_libraries(FactoryGame PRIVATE SDL2_image::SDL2_image SDL2::SDL2)
+    target_link_libraries(FactoryGame PRIVATE SDL2_ttf::SDL2_ttf SDL2_image::SDL2_image SDL2::SDL2)
 endif()
 
 target_link_libraries(FactoryGame PRIVATE easy_profiler)

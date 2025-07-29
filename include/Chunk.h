@@ -6,8 +6,8 @@
 #include "TileData.h"
 #include "Type.h"
 
-constexpr int CHUNK_WIDTH = 32;
-constexpr int CHUNK_HEIGHT = 32;
+constexpr int CHUNK_WIDTH = 8;
+constexpr int CHUNK_HEIGHT = 8;
 
 class Chunk {
  public:
@@ -15,7 +15,7 @@ class Chunk {
 
   // 월드 좌표를 이 청크의 로컬 타일 좌표로 변환
   Vec2 GetLocalTileCoords(int worldTileX, int worldTileY) const;
-  TileData* GetTile(int localX, int localY);
+  TileData* GetTile(int localX, int localY) ;
 
   // 청크의 좌표 (타일 좌표 기준 아님)
   const int chunkX;

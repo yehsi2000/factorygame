@@ -6,6 +6,7 @@
 #include "GEngine.h"
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 #include "World.h"
 
 void GameLoop(GEngine *engine) {
@@ -43,7 +44,7 @@ void InitMap(GEngine* engine){
 
 int main(int argc, char *argv[]) {
 
-  if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1)) {
+  if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1) || (TTF_Init() == -1)) {
     std::cout << "Could not initialize SDL:" << SDL_GetError() << ".\n";
     exit(-1);
   }
@@ -51,12 +52,18 @@ int main(int argc, char *argv[]) {
   std::cout << "SDL initialized.\n";
 
   SDL_Window *window = SDL_CreateWindow("Test", SDL_WINDOWPOS_CENTERED,
-                                        SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_RESIZABLE);
+                                        SDL_WINDOWPOS_CENTERED, 1920, 1080, SDL_WINDOW_RESIZABLE);
 
   SDL_Renderer *renderer =
       SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-  std::unique_ptr<GEngine> engine = std::make_unique<GEngine>(window, renderer);
+  TTF_Font* font = TTF_OpenFont("C:\\Windows\\Fonts\\gulim.ttc", 16);
+	if (font == NULL) {
+		printf("Could not open font! (%s)\n", TTF_GetError());
+		return -1;
+	}
+
+  std::unique_ptr<GEngine> engine = std::make_unique<GEngine>(window, renderer, font);
   
   engine->ChangeState(std::make_unique<MainMenuState>());
 
@@ -67,6 +74,7 @@ int main(int argc, char *argv[]) {
   GameLoop(engine.get());
 
   // inputThread.join();
+  TTF_CloseFont(font);
   SDL_DestroyWindow(window);
   SDL_Quit();
   exit(0);

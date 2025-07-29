@@ -12,8 +12,10 @@
 #include "Item.h"
 #include "Registry.h"
 #include "SDL.h"
+#include "SDL_ttf.h"
 #include "World.h"
 #include "System/AnimationSystem.h"
+#include "System/CameraSystem.h"
 #include "System/InputSystem.h"
 #include "System/InventorySystem.h"
 #include "System/MovementSystem.h"
@@ -35,6 +37,7 @@ class GEngine {
   std::shared_ptr<ItemDatabase> itemDatabase;
 
   std::unique_ptr<AnimationSystem> animationSystem;
+  std::unique_ptr<CameraSystem> cameraSystem;
   std::unique_ptr<InputSystem> inputSystem;
   std::unique_ptr<InventorySystem> inventorySystem;
   std::unique_ptr<MovementSystem> movementSystem;
@@ -46,6 +49,7 @@ class GEngine {
 
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
+  TTF_Font* gFont;
 
   World* world;
 
@@ -63,7 +67,7 @@ class GEngine {
   std::unique_ptr<EventHandle> GameEndHandle;
 
  public:
-  GEngine(SDL_Window* window, SDL_Renderer* renderer);
+  GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font);
 
   void ChangeState(std::unique_ptr<GameState> newState);
   void Update(float deltaTime);
@@ -72,6 +76,10 @@ class GEngine {
   inline CommandQueue* GetCommandQueue() { return commandQueue.get(); }
   inline EntityID GetPlayer() { return player; }
   inline Registry* GetRegistry() { return registry.get(); }
+  inline SDL_Renderer* GetRenderer() { return gRenderer; }
+  inline SDL_Window* GetWindow() { return gWindow; }
+  inline TTF_Font* GetFont() { return gFont; }
+  inline World* GetWorld() { return world; }
   inline bool IsRunning() const { return bIsRunning; }
 };
 
