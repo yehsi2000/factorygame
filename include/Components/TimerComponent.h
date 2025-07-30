@@ -4,6 +4,8 @@
 #include <array>
 #include <chrono>
 #include <functional>
+#include <memory>
+#include "ObjectPool.h"
 
 enum class TimerId : int {
   Interact,
@@ -20,6 +22,16 @@ struct TimerInstance {
   bool isRepeating = false;
   bool isPaused = false;
   bool isActive = true;  // 활성화 여부 (제거 대신 플래그로 관리, POD 유지)
+  
+  // Reset the timer for repeating
+  void resetForRepeat() {
+    if (isRepeating && isActive) {
+      elapsed = 0.0f;  // Reset elapsed time for the next cycle
+    }
+  }
+  
+  // Static ObjectPool for TimerInstance objects
+  static ObjectPool<TimerInstance> pool;
 };
 
 struct TimerComponent {

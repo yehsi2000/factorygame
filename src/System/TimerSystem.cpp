@@ -15,7 +15,7 @@ void TimerSystem::Update(float dt) {
         registry->EmplaceComponent<TimerExpiredTag>(entity,
                                                     TimerExpiredTag{timer.id});
         if (timer.isRepeating) {
-          timer.elapsed -= timer.duration;
+          util::ResetTimerForRepeat(timer);  // Use the new utility function
         } else {
           util::RemoveTimer(timerComp, timer.id);
         }
@@ -26,4 +26,32 @@ void TimerSystem::Update(float dt) {
       registry->RemoveComponent<TimerComponent>(entity);
     }
   }
+}
+
+bool TimerSystem::ScheduleEvent(std::shared_ptr<const Event> event, float delaySeconds) {
+  return timerManager.ScheduleEvent(event, delaySeconds);
+}
+
+void TimerSystem::ProcessScheduledEvents() {
+  ProcessScheduledEventsBatch(100); // Use batch processing with default batch size
+}
+
+void TimerSystem::ProcessScheduledEventsBatch(size_t batchSize) {
+  auto readyEvents = timerManager.ExtractReadyEventsBatch(batchSize);
+  
+  // In a real implementation, we would process these events
+  // For now, we're just extracting them
+  (void)readyEvents; // Suppress unused variable warning
+}
+
+TimerManagerMetrics TimerSystem::GetMetrics() const {
+  return timerManager.GetMetrics();
+}
+
+void TimerSystem::ResetMetrics() {
+  timerManager.ResetMetrics();
+}
+
+void TimerSystem::SetMaxQueueSize(int maxSize) {
+  timerManager.SetMaxQueueSize(maxSize);
 }

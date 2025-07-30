@@ -10,6 +10,8 @@
 
 #include "CommandQueue.h"
 #include "Event.h"
+#include "TimerManager.h"
+#include <chrono>
 
 
 using CallbackID = std::size_t;
@@ -38,9 +40,10 @@ class EventDispatcher {
 
   std::unordered_map<std::type_index,
                      std::vector<std::pair<CallbackID, Callback>>>
-      listeners;
-  CommandQueue* commandQueue = nullptr;
-  CallbackID nextCallbackID = 1;
+                     listeners;
+                 CommandQueue* commandQueue = nullptr;
+                 TimerManager timerManager;  // TimerManager for delayed events
+                 CallbackID nextCallbackID = 1;
 
   void ProcessEvent(const Event& event);
 
@@ -63,7 +66,29 @@ class EventDispatcher {
     return EventHandle(this, typeid(EventType), id);
   }
 
+  // Publish an event immediately
   void Publish(const std::shared_ptr<const Event> e);
+  
+  // Publish a high-priority event immediately (inserts at the front of the queue)
+  void PublishHighPriority(const std::shared_ptr<const Event> e);
+  
+  // Publish a delayed event with a delay in seconds
+  bool PublishDelayed(const std::shared_ptr<const Event> e, float delaySeconds);
+  
+  // Process delayed events that are ready to execute
+  void ProcessDelayedEvents();
+  
+  // Process delayed events in batch mode for better performance
+  void ProcessDelayedEventsBatch(size_t batchSize = 100);
+  
+  // Get performance metrics
+  TimerManagerMetrics GetMetrics() const;
+  
+  // Reset performance metrics
+  void ResetMetrics();
+  
+  // Set maximum queue size for overflow prevention
+  void SetMaxQueueSize(int maxSize);
 
  protected:
   void Unsubscribe(const std::type_index& ti, CallbackID id);
