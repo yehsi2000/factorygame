@@ -3,10 +3,11 @@
 #include "CommandQueue.h"
 #include "Components/TimerComponent.h"
 #include "Event.h"
-#include "EventDispatcher.h"  // QuitEvent를 위해 EventDispatcher.h가 필요
+#include "EventDispatcher.h"
 #include "GEngine.h"
 #include "InputState.h"
 #include "Registry.h"
+#include "TimerManager.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
 
@@ -41,7 +42,7 @@ void InputSystem::Update() {
   
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) {
-      engine->GetDispatcher()->Publish(std::make_shared<QuitEvent>());
+      engine->GetDispatcher()->Publish(QuitEvent{});
       return;  // 종료 이벤트 발생 시 추가 입력 처리를 중단
     }
     
@@ -78,19 +79,21 @@ void InputSystem::Update() {
 }
 
 void InputSystem::HandleInputAction(InputAction action) {
+  Registry& registry = *engine->GetRegistry();
+  TimerManager& timerManager = *engine->GetTimerManager();
+  EntityID player = engine->GetPlayer();
+
   switch (action) {
     case InputAction::StartInteraction:
-      util::AddTimer(engine->GetRegistry()->GetComponent<TimerComponent>(
-                         engine->GetPlayer()),
-                     TimerId::Interact, 1.f, true);
+      // Use the new, clean utility function to attach a timer.
+      util::AttachTimer(registry, timerManager, player, TimerId::Interact, 1.f, true);
       break;
     case InputAction::StopInteraction:
-      util::RemoveTimer(engine->GetRegistry()->GetComponent<TimerComponent>(
-                            engine->GetPlayer()),
-                        TimerId::Interact);
+      // Use the new, clean utility function to detach a timer.
+      util::DetachTimer(registry, timerManager, player, TimerId::Interact);
       break;
     case InputAction::Quit:
-      engine->GetDispatcher()->Publish(std::make_shared<QuitEvent>());
+      engine->GetDispatcher()->Publish(QuitEvent{});
       break;
   }
 }

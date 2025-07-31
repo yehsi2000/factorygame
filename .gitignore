@@ -6,3 +6,5 @@ CMake*
 out
 .vs
 !CMakeLists.txt
+*.md
+!README.md

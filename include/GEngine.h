@@ -14,6 +14,7 @@
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "World.h"
+#include "TimerManager.h"
 #include "System/AnimationSystem.h"
 #include "System/CameraSystem.h"
 #include "System/InputSystem.h"
@@ -24,6 +25,7 @@
 #include "System/ResourceNodeSystem.h"
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
+#include "System/InteractionSystem.h"
 
 class GEngine {
   EntityID player;
@@ -33,6 +35,7 @@ class GEngine {
   std::unique_ptr<CommandQueue> commandQueue;
   std::unique_ptr<GameState> currentState;
   std::unique_ptr<Registry> registry;
+  std::unique_ptr<TimerManager> timerManager;
 
   std::shared_ptr<ItemDatabase> itemDatabase;
 
@@ -46,6 +49,7 @@ class GEngine {
   std::unique_ptr<ResourceNodeSystem> resourceNodeSystem;
   std::unique_ptr<TimerSystem> timerSystem;
   std::unique_ptr<TimerExpireSystem> timerExpireSystem;
+  std::unique_ptr<InteractionSystem> interactionSystem;
 
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
@@ -76,6 +80,7 @@ class GEngine {
   inline CommandQueue* GetCommandQueue() { return commandQueue.get(); }
   inline EntityID GetPlayer() { return player; }
   inline Registry* GetRegistry() { return registry.get(); }
+  inline TimerManager* GetTimerManager() { return timerManager.get(); }
   inline SDL_Renderer* GetRenderer() { return gRenderer; }
   inline SDL_Window* GetWindow() { return gWindow; }
   inline TTF_Font* GetFont() { return gFont; }

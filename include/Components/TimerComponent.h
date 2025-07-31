@@ -1,48 +1,46 @@
-﻿#ifndef COMPONENTS_TIMERCOMPONENT_
+#ifndef COMPONENTS_TIMERCOMPONENT_
 #define COMPONENTS_TIMERCOMPONENT_
 
 #include <array>
-#include <chrono>
-#include <functional>
-#include <memory>
-#include "ObjectPool.h"
+#include <cstdint>
 
+// A handle to a timer instance. This is what components will store.
+using TimerHandle = uint32_t;
+constexpr TimerHandle INVALID_TIMER_HANDLE = 0;
+
+// An enum to identify the purpose of a timer.
 enum class TimerId : int {
-  Interact,
-  MaxTimers  // 최대 개수 (배열 크기용)
+    Interact,
+    MaxTimers // Represents the maximum number of timer types.
 };
 
-constexpr size_t MAX_TIMERS_PER_ENTITY =
-    static_cast<size_t>(TimerId::MaxTimers);  // enum 크기에 맞춤
+constexpr size_t MAX_TIMERS_PER_ENTITY = static_cast<size_t>(TimerId::MaxTimers);
 
+// TimerInstance is a pure POD struct. It contains no logic,
+// no complex types, and no static members. It's just data.
 struct TimerInstance {
-  TimerId id;      // enum으로 POD 유지
-  float duration;
-  float elapsed = 0.0f;
-  bool isRepeating = false;
-  bool isPaused = false;
-  bool isActive = true;  // 활성화 여부 (제거 대신 플래그로 관리, POD 유지)
-  
-  // Reset the timer for repeating
-  void resetForRepeat() {
-    if (isRepeating && isActive) {
-      elapsed = 0.0f;  // Reset elapsed time for the next cycle
-    }
-  }
-  
-  // Static ObjectPool for TimerInstance objects
-  static ObjectPool<TimerInstance> pool;
+    TimerId id;
+    TimerHandle handle = INVALID_TIMER_HANDLE;
+    float duration = 0.0f;
+    float elapsed = 0.0f;
+    bool isRepeating = false;
+    bool isPaused = false;
+    bool isActive = false;
 };
 
+// TimerComponent is also a pure POD. It simply holds an array of handles,
+// making it lightweight and easily serializable.
 struct TimerComponent {
-  std::array<TimerInstance, MAX_TIMERS_PER_ENTITY>
-      timers;              // 고정 크기 배열: POD 친화적
-  size_t activeCount = 0;
+    std::array<TimerHandle, MAX_TIMERS_PER_ENTITY> timers;
+    TimerComponent() {
+        timers.fill(INVALID_TIMER_HANDLE);
+    }
 };
 
-// 태그 컴포넌트: 만료 시 붙임 (빈 구조체 = POD)
+// A tag component added to an entity when one of its timers expires.
+// This is used to signal the TimerExpireSystem.
 struct TimerExpiredTag {
-  TimerId expiredId;  // 어떤 타이머가 만료됐는지
+    TimerId expiredId;
 };
 
 #endif /* COMPONENTS_TIMERCOMPONENT_ */

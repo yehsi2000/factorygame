@@ -1,41 +1,28 @@
 ﻿#ifndef COMMANDQUEUE_
 #define COMMANDQUEUE_
 
-#include <condition_variable>
-#include <functional>
-#include <iostream>
-#include <mutex>
+#include <memory>
 #include <queue>
+#include "Command.h"
 
 class CommandQueue {
-  std::queue<std::function<void()>> queue;
-  std::mutex mtx;
-  std::condition_variable cv;
+  std::queue<std::unique_ptr<Command>> queue;
 
  public:
-  void Push(std::function<void()> cmd) {
-    std::lock_guard<std::mutex> lock(mtx);
+  void Enqueue(std::unique_ptr<Command> cmd) {
     queue.push(std::move(cmd));
-    cv.notify_one();
   }
 
-  std::function<void()> Pop() {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [&] { return !queue.empty(); });
+  std::unique_ptr<Command> Dequeue() {
+    if (queue.empty()) {
+      return nullptr;
+    }
     auto cmd = std::move(queue.front());
     queue.pop();
     return cmd;
   }
 
-  std::queue<std::function<void()>> PopAll() {
-    std::lock_guard<std::mutex> lock(mtx);
-    std::queue<std::function<void()>> all_commands;
-    std::swap(all_commands, queue);  // 현재 큐와 빈 큐를 교체
-    return all_commands;
-  }
-
-  bool Empty() {
-    std::lock_guard<std::mutex> lock(mtx);
+  bool IsEmpty() const {
     return queue.empty();
   }
 };

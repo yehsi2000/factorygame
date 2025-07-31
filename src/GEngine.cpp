@@ -25,6 +25,7 @@
 #include "Registry.h"
 #include "SDL.h"
 #include "World.h"
+#include "TimerManager.h"
 #include "System/AnimationSystem.h"
 #include "System/CameraSystem.h"
 #include "System/InventorySystem.h"
@@ -38,7 +39,7 @@ void GEngine::InitCoreSystem() {
   commandQueue = std::make_unique<CommandQueue>();
   registry = std::make_unique<Registry>();
   dispatcher = std::make_unique<EventDispatcher>();
-  dispatcher->Init(GetCommandQueue());
+  timerManager = std::make_unique<TimerManager>();
 
   assert(registry && "Fail to initialize registry");
 
@@ -54,8 +55,9 @@ void GEngine::InitCoreSystem() {
   renderSystem = std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
   resourceNodeSystem =
       std::make_unique<ResourceNodeSystem>(itemDatabase, registry.get());
-  timerSystem = std::make_unique<TimerSystem>(registry.get());
+  timerSystem = std::make_unique<TimerSystem>(registry.get(), timerManager.get());
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
+  interactionSystem = std::make_unique<InteractionSystem>(dispatcher.get(), commandQueue.get());
 
   world = new World(this);
 }
@@ -131,12 +133,12 @@ void GEngine::Update(float deltaTime) {
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();
 
-  CommandQueue* cq = GetCommandQueue();
-  auto commands = cq->PopAll();
-  while (!commands.empty()) {
-    auto command = commands.front();
-    command();
-    commands.pop();
+  // Process all pending commands.
+  while (!commandQueue->IsEmpty()) {
+    std::unique_ptr<Command> command = commandQueue->Dequeue();
+    if (command) {
+        command->Execute(*this, *registry);
+    }
   }
 
   world->Update(registry->GetComponent<TransformComponent>(player).position);
@@ -146,6 +148,7 @@ void GEngine::Update(float deltaTime) {
   // inventorySystem->Update();
   refinerySystem->Update();
   resourceNodeSystem->Update();
+  interactionSystem->Update();
   
   renderSystem->Update();
 }

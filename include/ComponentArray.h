@@ -9,7 +9,6 @@
 
 #include "Entity.h"
 
-// 공통 인터페이스
 class IComponentArray {
  public:
   virtual ~IComponentArray() = default;
@@ -19,7 +18,7 @@ class IComponentArray {
   virtual std::vector<EntityID> getAllEntities() = 0;
 };
 
-// 실제 컴포넌트 데이터를 담을 템플릿 클래스
+// TODO : 병목생길시 entt스타일 sparse map으로 리팩토링 : pagenation, tombstone, 역방향 순회
 template <typename T>
 class ComponentArray : public IComponentArray {
  private:

@@ -1,57 +1,35 @@
-﻿#include "System/TimerSystem.h"
-
+#include "System/TimerSystem.h"
 #include "Components/TimerComponent.h"
 #include "Registry.h"
-#include "Util/TimerUtil.h"
+#include "TimerManager.h"
 
-void TimerSystem::Update(float dt) {
-  auto view = registry->view<TimerComponent>();
-  for (auto entity : view) {
-    auto& timerComp = registry->GetComponent<TimerComponent>(entity);
-    for (auto& timer : timerComp.timers) {  // 배열 순회 (고정 크기라 빠름)
-      if (!timer.isActive || timer.isPaused) continue;
-      timer.elapsed += dt;
-      if (timer.elapsed >= timer.duration) {
-        registry->EmplaceComponent<TimerExpiredTag>(entity,
-                                                    TimerExpiredTag{timer.id});
-        if (timer.isRepeating) {
-          util::ResetTimerForRepeat(timer);  // Use the new utility function
-        } else {
-          util::RemoveTimer(timerComp, timer.id);
+TimerSystem::TimerSystem(Registry* registry, TimerManager* timerManager)
+    : registry(registry), timerManager(timerManager) {}
+
+void TimerSystem::Update(float deltaTime) {
+    // Iterate over all entities that have a TimerComponent.
+    auto view = registry->view<TimerComponent>();
+    for (auto entity : view) {
+        const auto& timerComp = registry->GetComponent<TimerComponent>(entity);
+
+        // Check each potential timer handle in the component.
+        for (TimerHandle handle : timerComp.timers) {
+            if (handle == INVALID_TIMER_HANDLE) {
+                continue;
+            }
+
+            TimerInstance* timer = timerManager->GetTimer(handle);
+            if (!timer || !timer->isActive || timer->isPaused) {
+                continue;
+            }
+
+            timer->elapsed += deltaTime;
+
+            if (timer->elapsed >= timer->duration) {
+                // Timer has expired. Add a tag for the TimerExpireSystem to process.
+                // This decouples the timer update from the expiration logic.
+                registry->EmplaceComponent<TimerExpiredTag>(entity, TimerExpiredTag{timer->id});
+            }
         }
-      }
     }
-    // 모든 타이머 비활성 컴포넌트 제거 (오류시 deferred 방식으로 전환)
-    if (timerComp.activeCount == 0) {
-      registry->RemoveComponent<TimerComponent>(entity);
-    }
-  }
-}
-
-bool TimerSystem::ScheduleEvent(std::shared_ptr<const Event> event, float delaySeconds) {
-  return timerManager.ScheduleEvent(event, delaySeconds);
-}
-
-void TimerSystem::ProcessScheduledEvents() {
-  ProcessScheduledEventsBatch(100); // Use batch processing with default batch size
-}
-
-void TimerSystem::ProcessScheduledEventsBatch(size_t batchSize) {
-  auto readyEvents = timerManager.ExtractReadyEventsBatch(batchSize);
-  
-  // In a real implementation, we would process these events
-  // For now, we're just extracting them
-  (void)readyEvents; // Suppress unused variable warning
-}
-
-TimerManagerMetrics TimerSystem::GetMetrics() const {
-  return timerManager.GetMetrics();
-}
-
-void TimerSystem::ResetMetrics() {
-  timerManager.ResetMetrics();
-}
-
-void TimerSystem::SetMaxQueueSize(int maxSize) {
-  timerManager.SetMaxQueueSize(maxSize);
 }
