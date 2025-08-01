@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include "Item.h"
+#include "Core/Item.h"
 
 struct InventoryComponent {
   std::unordered_map<ItemID, int> items;

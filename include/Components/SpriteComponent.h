@@ -5,7 +5,7 @@
 
 using render_order_t = unsigned int;
 
-struct SpriteComponent{
+struct SpriteComponent {
   SDL_Texture* texture = nullptr;
   SDL_Rect srcRect;
   SDL_Rect renderRect;

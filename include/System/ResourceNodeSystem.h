@@ -4,9 +4,9 @@
 #include <memory>
 
 #include "Components/ResourceNodeComponent.h"
-#include "Entity.h"
-#include "Item.h"
-#include "Registry.h"
+#include "Core/Entity.h"
+#include "Core/Item.h"
+#include "Core/Registry.h"
 
 class ResourceNodeSystem {
  public:

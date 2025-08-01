@@ -4,10 +4,11 @@
 class Registry;
 
 class MovementSystem {
-    Registry* registry;
-public:
-    MovementSystem(Registry* r);
-    void Update(float deltaTime);
+  Registry* registry;
+
+ public:
+  MovementSystem(Registry* r);
+  void Update(float deltaTime);
 };
 
 #endif /* SYSTEM_MOVEMENTSYSTEM_ */

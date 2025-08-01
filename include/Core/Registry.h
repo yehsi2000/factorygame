@@ -1,16 +1,16 @@
-﻿#ifndef REGISTRY_
-#define REGISTRY_
+﻿#ifndef CORE_REGISTRY_
+#define CORE_REGISTRY_
 
 #include <algorithm>
+#include <iostream>
 #include <queue>
 #include <string>
 #include <typeinfo>
-#include <iostream>
 
-#include "ComponentArray.h"
-#include "InputState.h"
+#include "Core/ComponentArray.h"
+#include "Core/InputState.h"
 
-constexpr int MAX_ENTITIES = 100000000;
+constexpr int MAX_ENTITIES = 100000;
 
 class Registry {
  private:
@@ -59,11 +59,12 @@ class Registry {
 
   // 엔티티 생성
   EntityID CreateEntity() {
-    assert(livingEntityCount < MAX_ENTITIES && "Too many entities in existence.");
+    assert(livingEntityCount < MAX_ENTITIES &&
+           "Too many entities in existence.");
     EntityID id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;
-    //std::cout<<"Created entity with ID:" << id << std::endl;
+    std::cout<<"Created entity with ID:" << id << std::endl;
     return id;
   }
 
@@ -169,4 +170,4 @@ class Registry {
   inline InputState& GetInputState() { return inputState; }
 };
 
-#endif /* REGISTRY_ */
+#endif /* CORE_REGISTRY_ */

@@ -1,24 +1,24 @@
-﻿#include "World.h"
+﻿#include "Core/World.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <algorithm>
 #include <map>
 #include <random>
 
-#include "AssetManager.h"
-#include "Chunk.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
-#include "FastNoiseLite.h"
-#include "GEngine.h"
-#include "Registry.h"
+#include "Core/AssetManager.h"
+#include "Core/Chunk.h"
+#include "Core/GEngine.h"
+#include "Core/Registry.h"
+#include "Core/TileData.h"
+#include "Core/Type.h"
+#include "Lib/FastNoiseLite.h"
 #include "SDL.h"
 #include "SDL_ttf.h"
-#include "TileData.h"
-#include "Type.h"
 
 World::World(GEngine* engine) : engine(engine) {
   std::random_device rd;
@@ -180,6 +180,7 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
 }
 
 void World::GenerateChunk(Chunk& chunk) {
+  //TODO : 청크 생성 너무 빨리하면 카메라가 플레이어 이동 못따라가는 현상 발생
   FastNoiseLite noise;
   noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
   noise.SetFrequency(0.05f);  // 맵 스케일 조절
@@ -242,8 +243,12 @@ void World::GenerateChunk(Chunk& chunk) {
           spriteComp.texture = spritesheet;
           tile->debugValue = oreAmount;
           rsrc_amt_t min_oreAmount = oreThreshold * max_oreAmount;
-          
-          int richnessIndex = 7 - std::min(7.0, std::floor((double)(oreAmount-min_oreAmount) / (double)(max_oreAmount-min_oreAmount) * 8.0));
+
+          int richnessIndex =
+              7 -
+              std::min(7.0, std::floor((double)(oreAmount - min_oreAmount) /
+                                       (double)(max_oreAmount - min_oreAmount) *
+                                       8.0));
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
           spriteComp.renderRect = {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);

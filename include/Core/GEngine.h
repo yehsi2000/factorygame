@@ -1,23 +1,24 @@
-﻿#ifndef GENGINE_
-#define GENGINE_
+﻿#ifndef CORE_GENGINE_
+#define CORE_GENGINE_
 
 #include <memory>
 #include <vector>
 
-#include "CommandQueue.h"
-#include "Entity.h"
-#include "Event.h"
-#include "EventDispatcher.h"
-#include "GameState.h"
-#include "Item.h"
-#include "Registry.h"
+#include "Core/CommandQueue.h"
+#include "Core/Entity.h"
+#include "Core/Event.h"
+#include "Core/EventDispatcher.h"
+#include "Core/GameState.h"
+#include "Core/Item.h"
+#include "Core/Registry.h"
+#include "Core/TimerManager.h"
+#include "Core/World.h"
 #include "SDL.h"
 #include "SDL_ttf.h"
-#include "World.h"
-#include "TimerManager.h"
 #include "System/AnimationSystem.h"
 #include "System/CameraSystem.h"
 #include "System/InputSystem.h"
+#include "System/InteractionSystem.h"
 #include "System/InventorySystem.h"
 #include "System/MovementSystem.h"
 #include "System/RefinerySystem.h"
@@ -25,7 +26,6 @@
 #include "System/ResourceNodeSystem.h"
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
-#include "System/InteractionSystem.h"
 
 class GEngine {
   EntityID player;
@@ -88,4 +88,4 @@ class GEngine {
   inline bool IsRunning() const { return bIsRunning; }
 };
 
-#endif /* GENGINE_ */
+#endif /* CORE_GENGINE_ */

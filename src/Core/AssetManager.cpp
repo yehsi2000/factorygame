@@ -1,4 +1,4 @@
-﻿#include "AssetManager.h"
+﻿#include "Core/AssetManager.h"
 
 #include <iostream>
 #include <memory>
@@ -24,7 +24,7 @@ SDL_Texture* AssetManager::getTexture(const std::string& path,
   }
 
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_FreeSurface(surface);  // 서피스는 텍스처로 변환 후 바로 해제
+  SDL_FreeSurface(surface);
 
   if (!texture) {
     std::cerr << "Failed to create texture from surface: " << SDL_GetError()

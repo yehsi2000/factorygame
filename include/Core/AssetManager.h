@@ -1,5 +1,5 @@
-﻿#ifndef ASSETMANAGER_
-#define ASSETMANAGER_
+﻿#ifndef CORE_ASSETMANAGER_
+#define CORE_ASSETMANAGER_
 
 #include <memory>
 #include <string>
@@ -37,4 +37,4 @@ class AssetManager {
       textureCache;
 };
 
-#endif /* ASSETMANAGER_ */
+#endif /* CORE_ASSETMANAGER_ */

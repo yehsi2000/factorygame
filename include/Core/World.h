@@ -1,14 +1,14 @@
-﻿#ifndef WORLD_
-#define WORLD_
+﻿#ifndef CORE_WORLD_
+#define CORE_WORLD_
 
 #include <map>
 #include <random>
 
-#include "Chunk.h"
-#include "Components/TransformComponent.h"  // Vec2 같은 타입을 위해 필요할 수 있음
 #include "Components/ChunkComponent.h"
-#include "Type.h"
-#include "TileData.h"
+#include "Components/TransformComponent.h"  // Vec2 같은 타입을 위해 필요할 수 있음
+#include "Core/Chunk.h"
+#include "Core/TileData.h"
+#include "Core/Type.h"
 #include "SDL.h"
 
 class GEngine;
@@ -47,4 +47,4 @@ class World {
   int viewDistance = 2;  // 플레이어로부터 몇 청크까지 로드할 것인가
 };
 
-#endif /* WORLD_ */
+#endif /* CORE_WORLD_ */

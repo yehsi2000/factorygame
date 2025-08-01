@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "Entity.h"
-#include "Item.h"
+#include "Core/Entity.h"
+#include "Core/Item.h"
 
 using rsrc_amt_t = unsigned long long;
 

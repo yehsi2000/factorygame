@@ -1,5 +1,5 @@
-﻿#ifndef GAMESTATE_
-#define GAMESTATE_
+﻿#ifndef CORE_GAMESTATE_
+#define CORE_GAMESTATE_
 
 class GameState {
  public:
@@ -19,4 +19,4 @@ class PlayState : public GameState {
   virtual void Exit() override;
 };
 
-#endif /* GAMESTATE_ */
+#endif /* CORE_GAMESTATE_ */

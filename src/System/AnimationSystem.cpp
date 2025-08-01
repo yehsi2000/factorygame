@@ -2,7 +2,7 @@
 
 #include "Components/AnimationComponent.h"
 #include "Components/SpriteComponent.h"
-#include "Entity.h"
+#include "Core/Entity.h"
 
 AnimationSystem::AnimationSystem(Registry* r) { registry = r; }
 

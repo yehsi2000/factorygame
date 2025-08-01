@@ -1,10 +1,11 @@
 #include "System/CameraSystem.h"
-#include "Components/CameraComponent.h"
-#include "Components/TransformComponent.h"
-#include "Components/MovementComponent.h"
 
-CameraSystem::CameraSystem(Registry* r, EntityID player) 
-  : registry(r), playerEntity(player) {
+#include "Components/CameraComponent.h"
+#include "Components/MovementComponent.h"
+#include "Components/TransformComponent.h"
+
+CameraSystem::CameraSystem(Registry* r, EntityID player)
+    : registry(r), playerEntity(player) {
   cameraEntity = CreateCameraEntity();
 }
 
@@ -21,49 +22,49 @@ Vec2f CameraSystem::GetCameraPosition() const {
   return {0.0f, 0.0f};
 }
 
-Vec2f CameraSystem::WorldToScreen(Vec2f worldPos, int screenWidth, int screenHeight) const {
+Vec2f CameraSystem::WorldToScreen(Vec2f worldPos, int screenWidth,
+                                  int screenHeight) const {
   Vec2f cameraPos = GetCameraPosition();
-  return {
-    worldPos.x - cameraPos.x + screenWidth / 2.0f,
-    worldPos.y - cameraPos.y + screenHeight / 2.0f
-  };
+  return {worldPos.x - cameraPos.x + screenWidth / 2.0f,
+          worldPos.y - cameraPos.y + screenHeight / 2.0f};
 }
 
-Vec2f CameraSystem::ScreenToWorld(Vec2f screenPos, int screenWidth, int screenHeight) const {
+Vec2f CameraSystem::ScreenToWorld(Vec2f screenPos, int screenWidth,
+                                  int screenHeight) const {
   Vec2f cameraPos = GetCameraPosition();
-  return {
-    screenPos.x + cameraPos.x - screenWidth / 2.0f,
-    screenPos.y + cameraPos.y - screenHeight / 2.0f
-  };
+  return {screenPos.x + cameraPos.x - screenWidth / 2.0f,
+          screenPos.y + cameraPos.y - screenHeight / 2.0f};
 }
 
 void CameraSystem::UpdateCameraFollow(float deltaTime) {
   if (!registry->HasComponent<CameraComponent>(cameraEntity)) return;
-  
+
   auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
-  
+
   // Update target position to player position
   if (registry->HasComponent<TransformComponent>(playerEntity)) {
-    const auto& playerTransform = registry->GetComponent<TransformComponent>(playerEntity);
+    const auto& playerTransform =
+        registry->GetComponent<TransformComponent>(playerEntity);
     camera.target = playerTransform.position;
   }
-  
+
   // Only follow if not dragging and following is enabled
   if (camera.isFollowing && !camera.isDragging) {
     // Smooth camera movement towards target
     Vec2f targetPos = camera.target + camera.offset;
-    Vec2f direction = {
-      targetPos.x - camera.position.x,
-      targetPos.y - camera.position.y
-    };
-    
-    float distance = sqrtf(direction.x * direction.x + direction.y * direction.y);
+    Vec2f direction = {targetPos.x - camera.position.x,
+                       targetPos.y - camera.position.y};
+
+    float distance =
+        sqrtf(direction.x * direction.x + direction.y * direction.y);
     if (distance > 0.1f) {
       direction.x /= distance;
       direction.y /= distance;
-      
-      camera.position.x += direction.x * camera.followSpeed * deltaTime * distance;
-      camera.position.y += direction.y * camera.followSpeed * deltaTime * distance;
+
+      camera.position.x +=
+          direction.x * camera.followSpeed * deltaTime * distance;
+      camera.position.y +=
+          direction.y * camera.followSpeed * deltaTime * distance;
     } else {
       camera.position = targetPos;
     }
@@ -72,15 +73,16 @@ void CameraSystem::UpdateCameraFollow(float deltaTime) {
 
 void CameraSystem::UpdateCameraDrag(float deltaTime) {
   if (!registry->HasComponent<CameraComponent>(cameraEntity)) return;
-  
+
   auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
   const auto& input = registry->GetInputState();
-  
+
   // Check if player is moving (disable drag if moving)
   bool playerIsMoving = false;
   const auto& inputState = registry->GetInputState();
-  playerIsMoving = (abs(inputState.xAxis) > 0.1f || abs(inputState.yAxis) > 0.1f);
-  
+  playerIsMoving =
+      (abs(inputState.xAxis) > 0.1f || abs(inputState.yAxis) > 0.1f);
+
   // Start dragging
   if (input.rightMousePressed && !playerIsMoving) {
     camera.isDragging = true;
@@ -88,34 +90,29 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
     camera.dragStartPos = {(float)input.mouseX, (float)input.mouseY};
     camera.cameraStartPos = camera.position;
   }
-  
+
   // Continue dragging
   if (camera.isDragging && input.rightMouseDown) {
     Vec2f currentMousePos = {(float)input.mouseX, (float)input.mouseY};
-    Vec2f mouseDelta = {
-      currentMousePos.x - camera.dragStartPos.x,
-      currentMousePos.y - camera.dragStartPos.y
-    };
-    
+    Vec2f mouseDelta = {currentMousePos.x - camera.dragStartPos.x,
+                        currentMousePos.y - camera.dragStartPos.y};
+
     // Update camera position (invert delta for natural dragging feel)
-    camera.position = {
-      camera.cameraStartPos.x - mouseDelta.x,
-      camera.cameraStartPos.y - mouseDelta.y
-    };
+    camera.position = {camera.cameraStartPos.x - mouseDelta.x,
+                       camera.cameraStartPos.y - mouseDelta.y};
   }
-  
+
   // End dragging
   if (input.rightMouseReleased || playerIsMoving) {
     if (camera.isDragging) {
       // Store the offset for smooth transition back to following
       if (registry->HasComponent<TransformComponent>(playerEntity)) {
-        const auto& playerTransform = registry->GetComponent<TransformComponent>(playerEntity);
-        camera.offset = {
-          camera.position.x - playerTransform.position.x,
-          camera.position.y - playerTransform.position.y
-        };
+        const auto& playerTransform =
+            registry->GetComponent<TransformComponent>(playerEntity);
+        camera.offset = {camera.position.x - playerTransform.position.x,
+                         camera.position.y - playerTransform.position.y};
       }
-      
+
       camera.isDragging = false;
       // Re-enable following when player starts moving or after a delay
       if (playerIsMoving) {
@@ -129,12 +126,12 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
       }
     }
   }
-  
+
   // Auto re-enable following after some time of inactivity
   static float inactiveTime = 0.0f;
   if (!camera.isDragging && !camera.isFollowing) {
     inactiveTime += deltaTime;
-    if (inactiveTime > 3.0f) { // 3 seconds of inactivity
+    if (inactiveTime > 3.0f) {  // 3 seconds of inactivity
       camera.isFollowing = true;
       camera.offset = {0.0f, 0.0f};
       inactiveTime = 0.0f;

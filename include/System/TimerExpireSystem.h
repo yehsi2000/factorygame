@@ -5,6 +5,7 @@ class GEngine;
 
 class TimerExpireSystem {
   GEngine* engine;
+
  public:
   TimerExpireSystem(GEngine* e) : engine(e) {}
   void Update();

@@ -2,8 +2,8 @@
 #define SYSTEM_REFINERYSYSTEM_
 
 #include "Components/RefineryComponent.h"
-#include "Entity.h"
-#include "Registry.h"
+#include "Core/Entity.h"
+#include "Core/Registry.h"
 
 class RefinerySystem {
   Registry* registry;

@@ -1,17 +1,16 @@
-﻿#ifndef COMMANDQUEUE_
-#define COMMANDQUEUE_
+﻿#ifndef CORE_COMMANDQUEUE_
+#define CORE_COMMANDQUEUE_
 
 #include <memory>
 #include <queue>
-#include "Command.h"
+
+#include "Core/Command.h"
 
 class CommandQueue {
   std::queue<std::unique_ptr<Command>> queue;
 
  public:
-  void Enqueue(std::unique_ptr<Command> cmd) {
-    queue.push(std::move(cmd));
-  }
+  void Enqueue(std::unique_ptr<Command> cmd) { queue.push(std::move(cmd)); }
 
   std::unique_ptr<Command> Dequeue() {
     if (queue.empty()) {
@@ -22,9 +21,7 @@ class CommandQueue {
     return cmd;
   }
 
-  bool IsEmpty() const {
-    return queue.empty();
-  }
+  bool IsEmpty() const { return queue.empty(); }
 };
 
-#endif /* COMMANDQUEUE_ */
+#endif /* CORE_COMMANDQUEUE_ */

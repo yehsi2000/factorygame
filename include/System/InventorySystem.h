@@ -3,9 +3,8 @@
 
 #include <memory>
 
-#include "InventorySystem.h"
 #include "Components/InventoryComponent.h"
-#include "Item.h"
+#include "Core/Item.h"
 
 class InventorySystem {
  public:

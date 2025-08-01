@@ -2,6 +2,8 @@
 
 #include "Commands/PerformInteractionCommand.h"
 
+#include "SDL.h"
+
 InteractionSystem::InteractionSystem(EventDispatcher* dispatcher,
                                      CommandQueue* commandQueue)
     : commandQueue(commandQueue),
@@ -12,6 +14,8 @@ InteractionSystem::InteractionSystem(EventDispatcher* dispatcher,
 
 void InteractionSystem::OnInteractEvent(const InteractEvent& event) {
   commandQueue->Enqueue(std::make_unique<PerformInteractionCommand>());
+  std::cout << "Interacted immediately. tick:"
+            << SDL_GetTicks() << std::endl;
 }
 
 void InteractionSystem::Update() {

@@ -1,31 +1,31 @@
-﻿#include "GEngine.h"
+﻿#include "Core/GEngine.h"
+
+#include <easy/profiler.h>
 
 #include <cassert>
 #include <type_traits>
-#include <easy/profiler.h>
 
-#include "AssetManager.h"
 #include "Components/AnimationComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
-#include "Components/InteractableComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
 #include "Components/RefineryComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
+#include "Components/TextComponent.h"
 #include "Components/TimerComponent.h"
 #include "Components/TransformComponent.h"
-#include "Components/TextComponent.h"
-#include "Event.h"
-#include "EventDispatcher.h"
-#include "GameState.h"
-#include "Item.h"
-#include "Registry.h"
+#include "Core/AssetManager.h"
+#include "Core/Event.h"
+#include "Core/EventDispatcher.h"
+#include "Core/GameState.h"
+#include "Core/Item.h"
+#include "Core/Registry.h"
+#include "Core/TimerManager.h"
+#include "Core/World.h"
 #include "SDL.h"
-#include "World.h"
-#include "TimerManager.h"
 #include "System/AnimationSystem.h"
 #include "System/CameraSystem.h"
 #include "System/InventorySystem.h"
@@ -52,12 +52,15 @@ void GEngine::InitCoreSystem() {
   inventorySystem = std::make_unique<InventorySystem>(itemDatabase);
   movementSystem = std::make_unique<MovementSystem>(registry.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
-  renderSystem = std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
+  renderSystem =
+      std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
   resourceNodeSystem =
       std::make_unique<ResourceNodeSystem>(itemDatabase, registry.get());
-  timerSystem = std::make_unique<TimerSystem>(registry.get(), timerManager.get());
+  timerSystem =
+      std::make_unique<TimerSystem>(registry.get(), timerManager.get());
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
-  interactionSystem = std::make_unique<InteractionSystem>(dispatcher.get(), commandQueue.get());
+  interactionSystem =
+      std::make_unique<InteractionSystem>(dispatcher.get(), commandQueue.get());
 
   world = new World(this);
 }
@@ -66,7 +69,6 @@ void GEngine::RegisterComponent() {
   registry->RegisterComponent<AnimationComponent>();
   registry->RegisterComponent<CameraComponent>();
   registry->RegisterComponent<ChunkComponent>();
-  registry->RegisterComponent<InteractableComponent>();
   registry->RegisterComponent<InventoryComponent>();
   registry->RegisterComponent<MovableComponent>();
   registry->RegisterComponent<MovementComponent>();
@@ -91,7 +93,11 @@ void GEngine::GeneratePlayer() {
   SDL_Texture* playerIdleSpritesheet = AssetManager::getInstance().getTexture(
       "assets/img/character/Miner_IdleAnimation.png", gRenderer);
   registry->AddComponent<SpriteComponent>(
-      player, SpriteComponent{playerIdleSpritesheet, {0, 0, 16, 16}, {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT}, SDL_FLIP_NONE, render_order_t(100)});
+      player, SpriteComponent{playerIdleSpritesheet,
+                              {0, 0, 16, 16},
+                              {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT},
+                              SDL_FLIP_NONE,
+                              render_order_t(100)});
 
   AnimationComponent anim;
   anim.animations["PlayerIdle"] = {0, 12, 8.f, 16, 16, true};
@@ -103,7 +109,6 @@ void GEngine::GeneratePlayer() {
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
     : gWindow(window), gRenderer(renderer), gFont(font) {
-
   // 레지스트리, 이벤트 디스패쳐 등 코어클래스와 시스템들 등록
   InitCoreSystem();
 
@@ -129,26 +134,24 @@ void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
 }
 
 void GEngine::Update(float deltaTime) {
-  inputSystem->Update();
-  timerSystem->Update(deltaTime);
-  timerExpireSystem->Update();
-
   // Process all pending commands.
   while (!commandQueue->IsEmpty()) {
     std::unique_ptr<Command> command = commandQueue->Dequeue();
     if (command) {
-        command->Execute(*this, *registry);
+      command->Execute(*this, *registry);
     }
   }
 
+  inputSystem->Update();
+  timerSystem->Update(deltaTime);
+  timerExpireSystem->Update();
   world->Update(registry->GetComponent<TransformComponent>(player).position);
   movementSystem->Update(deltaTime);
   animationSystem->Update(deltaTime);
   cameraSystem->Update(deltaTime);
-  // inventorySystem->Update();
   refinerySystem->Update();
   resourceNodeSystem->Update();
   interactionSystem->Update();
-  
+
   renderSystem->Update();
 }

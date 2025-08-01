@@ -1,5 +1,5 @@
-﻿#ifndef ITEM_
-#define ITEM_
+﻿#ifndef CORE_ITEM_
+#define CORE_ITEM_
 
 #include <map>
 #include <string>
@@ -94,4 +94,4 @@ class ItemDatabase {
   std::map<ItemID, ItemData> db;
 };
 
-#endif /* ITEM_ */
+#endif /* CORE_ITEM_ */

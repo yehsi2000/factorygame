@@ -1,13 +1,13 @@
-﻿#ifndef COMPONENTARRAY_
-#define COMPONENTARRAY_
+﻿#ifndef CORE_COMPONENTARRAY_
+#define CORE_COMPONENTARRAY_
 
 #include <cassert>
+#include <cstddef>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include <cstddef>
 
-#include "Entity.h"
+#include "Core/Entity.h"
 
 class IComponentArray {
  public:
@@ -18,7 +18,8 @@ class IComponentArray {
   virtual std::vector<EntityID> getAllEntities() = 0;
 };
 
-// TODO : 병목생길시 entt스타일 sparse map으로 리팩토링 : pagenation, tombstone, 역방향 순회
+// TODO : 병목생길시 entt스타일 sparse map으로 리팩토링 : pagenation, tombstone,
+// 역방향 순회
 template <typename T>
 class ComponentArray : public IComponentArray {
  private:
@@ -106,9 +107,7 @@ class ComponentArray : public IComponentArray {
     }
   }
 
-  std::size_t getSize() override {
-    return componentArray.size();
-  }
+  std::size_t getSize() override { return componentArray.size(); }
 };
 
-#endif /* COMPONENTARRAY_ */
+#endif /* CORE_COMPONENTARRAY_ */

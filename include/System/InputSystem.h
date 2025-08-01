@@ -4,14 +4,10 @@
 #include <cstddef>
 #include <unordered_map>
 
-#include "CommandQueue.h"
+#include "Core/CommandQueue.h"
 #include "SDL.h"
 
-enum class InputAction {
-  StartInteraction,
-  StopInteraction,
-  Quit
-};
+enum class InputAction { StartInteraction, StopInteraction, Quit };
 
 class GEngine;
 

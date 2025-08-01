@@ -1,5 +1,5 @@
-﻿#ifndef EVENT_
-#define EVENT_
+﻿#ifndef CORE_EVENT_
+#define CORE_EVENT_
 #include <memory>
 
 struct Event {
@@ -20,4 +20,4 @@ struct YAxisEvent : public Event {
 
 struct QuitEvent : public Event {};
 
-#endif /* EVENT_ */
+#endif /* CORE_EVENT_ */

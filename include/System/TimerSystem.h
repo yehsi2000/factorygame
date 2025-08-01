@@ -4,15 +4,16 @@
 class Registry;
 class TimerManager;
 
-// The TimerSystem is responsible for updating the elapsed time of all active timers.
+// The TimerSystem is responsible for updating the elapsed time of all active
+// timers.
 class TimerSystem {
-public:
-    TimerSystem(Registry* registry, TimerManager* timerManager);
-    void Update(float deltaTime);
+ public:
+  TimerSystem(Registry* registry, TimerManager* timerManager);
+  void Update(float deltaTime);
 
-private:
-    Registry* registry;
-    TimerManager* timerManager;
+ private:
+  Registry* registry;
+  TimerManager* timerManager;
 };
 
 #endif /* SYSTEM_TIMERSYSTEM_ */

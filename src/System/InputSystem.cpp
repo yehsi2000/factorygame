@@ -1,13 +1,13 @@
 ﻿#include "System/InputSystem.h"
 
-#include "CommandQueue.h"
 #include "Components/TimerComponent.h"
-#include "Event.h"
-#include "EventDispatcher.h"
-#include "GEngine.h"
-#include "InputState.h"
-#include "Registry.h"
-#include "TimerManager.h"
+#include "Core/CommandQueue.h"
+#include "Core/Event.h"
+#include "Core/EventDispatcher.h"
+#include "Core/GEngine.h"
+#include "Core/InputState.h"
+#include "Core/Registry.h"
+#include "Core/TimerManager.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
 
@@ -39,13 +39,13 @@ void InputSystem::Update() {
   inputState.rightMouseReleased = false;
   inputState.mouseDeltaX = 0;
   inputState.mouseDeltaY = 0;
-  
+
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) {
       engine->GetDispatcher()->Publish(QuitEvent{});
       return;  // 종료 이벤트 발생 시 추가 입력 처리를 중단
     }
-    
+
     // Handle mouse input
     if (event.type == SDL_MOUSEBUTTONDOWN) {
       if (event.button.button == SDL_BUTTON_RIGHT) {
@@ -63,7 +63,7 @@ void InputSystem::Update() {
       inputState.mouseX = event.motion.x;
       inputState.mouseY = event.motion.y;
     }
-    
+
     if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
         event.type == SDL_KEYUP) {
       auto scancode = event.key.keysym.scancode;
@@ -86,7 +86,8 @@ void InputSystem::HandleInputAction(InputAction action) {
   switch (action) {
     case InputAction::StartInteraction:
       // Use the new, clean utility function to attach a timer.
-      util::AttachTimer(registry, timerManager, player, TimerId::Interact, 1.f, true);
+      util::AttachTimer(registry, timerManager, player, TimerId::Interact, 1.f,
+                        true);
       break;
     case InputAction::StopInteraction:
       // Use the new, clean utility function to detach a timer.
