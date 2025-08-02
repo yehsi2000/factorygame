@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <format>
 #include <iostream>
 #include <map>
 #include <random>
 
+#include "Components/InactiveComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
@@ -16,48 +18,57 @@
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
+#include "Core/World.h"
 #include "Lib/FastNoiseLite.h"
 #include "SDL.h"
 #include "SDL_ttf.h"
 
-World::World(GEngine* engine) : engine(engine) {
+World::World(SDL_Renderer* renderer, Registry* registry, TTF_Font* font)
+    : renderer(renderer), registry(registry), font(font) {
   std::random_device rd;
   randomGenerator.seed(rd());
   distribution = std::normal_distribution<float>(0.0, 1.0);
 }
 
-void World::Update(Vec2f playerPosition) {
-  // 플레이어가 있는 청크 좌표 계산
+void World::Update(EntityID player) {
+  if (!registry->HasComponent<TransformComponent>(player)) return;
+
+  const Vec2f playerPosition =
+      registry->GetComponent<TransformComponent>(player).position;
+
   int playerChunkX = floor(playerPosition.x / (CHUNK_WIDTH * TILE_PIXEL_WIDTH));
   int playerChunkY =
       floor(playerPosition.y / (CHUNK_HEIGHT * TILE_PIXEL_HEIGHT));
 
-  // 현재 로드된 청크들을 확인하고, 필요 없는 것은 언로드
   auto it = activeChunks.begin();
   while (it != activeChunks.end()) {
     int dx = std::abs(it->first.x - playerChunkX);
     int dy = std::abs(it->first.y - playerChunkY);
 
-    // 시야 거리보다 멀리 떨어진 청크는 언로드
+    // Unload far chunk
     if (dx > viewDistance || dy > viewDistance) {
       UnloadChunk(it->second);
+      chunkCache.insert({it->first, it->second});
       it = activeChunks.erase(it);
     } else {
       ++it;
     }
   }
 
-  // 시야 거리 내의 청크 로드
+  // Load chunk in view dist
   for (int y = playerChunkY - viewDistance; y <= playerChunkY + viewDistance;
        ++y) {
     for (int x = playerChunkX - viewDistance; x <= playerChunkX + viewDistance;
          ++x) {
-      // 아직 로드되지 않은 청크라면 로드
       if (activeChunks.find({x, y}) == activeChunks.end()) {
         LoadChunk(x, y);
       }
     }
   }
+}
+
+TileData* World::GetTileAtWorldPosition(Vec2f position) {
+  return GetTileAtWorldPosition(position.x, position.y);
 }
 
 TileData* World::GetTileAtWorldPosition(float worldX, float worldY) {
@@ -67,11 +78,25 @@ TileData* World::GetTileAtWorldPosition(float worldX, float worldY) {
   return GetTileAtTileCoords(tileX, tileY);
 }
 
+Vec2 World::GetTileCoordFromWorldPosition(Vec2f position) {
+  return GetTileCoordFromWorldPosition(position.x, position.y);
+}
+
+Vec2 World::GetTileCoordFromWorldPosition(float worldX, float worldY) {
+  int tileX = static_cast<int>(worldX) / TILE_PIXEL_WIDTH;
+  int tileY = static_cast<int>(worldY) / TILE_PIXEL_HEIGHT;
+
+  return Vec2(tileX, tileY);
+}
+
+TileData* World::GetTileAtTileCoords(Vec2 tileCoord) {
+  return GetTileAtTileCoords(tileCoord.x, tileCoord.y);
+}
+
 TileData* World::GetTileAtTileCoords(int tileX, int tileY) {
   int chunkX = tileX / CHUNK_WIDTH;
   int chunkY = tileY / CHUNK_HEIGHT;
 
-  // 음수일 경우 보정
   if (tileX < 0) chunkX -= 1;
   if (tileY < 0) chunkY -= 1;
 
@@ -89,18 +114,38 @@ const std::map<ChunkCoord, Chunk>& World::GetActiveChunks() const {
 }
 
 void World::LoadChunk(int chunkX, int chunkY) {
-  Chunk chunk(chunkX, chunkY);
-  GenerateChunk(chunk);
-  activeChunks.insert({{chunkX, chunkY}, chunk});
+  auto it = chunkCache.find({chunkX, chunkY});
+  if (it != chunkCache.end()) {
+    Chunk& chunk = it->second;
+    // Reactivate entities
+    registry->RemoveComponent<InactiveComponent>(chunk.chunkEntity);
+    for (int y = 0; y < CHUNK_HEIGHT; ++y) {
+      for (int x = 0; x < CHUNK_WIDTH; ++x) {
+        TileData* tile = chunk.GetTile(x, y);
+        if (tile && tile->occupyingEntity != INVALID_ENTITY) {
+          registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
+        }
+      }
+    }
+    activeChunks.insert({it->first, chunk});
+    chunkCache.erase(it);
+    std::cout << "Reloaded Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
+              << ")\n";
+  } else {
+    Chunk chunk(chunkX, chunkY);
+    GenerateChunk(chunk);
+    activeChunks.insert({{chunkX, chunkY}, chunk});
+  }
 }
 
 void World::UnloadChunk(Chunk& chunk) {
+  // Deactivate entities
+  registry->EmplaceComponent<InactiveComponent>(chunk.chunkEntity);
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       TileData* tile = chunk.GetTile(x, y);
-      if (tile && tile->occupyingEntity != 0) {
-        engine->GetRegistry()->DestroyEntity(tile->occupyingEntity);
-        tile->occupyingEntity = 0;
+      if (tile && tile->occupyingEntity != INVALID_ENTITY) {
+        registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
       }
     }
   }
@@ -109,7 +154,6 @@ void World::UnloadChunk(Chunk& chunk) {
 }
 
 SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
-  SDL_Renderer* renderer = engine->GetRenderer();
   // Create a texture for the entire chunk
   SDL_Texture* chunkTexture = SDL_CreateTexture(
       renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
@@ -126,7 +170,6 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
   SDL_Texture* tilesetTexture = AssetManager::getInstance().getTexture(
       "assets/img/tile/dirt-1.png", renderer);
 
-  char* text = new char[10];
   // Draw all tiles in the chunk to the texture
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
@@ -135,16 +178,16 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
       // Determine source rectangle based on tile type
       SDL_Rect srcRect;
       switch (tile->type) {
-        case TileType::tDirt:
+        case TileType::Dirt:
           srcRect = {0, 0, 64, 64};
           break;
-        case TileType::tGrass:
+        case TileType::Grass:
           srcRect = {64, 0, 64, 64};
           break;
-        case TileType::tWater:
+        case TileType::Water:
           srcRect = {128, 0, 64, 64};
           break;
-        case TileType::tStone:
+        case TileType::Stone:
           srcRect = {192, 0, 64, 64};
           break;
       }
@@ -156,36 +199,34 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
       // Render the tile to the chunk texture
       SDL_RenderCopy(renderer, tilesetTexture, &srcRect, &destRect);
 
-      if (tile->debugValue > 1) {
-        sprintf(text, "%.2f", tile->debugValue);
+      // if (tile->debugValue > 1) {
+      //   sprintf(text, "%.2f", tile->debugValue);
 
-        SDL_Surface* textSurface = TTF_RenderText_Blended(
-            engine->GetFont(), text, SDL_Color{255, 255, 255});
-        SDL_Texture* textTexture =
-            SDL_CreateTextureFromSurface(renderer, textSurface);
-        destRect.h = textSurface->h;
-        destRect.w = textSurface->w;
-        SDL_FreeSurface(textSurface);
-        SDL_RenderCopy(renderer, textTexture, nullptr, &destRect);
-      }
+      //   SDL_Surface* textSurface =
+      //       TTF_RenderText_Blended(font, text, SDL_Color{255, 255, 255});
+      //   SDL_Texture* textTexture =
+      //       SDL_CreateTextureFromSurface(renderer, textSurface);
+      //   destRect.h = textSurface->h;
+      //   destRect.w = textSurface->w;
+      //   SDL_FreeSurface(textSurface);
+      //   SDL_RenderCopy(renderer, textTexture, nullptr, &destRect);
+      // }
     }
   }
 
   // Reset render target to default
   SDL_SetRenderTarget(renderer, nullptr);
 
-  delete[] text;
-
   return chunkTexture;
 }
 
 void World::GenerateChunk(Chunk& chunk) {
-  //TODO : 청크 생성 너무 빨리하면 카메라가 플레이어 이동 못따라가는 현상 발생
+  // TODO : camera lagged on chunk generation
   FastNoiseLite noise;
   noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-  noise.SetFrequency(0.05f);  // 맵 스케일 조절
+  noise.SetFrequency(0.05f);
 
-  // 1. 지형 생성
+  // terrain generation
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       int worldTileX = chunk.chunkX * CHUNK_WIDTH + x;
@@ -195,20 +236,17 @@ void World::GenerateChunk(Chunk& chunk) {
       TileData* tile = chunk.GetTile(x, y);
 
       if (terrainValue < -0.2f) {
-        tile->type = TileType::tWater;
+        tile->type = TileType::Water;
       } else if (terrainValue < 0.3f) {
-        tile->type = TileType::tDirt;
+        tile->type = TileType::Dirt;
       } else {
-        tile->type = TileType::tGrass;
+        tile->type = TileType::Grass;
       }
     }
   }
 
-  // 2. 자원(Ore) 군집 생성
+  // ore group generation
   FastNoiseLite oreNoise;
-  Registry* registry = engine->GetRegistry();
-  SDL_Renderer* renderer = engine->GetRenderer();
-  TTF_Font* font = engine->GetFont();
   oreNoise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
   oreNoise.SetFrequency(0.05f);
   // oreNoise.SetSeed(randomGenerator());
@@ -221,27 +259,35 @@ void World::GenerateChunk(Chunk& chunk) {
       float oreValue = oreNoise.GetNoise((float)worldTileX, (float)worldTileY);
       float oreThreshold = 0.5f;
       TileData* tile = chunk.GetTile(x, y);
+
       if (oreValue > oreThreshold &&
-          chunk.GetTile(x, y)->type != TileType::tWater) {
+          chunk.GetTile(x, y)->type != TileType::Water) {
         TileData* tile = chunk.GetTile(x, y);
-        if (tile->occupyingEntity == 0) {
+
+        if (tile->occupyingEntity == INVALID_ENTITY) {
           EntityID oreNode = registry->CreateEntity();
           float max_oreAmount = 10000.0;
           rsrc_amt_t oreAmount = max_oreAmount * oreValue;
 
           registry->AddComponent<TransformComponent>(
-              oreNode, TransformComponent{
-                           static_cast<float>(worldTileX * TILE_PIXEL_WIDTH),
-                           static_cast<float>(worldTileY * TILE_PIXEL_HEIGHT)});
+              oreNode,
+              TransformComponent{
+                  {static_cast<float>(worldTileX * TILE_PIXEL_WIDTH),
+                   static_cast<float>(worldTileY * TILE_PIXEL_HEIGHT)}});
+
           registry->AddComponent<ResourceNodeComponent>(
-              oreNode, ResourceNodeComponent{static_cast<rsrc_amt_t>(oreAmount),
-                                             OreType::Iron});
+              oreNode, ResourceNodeComponent{oreAmount, OreType::Iron});
+
+          TextComponent textComp;
+          snprintf(textComp.text, sizeof(textComp.text), "init");
+          textComp.color = SDL_Color{255, 255, 255};
+          registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
           SDL_Texture* spritesheet = AssetManager::getInstance().getTexture(
               "assets/img/tile/iron-ore.png", renderer);
           SpriteComponent spriteComp;
           spriteComp.texture = spritesheet;
-          tile->debugValue = oreAmount;
+          // tile->debugValue = oreAmount;
           rsrc_amt_t min_oreAmount = oreThreshold * max_oreAmount;
 
           int richnessIndex =
@@ -253,7 +299,7 @@ void World::GenerateChunk(Chunk& chunk) {
           spriteComp.renderRect = {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);
           tile->occupyingEntity = oreNode;
-          tile->type = TileType::tStone;
+          tile->type = TileType::Stone;
         }
       }
     }
@@ -261,6 +307,7 @@ void World::GenerateChunk(Chunk& chunk) {
 
   // Create a single entity for the entire chunk with a pre-rendered texture
   EntityID chunkEntity = registry->CreateEntity();
+  chunk.chunkEntity = chunkEntity;
 
   // Calculate world position of the chunk (top-left corner)
   float worldX =
@@ -270,7 +317,7 @@ void World::GenerateChunk(Chunk& chunk) {
 
   // Add transform component for positioning
   registry->EmplaceComponent<TransformComponent>(
-      chunkEntity, TransformComponent{worldX, worldY});
+      chunkEntity, TransformComponent{{worldX, worldY}});
 
   // Create and add the chunk component with the pre-rendered texture
   ChunkComponent chunkComp;
@@ -278,10 +325,6 @@ void World::GenerateChunk(Chunk& chunk) {
   chunkComp.needsRedraw = false;
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
 
-  // Store the chunk entity ID in the chunk for later reference
-  // We'll need to modify the Chunk class to store this if we want to update it
-  // later
-
-  std::cout << "Loaded Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
-            << ")\n";
+  std::cout << "Generated Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
+            << " id=" << chunkEntity << ")\n";
 }

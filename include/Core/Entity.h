@@ -3,4 +3,6 @@
 
 using EntityID = unsigned long long;
 
+constexpr EntityID INVALID_ENTITY = 0;
+
 #endif /* CORE_ENTITY_ */

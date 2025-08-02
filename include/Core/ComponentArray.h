@@ -18,17 +18,18 @@ class IComponentArray {
   virtual std::vector<EntityID> getAllEntities() = 0;
 };
 
-// TODO : 병목생길시 entt스타일 sparse map으로 리팩토링 : pagenation, tombstone,
-// 역방향 순회
+// TODO : in case of bottleneck -> refactor to entt-style sparse map
+// (using pagenation, tombstone, reverse iteration)
 template <typename T>
 class ComponentArray : public IComponentArray {
  private:
-  // 컴포넌트 데이터를 연속된 메모리에 저장 (캐시 효율)
+  // contiguous memory allocation for fast read
+  // TODO : non-pod component's reallocation is expensive
   std::vector<T> componentArray;
 
-  // 엔티티 ID -> 데이터 배열의 인덱스
+  // entityID -> componentArray index
   std::unordered_map<EntityID, std::size_t> entityToIndexMap;
-  // 데이터 배열의 인덱스 -> 엔티티 ID (빠른 삭제를 위함)
+  // componentArray index -> entityID (for quick remove)
   std::unordered_map<std::size_t, EntityID> indexToEntityMap;
 
  public:
@@ -46,18 +47,14 @@ class ComponentArray : public IComponentArray {
     assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
            "Removing non-existent component.");
 
-    // 삭제할 요소의 인덱스 찾기
     std::size_t indexOfRemovedEntity = entityToIndexMap[entity];
-    // 배열의 마지막을 삭제할 위치로 옮김
     std::size_t indexOfLastElement = componentArray.size() - 1;
     componentArray[indexOfRemovedEntity] = componentArray[indexOfLastElement];
 
-    // 맵 정보 업데이트
     EntityID entityOfLastElement = indexToEntityMap[indexOfLastElement];
     entityToIndexMap[entityOfLastElement] = indexOfRemovedEntity;
     indexToEntityMap[indexOfRemovedEntity] = entityOfLastElement;
 
-    // 맨 뒤의 요소와 맵 삭제
     componentArray.pop_back();
     entityToIndexMap.erase(entity);
     indexToEntityMap.erase(indexOfLastElement);
@@ -96,11 +93,10 @@ class ComponentArray : public IComponentArray {
   }
 
   bool hasEntity(EntityID entity) override {
-    // map의 count 메서드를 사용하여 O(1) 시간 복잡도로 확인
     return entityToIndexMap.count(entity) > 0;
   }
 
-  // 엔티티가 파괴될 때 호출되는 콜백
+  // Called when entity is destoryed
   void entityDestroyed(EntityID entity) override {
     if (entityToIndexMap.count(entity)) {
       removeData(entity);

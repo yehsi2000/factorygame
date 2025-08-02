@@ -10,7 +10,7 @@ Vec2 Chunk::GetLocalTileCoords(int worldTileX, int worldTileY) const {
   int localX = worldTileX - (chunkX * CHUNK_WIDTH);
   int localY = worldTileY - (chunkY * CHUNK_HEIGHT);
 
-  // 음수 보정
+  // negative value correction
   if (localX < 0) localX += CHUNK_WIDTH;
   if (localY < 0) localY += CHUNK_HEIGHT;
 

@@ -4,7 +4,7 @@
 #include "SDL.h"
 
 struct TextComponent {
-  char text[10];
+  char text[20];
   SDL_Color color;
 };
 

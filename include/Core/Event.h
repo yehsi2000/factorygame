@@ -2,11 +2,16 @@
 #define CORE_EVENT_
 #include <memory>
 
+#include "Core/Entity.h"
+
 struct Event {
   virtual ~Event() = default;
 };
 
-struct InteractEvent : public Event {};
+struct InteractEvent : public Event {
+  InteractEvent(EntityID i) : instigator(i) {}
+  EntityID instigator;
+};
 
 struct XAxisEvent : public Event {
   XAxisEvent(float i) : val(i) {}

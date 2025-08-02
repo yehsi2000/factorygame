@@ -8,7 +8,6 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
-// SDL_Texture를 위한 커스텀 삭제자
 struct TextureDeleter {
   void operator()(SDL_Texture* texture) const {
     if (texture) {

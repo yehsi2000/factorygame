@@ -58,6 +58,8 @@ class OreToItemMapper {
   }
   OreToItemMapper(const OreToItemMapper&) = delete;
   OreToItemMapper& operator=(const OreToItemMapper&) = delete;
+  OreToItemMapper(OreToItemMapper&&) = delete;
+  OreToItemMapper& operator=(OreToItemMapper&&) = delete;
 
  private:
   OreToItemMapper() {
@@ -67,10 +69,28 @@ class OreToItemMapper {
   std::unordered_map<OreType, ItemID> mapping;
 };
 
-// 아이템 데이터베이스 클래스
 class ItemDatabase {
  public:
-  void initialize() {
+  static const ItemDatabase& instance() {
+    static ItemDatabase db;
+    return db;
+  }
+
+  ItemDatabase(const ItemDatabase&) = delete;
+  ItemDatabase& operator=(const ItemDatabase&) = delete;
+  ItemDatabase(ItemDatabase&&) = delete;
+  ItemDatabase& operator=(ItemDatabase&&) = delete;
+
+  const ItemData& get(ItemID id) const { return db.at(id); }
+
+  bool IsOfCategory(ItemID id, ItemCategory category) const {
+    if (db.count(id) == 0) return false;
+    return db.at(id).category == category;
+  }
+
+ private:
+  std::map<ItemID, ItemData> db;
+  ItemDatabase() {
     db[ItemID::IronOre] = {ItemID::IronOre, ItemCategory::Ore, "철광석",
                            "제련하여 철 주괴로 만들 수 있습니다.", 100};
     db[ItemID::IronIngot] = {
@@ -82,16 +102,6 @@ class ItemDatabase {
         ItemID::CopperIngot, ItemCategory::Ingot, "구리주괴",
         "구리로 된 주괴. 다른 구리 제품을 만드는데 사용된다.", 100};
   }
-
-  const ItemData& get(ItemID id) const { return db.at(id); }
-
-  bool IsOfCategory(ItemID id, ItemCategory category) const {
-    if (db.count(id) == 0) return false;
-    return db.at(id).category == category;
-  }
-
- private:
-  std::map<ItemID, ItemData> db;
 };
 
 #endif /* CORE_ITEM_ */

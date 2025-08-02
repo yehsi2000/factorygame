@@ -8,6 +8,7 @@
 #include "SDL.h"
 
 enum class InputAction { StartInteraction, StopInteraction, Quit };
+enum class InputType { KEYBOARD, MOUSE };
 
 class GEngine;
 
@@ -26,13 +27,13 @@ struct KeyEventHasher {
 class InputSystem {
   std::unordered_map<KeyEvent, InputAction, KeyEventHasher> keyBindings;
   GEngine* engine;
-  SDL_Event event;
+  double maxInteractionRadius = 3000.0;
 
  public:
   InputSystem(GEngine* e) : engine(e) {}
   void Update();
   void RegisterInputBindings();
-  void HandleInputAction(InputAction action);
+  void HandleInputAction(InputAction action, InputType type);
   void HandleInputAxis(const Uint8* keyState);
 };
 

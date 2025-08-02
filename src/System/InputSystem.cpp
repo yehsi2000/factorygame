@@ -1,5 +1,10 @@
 ﻿#include "System/InputSystem.h"
 
+#include <Components/CameraComponent.h>
+
+#include <format>
+
+#include "Components/InteractionComponent.h"
 #include "Components/TimerComponent.h"
 #include "Core/CommandQueue.h"
 #include "Core/Event.h"
@@ -8,6 +13,7 @@
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
+#include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
 
@@ -39,21 +45,25 @@ void InputSystem::Update() {
   inputState.rightMouseReleased = false;
   inputState.mouseDeltaX = 0;
   inputState.mouseDeltaY = 0;
+  SDL_Event event;
 
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) {
       engine->GetDispatcher()->Publish(QuitEvent{});
-      return;  // 종료 이벤트 발생 시 추가 입력 처리를 중단
+      return;  // Stop all input handling if quit event occurs
     }
 
-    // Handle mouse input
     if (event.type == SDL_MOUSEBUTTONDOWN) {
-      if (event.button.button == SDL_BUTTON_RIGHT) {
+      if (event.button.button == SDL_BUTTON_LEFT) {
+        HandleInputAction(InputAction::StartInteraction, InputType::MOUSE);
+      } else {
         inputState.rightMouseDown = true;
         inputState.rightMousePressed = true;
       }
     } else if (event.type == SDL_MOUSEBUTTONUP) {
-      if (event.button.button == SDL_BUTTON_RIGHT) {
+      if (event.button.button == SDL_BUTTON_LEFT) {
+        HandleInputAction(InputAction::StopInteraction, InputType::MOUSE);
+      } else {
         inputState.rightMouseDown = false;
         inputState.rightMouseReleased = true;
       }
@@ -62,6 +72,17 @@ void InputSystem::Update() {
       inputState.mouseDeltaY = event.motion.yrel;
       inputState.mouseX = event.motion.x;
       inputState.mouseY = event.motion.y;
+      // Registry* registry = engine->GetRegistry();
+      // EntityID player = engine->GetPlayer();
+      // if (registry->HasComponent<InteractionComponent>(player)) {
+      //   if (registry->GetComponent<InteractionComponent>(player).type ==
+      //       InteractionType::MOUSE) {
+      //     registry->RemoveComponent<InteractionComponent>(player);
+      //     TimerManager* timerManager = engine->GetTimerManager();
+      //     util::DetachTimer(*registry, *timerManager, player,
+      //                       TimerId::Interact);
+      //   }
+      // }
     }
 
     if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
@@ -70,7 +91,7 @@ void InputSystem::Update() {
       auto it = keyBindings.find(
           KeyEvent{scancode, static_cast<SDL_EventType>(event.type)});
       if (it != keyBindings.end()) {
-        HandleInputAction(it->second);
+        HandleInputAction(it->second, InputType::KEYBOARD);
       }
     }
   }
@@ -78,20 +99,72 @@ void InputSystem::Update() {
   HandleInputAxis(keystate);
 }
 
-void InputSystem::HandleInputAction(InputAction action) {
+void InputSystem::HandleInputAction(InputAction action, InputType type) {
   Registry& registry = *engine->GetRegistry();
   TimerManager& timerManager = *engine->GetTimerManager();
   EntityID player = engine->GetPlayer();
 
   switch (action) {
     case InputAction::StartInteraction:
-      // Use the new, clean utility function to attach a timer.
-      util::AttachTimer(registry, timerManager, player, TimerId::Interact, 1.f,
-                        true);
+      if (!registry.HasComponent<InteractionComponent>(player)) {
+        const auto& playerTransform =
+            registry.GetComponent<TransformComponent>(player);
+
+        Vec2f targetPos;
+        InteractionType interactionType = InteractionType::INVALID;
+
+        // Mouse interaction
+        if (type == InputType::MOUSE) {
+          auto camera = registry.view<CameraComponent>();
+          int screenWidth, screenHeight;
+          SDL_GetRendererOutputSize(engine->GetRenderer(), &screenWidth,
+                                    &screenHeight);
+          const auto& campos =
+              registry.GetComponent<CameraComponent>(camera[0]).position;
+          targetPos = Vec2f(engine->GetRegistry()->GetInputState().mouseX +
+                                campos.x - (screenWidth / 2.f),
+                            engine->GetRegistry()->GetInputState().mouseY +
+                                campos.y - (screenHeight / 2.f));
+          auto dist = util::dist(playerTransform.position, targetPos);
+          if (maxInteractionRadius < dist) break;
+          interactionType = InteractionType::MOUSE;
+        }
+
+        // Keyboard interaction
+        else if (type == InputType::KEYBOARD) {
+          targetPos =
+              Vec2f(playerTransform.position.x, playerTransform.position.y);
+          interactionType = InteractionType::KEYBOARD;
+        }
+
+        if (interactionType == InteractionType::INVALID) break;
+
+        Vec2 tilecoord =
+            engine->GetWorld()->GetTileCoordFromWorldPosition(targetPos);
+
+        Vec2 playertilecoord =
+            engine->GetWorld()->GetTileCoordFromWorldPosition(
+                playerTransform.position);
+
+        std::cout << std::format(
+            "targettile = {}:{}, playertile = {}:{} type : {}\n", tilecoord.x,
+            tilecoord.y, playertilecoord.x, playertilecoord.y,
+            (interactionType == InteractionType::KEYBOARD ? "keyboard"
+                                                          : "mouse"));
+
+        registry.AddComponent<InteractionComponent>(
+            player,
+            InteractionComponent{player, tilecoord, interactionType, 1.f});
+
+        util::AttachTimer(registry, timerManager, player, TimerId::Interact,
+                          1.f, true);
+      }
       break;
     case InputAction::StopInteraction:
-      // Use the new, clean utility function to detach a timer.
-      util::DetachTimer(registry, timerManager, player, TimerId::Interact);
+      if (registry.HasComponent<InteractionComponent>(player)) {
+        registry.RemoveComponent<InteractionComponent>(player);
+        util::DetachTimer(registry, timerManager, player, TimerId::Interact);
+      }
       break;
     case InputAction::Quit:
       engine->GetDispatcher()->Publish(QuitEvent{});

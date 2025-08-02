@@ -1,23 +1,23 @@
 ﻿#include "System/ResourceNodeSystem.h"
 
+#include <Components/TextComponent.h>
+
+#include <format>
+
 #include "Components/ResourceNodeComponent.h"
 #include "Core/Item.h"
 #include "Core/Registry.h"
 
-ResourceNodeSystem::ResourceNodeSystem(std::shared_ptr<ItemDatabase> db,
-                                       Registry* r) {
-  itemDatabase = db;
-  registry = r;
-}
+ResourceNodeSystem::ResourceNodeSystem(Registry* r) { registry = r; }
 
 void ResourceNodeSystem::Update() {
-  // TODO : Interact Event가 발생했을 때 1초가 지날 때 마다 연결된 Miner에
-  // ResourceNodeComponent의 Ore를 추가
-  if (registry == nullptr) return;
+  for (EntityID entity : registry->view<ResourceNodeComponent>()) {
+    if (registry->HasComponent<TextComponent>(entity)) {
+      const ResourceNodeComponent& resource =
+          registry->GetComponent<ResourceNodeComponent>(entity);
+      TextComponent& textComp = registry->GetComponent<TextComponent>(entity);
+      snprintf(textComp.text, sizeof(textComp.text), "%lld",
+               static_cast<unsigned long long>(resource.LeftResource));
+    }
+  }
 }
-
-long long ResourceNodeSystem::leftcount(ResourceNodeComponent& resNode) {
-  return resNode.LeftResource;
-}
-
-ResourceNodeSystem::~ResourceNodeSystem() = default;

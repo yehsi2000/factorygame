@@ -8,6 +8,8 @@
 #include "Components/AnimationComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
+#include "Components/InactiveComponent.h"
+#include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
@@ -40,37 +42,35 @@ void GEngine::InitCoreSystem() {
   registry = std::make_unique<Registry>();
   dispatcher = std::make_unique<EventDispatcher>();
   timerManager = std::make_unique<TimerManager>();
+  world = std::make_unique<World>(gRenderer, registry.get(), gFont);
 
   assert(registry && "Fail to initialize registry");
-
-  itemDatabase = std::make_shared<ItemDatabase>();
-  itemDatabase->initialize();
 
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
   inputSystem = std::make_unique<InputSystem>(this);
   inputSystem->RegisterInputBindings();
-  inventorySystem = std::make_unique<InventorySystem>(itemDatabase);
-  movementSystem = std::make_unique<MovementSystem>(registry.get());
+  inventorySystem = std::make_unique<InventorySystem>();
+  movementSystem =
+      std::make_unique<MovementSystem>(registry.get(), timerManager.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
   renderSystem =
       std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
-  resourceNodeSystem =
-      std::make_unique<ResourceNodeSystem>(itemDatabase, registry.get());
+  resourceNodeSystem = std::make_unique<ResourceNodeSystem>(registry.get());
   timerSystem =
       std::make_unique<TimerSystem>(registry.get(), timerManager.get());
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
-  interactionSystem =
-      std::make_unique<InteractionSystem>(dispatcher.get(), commandQueue.get());
-
-  world = new World(this);
+  interactionSystem = std::make_unique<InteractionSystem>(
+      registry.get(), world.get(), dispatcher.get(), commandQueue.get());
 }
 
 void GEngine::RegisterComponent() {
   registry->RegisterComponent<AnimationComponent>();
   registry->RegisterComponent<CameraComponent>();
   registry->RegisterComponent<ChunkComponent>();
+  registry->RegisterComponent<InactiveComponent>();
   registry->RegisterComponent<InventoryComponent>();
   registry->RegisterComponent<MovableComponent>();
+  registry->RegisterComponent<InteractionComponent>();
   registry->RegisterComponent<MovementComponent>();
   registry->RegisterComponent<RefineryComponent>();
   registry->RegisterComponent<ResourceNodeComponent>();
@@ -83,19 +83,16 @@ void GEngine::RegisterComponent() {
 
 void GEngine::GeneratePlayer() {
   player = registry->CreateEntity();
-  registry->EmplaceComponent<InventoryComponent>(player);
-
-  int w, h;
-  SDL_GetWindowSize(gWindow, &w, &h);
-  registry->AddComponent<TransformComponent>(
-      player, TransformComponent{{w / 2.f, h / 2.f}});
+  registry->AddComponent<TransformComponent>(player,
+                                             TransformComponent{{0, 0}});
 
   SDL_Texture* playerIdleSpritesheet = AssetManager::getInstance().getTexture(
       "assets/img/character/Miner_IdleAnimation.png", gRenderer);
   registry->AddComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet,
                               {0, 0, 16, 16},
-                              {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT},
+                              {TILE_PIXEL_WIDTH / 2, TILE_PIXEL_HEIGHT / 2,
+                               TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT},
                               SDL_FLIP_NONE,
                               render_order_t(100)});
 
@@ -105,23 +102,16 @@ void GEngine::GeneratePlayer() {
   registry->AddComponent<AnimationComponent>(player, std::move(anim));
   registry->EmplaceComponent<MovementComponent>(player);
   registry->EmplaceComponent<MovableComponent>(player);
+  registry->EmplaceComponent<InventoryComponent>(player);
 }
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
     : gWindow(window), gRenderer(renderer), gFont(font) {
-  // 레지스트리, 이벤트 디스패쳐 등 코어클래스와 시스템들 등록
+  // Register core classes and systems such as the registry and event dispatcher
   InitCoreSystem();
-
-  // 컴포넌트 등록
   RegisterComponent();
-
-  // 플레이어 생성 및 컴포넌트 등록
   GeneratePlayer();
-
-  // 카메라 시스템 초기화 (플레이어 생성 후)
   cameraSystem = std::make_unique<CameraSystem>(registry.get(), player);
-
-  // 게임 종료 이벤트 구독
   GameEndHandle =
       std::make_unique<EventHandle>(GetDispatcher()->Subscribe<QuitEvent>(
           [this](const QuitEvent&) { this->bIsRunning = false; }));
@@ -145,13 +135,13 @@ void GEngine::Update(float deltaTime) {
   inputSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();
-  world->Update(registry->GetComponent<TransformComponent>(player).position);
+  interactionSystem->Update();
+  world->Update(player);
   movementSystem->Update(deltaTime);
   animationSystem->Update(deltaTime);
   cameraSystem->Update(deltaTime);
   refinerySystem->Update();
   resourceNodeSystem->Update();
-  interactionSystem->Update();
 
   renderSystem->Update();
 }

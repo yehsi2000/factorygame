@@ -1,15 +1,21 @@
 ﻿#include "System/MovementSystem.h"
 
+#include <Util/TimerUtil.h>
+
 #include <cmath>  // for std::sqrt
 
+#include "Components/InactiveComponent.h"
+#include "Components/InteractionComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Entity.h"
+#include "Core/GEngine.h"
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 
-MovementSystem::MovementSystem(Registry* r) : registry(r) {}
+MovementSystem::MovementSystem(Registry* r, TimerManager* tm)
+    : registry(r), timerManager(tm) {}
 
 void MovementSystem::Update(float deltaTime) {
   float ix = registry->GetInputState().xAxis;
@@ -19,14 +25,22 @@ void MovementSystem::Update(float deltaTime) {
   for (EntityID entity :
        registry
            ->view<MovableComponent, MovementComponent, TransformComponent>()) {
-    MovementComponent& move = registry->GetComponent<MovementComponent>(entity);
+    if (registry->HasComponent<InactiveComponent>(entity)) {
+      continue;
+    }
+    const MovementComponent& move =
+        registry->GetComponent<MovementComponent>(entity);
     TransformComponent& trans =
         registry->GetComponent<TransformComponent>(entity);
 
-    // 대각선 이동이 더 빨라지는 것을 막기 위해 방향 벡터를 정규화
+    // Normalize direction for uniform movement speed
     float length = std::sqrt(ix * ix + iy * iy);
 
     trans.position.x += (ix / length) * move.speed * deltaTime;
     trans.position.y += (iy / length) * move.speed * deltaTime;
+    if (registry->HasComponent<InteractionComponent>(entity)) {
+      registry->RemoveComponent<InteractionComponent>(entity);
+      util::DetachTimer(*registry, *timerManager, entity, TimerId::Interact);
+    }
   }
 }

@@ -1,10 +1,12 @@
 ﻿#include "System/RenderSystem.h"
 
 #include <algorithm>
+#include <format>
 #include <vector>
 
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
+#include "Components/InactiveComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
@@ -31,8 +33,8 @@ void RenderSystem::Update() {
   RenderEntities();
 
   // RenderTexts();
+  RenderTexts();
 
-  // 모든 엔티티를 그린 후, 화면에 한 번만 렌더링합니다.
   SDL_RenderPresent(renderer);
 }
 
@@ -45,8 +47,11 @@ void RenderSystem::RenderChunks() {
   auto chunkView = registry->view<ChunkComponent, TransformComponent>();
 
   for (EntityID entity : chunkView) {
-    auto& chunk = registry->GetComponent<ChunkComponent>(entity);
-    auto& transform = registry->GetComponent<TransformComponent>(entity);
+    if (registry->HasComponent<InactiveComponent>(entity)) {
+      continue;
+    }
+    const auto& chunk = registry->GetComponent<ChunkComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
 
     // Convert world position to screen position
     Vec2f screenPos =
@@ -82,12 +87,12 @@ void RenderSystem::RenderEntities() {
   std::vector<std::pair<EntityID, int>> entitiesWithOrder;
 
   for (EntityID entity : view) {
-    // Skip entities that are chunks (they have ChunkComponent)
-    if (registry->HasComponent<ChunkComponent>(entity)) {
+    if (registry->HasComponent<InactiveComponent>(entity) ||
+        registry->HasComponent<ChunkComponent>(entity)) {
       continue;
     }
 
-    auto& sprite = registry->GetComponent<SpriteComponent>(entity);
+    const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
     entitiesWithOrder.push_back({entity, sprite.renderOrder});
   }
 
@@ -101,8 +106,8 @@ void RenderSystem::RenderEntities() {
   // Render sorted entities
   for (const auto& pair : entitiesWithOrder) {
     EntityID entity = pair.first;
-    auto& sprite = registry->GetComponent<SpriteComponent>(entity);
-    auto& transform = registry->GetComponent<TransformComponent>(entity);
+    const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
 
     // Convert world position to screen position
     Vec2f screenPos =
@@ -117,9 +122,10 @@ void RenderSystem::RenderEntities() {
       continue;
     }
 
-    SDL_Rect destRect = {
-        static_cast<int>(screenPos.x), static_cast<int>(screenPos.y),
-        static_cast<int>(entityWidth), static_cast<int>(entityHeight)};
+    SDL_Rect destRect = {static_cast<int>(screenPos.x - sprite.renderRect.x),
+                         static_cast<int>(screenPos.y - sprite.renderRect.y),
+                         static_cast<int>(entityWidth),
+                         static_cast<int>(entityHeight)};
 
     SDL_RenderCopyEx(renderer, sprite.texture, &sprite.srcRect, &destRect,
                      transform.rotation, nullptr, sprite.flip);
@@ -130,9 +136,11 @@ void RenderSystem::RenderTexts() {
   Vec2f cameraPos = GetCameraPosition();
   int screenWidth, screenHeight;
   SDL_GetRendererOutputSize(renderer, &screenWidth, &screenHeight);
-  auto view = registry->view<TextComponent, TransformComponent>();
 
-  for (EntityID entity : view) {
+  for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
+    if (registry->HasComponent<InactiveComponent>(entity)) {
+      continue;
+    }
     const auto& text = registry->GetComponent<TextComponent>(entity);
     const auto& transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =

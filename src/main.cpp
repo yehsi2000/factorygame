@@ -49,9 +49,9 @@ int main(int argc, char *argv[]) {
 
   std::cout << "SDL initialized " << SDL_GetTicks() << std::endl;
 
-  SDL_Window *window = SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
-                                        SDL_WINDOWPOS_CENTERED, 1920, 1080,
-                                        SDL_WINDOW_RESIZABLE);
+  SDL_Window *window =
+      SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
+                       SDL_WINDOWPOS_CENTERED, 1280, 960, SDL_WINDOW_RESIZABLE);
 
   SDL_Renderer *renderer =
       SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);

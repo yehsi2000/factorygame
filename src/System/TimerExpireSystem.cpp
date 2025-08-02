@@ -9,7 +9,8 @@
 void TimerExpireSystem::Update() {
   auto view = engine->GetRegistry()->view<TimerExpiredTag>();
   for (auto entity : view) {
-    auto& tag = engine->GetRegistry()->GetComponent<TimerExpiredTag>(entity);
+    const auto& tag =
+        engine->GetRegistry()->GetComponent<TimerExpiredTag>(entity);
 
     // Find the handle for the expired timer
     TimerHandle handle = INVALID_TIMER_HANDLE;
@@ -23,7 +24,7 @@ void TimerExpireSystem::Update() {
         // 1. Publish the high-level event
         switch (tag.expiredId) {
           case TimerId::Interact:
-            engine->GetDispatcher()->Publish(InteractEvent{});
+            engine->GetDispatcher()->Publish(InteractEvent(entity));
             break;
           default:
             break;

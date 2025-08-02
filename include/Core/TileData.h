@@ -3,14 +3,14 @@
 
 #include "Core/Entity.h"
 
-enum class TileType { tDirt, tGrass, tWater, tStone };
+enum class TileType { Invalid, Dirt, Grass, Water, Stone };
 
 constexpr int TILE_PIXEL_WIDTH = 64;
 constexpr int TILE_PIXEL_HEIGHT = 64;
 
 struct TileData {
-  TileType type = TileType::tDirt;
-  EntityID occupyingEntity = 0;  // 이 타일을 차지하는 건물이나 자원의 엔티티 ID
+  TileType type = TileType::Invalid;
+  EntityID occupyingEntity = INVALID_ENTITY;  // entity on this tile
   float debugValue;
 };
 

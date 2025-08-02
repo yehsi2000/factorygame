@@ -36,8 +36,7 @@ class GEngine {
   std::unique_ptr<GameState> currentState;
   std::unique_ptr<Registry> registry;
   std::unique_ptr<TimerManager> timerManager;
-
-  std::shared_ptr<ItemDatabase> itemDatabase;
+  std::unique_ptr<World> world;
 
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<CameraSystem> cameraSystem;
@@ -54,8 +53,6 @@ class GEngine {
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
   TTF_Font* gFont;
-
-  World* world;
 
   bool bIsRunning = true;
 
@@ -84,7 +81,7 @@ class GEngine {
   inline SDL_Renderer* GetRenderer() { return gRenderer; }
   inline SDL_Window* GetWindow() { return gWindow; }
   inline TTF_Font* GetFont() { return gFont; }
-  inline World* GetWorld() { return world; }
+  inline World* GetWorld() { return world.get(); }
   inline bool IsRunning() const { return bIsRunning; }
 };
 
