@@ -19,7 +19,7 @@
 #include "Core/TileData.h"
 #include "Core/Type.h"
 #include "Core/World.h"
-#include "Lib/FastNoiseLite.h"
+#include "FastNoiseLite.h"
 #include "SDL.h"
 #include "SDL_ttf.h"
 

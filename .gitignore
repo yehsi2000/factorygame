@@ -8,3 +8,4 @@ out
 !CMakeLists.txt
 *.md
 !README.md
+*.ini

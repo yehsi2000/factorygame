@@ -26,6 +26,8 @@
 #include "System/ResourceNodeSystem.h"
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
+#include "System/UISystem.h"
+#include "imgui.h"
 
 class GEngine {
   EntityID player;
@@ -49,10 +51,12 @@ class GEngine {
   std::unique_ptr<TimerSystem> timerSystem;
   std::unique_ptr<TimerExpireSystem> timerExpireSystem;
   std::unique_ptr<InteractionSystem> interactionSystem;
+  std::unique_ptr<UISystem> uiSystem;
 
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
   TTF_Font* gFont;
+  ImGuiIO& guiIo;
 
   bool bIsRunning = true;
 
@@ -68,7 +72,8 @@ class GEngine {
   std::unique_ptr<EventHandle> GameEndHandle;
 
  public:
-  GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font);
+  GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font,
+          ImGuiIO& io);
 
   void ChangeState(std::unique_ptr<GameState> newState);
   void Update(float deltaTime);
@@ -83,6 +88,7 @@ class GEngine {
   inline TTF_Font* GetFont() { return gFont; }
   inline World* GetWorld() { return world.get(); }
   inline bool IsRunning() const { return bIsRunning; }
+  inline ImGuiIO& GetGuiIO() { return guiIo; }
 };
 
 #endif /* CORE_GENGINE_ */

@@ -13,9 +13,13 @@
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
+#include "SDL.h"
 #include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 
 std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
   using boost::hash_combine;
@@ -48,12 +52,14 @@ void InputSystem::Update() {
   SDL_Event event;
 
   while (SDL_PollEvent(&event)) {
+    ImGui_ImplSDL2_ProcessEvent(&event);
+
     if (event.type == SDL_QUIT) {
       engine->GetDispatcher()->Publish(QuitEvent{});
       return;  // Stop all input handling if quit event occurs
     }
-
-    if (event.type == SDL_MOUSEBUTTONDOWN) {
+    if (engine->GetGuiIO().WantCaptureMouse) {
+    } else if (event.type == SDL_MOUSEBUTTONDOWN) {
       if (event.button.button == SDL_BUTTON_LEFT) {
         HandleInputAction(InputAction::StartInteraction, InputType::MOUSE);
       } else {
@@ -84,9 +90,9 @@ void InputSystem::Update() {
       //   }
       // }
     }
-
-    if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
-        event.type == SDL_KEYUP) {
+    if (engine->GetGuiIO().WantCaptureKeyboard) {
+    } else if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
+               event.type == SDL_KEYUP) {
       auto scancode = event.key.keysym.scancode;
       auto it = keyBindings.find(
           KeyEvent{scancode, static_cast<SDL_EventType>(event.type)});

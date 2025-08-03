@@ -35,7 +35,12 @@
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
 #include "System/ResourceNodeSystem.h"
+#include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
+#include "System/UISystem.h"
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 
 void GEngine::InitCoreSystem() {
   commandQueue = std::make_unique<CommandQueue>();
@@ -61,6 +66,7 @@ void GEngine::InitCoreSystem() {
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
   interactionSystem = std::make_unique<InteractionSystem>(
       registry.get(), world.get(), dispatcher.get(), commandQueue.get());
+  uiSystem = std::make_unique<UISystem>(gRenderer, guiIo);
 }
 
 void GEngine::RegisterComponent() {
@@ -105,8 +111,9 @@ void GEngine::GeneratePlayer() {
   registry->EmplaceComponent<InventoryComponent>(player);
 }
 
-GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
-    : gWindow(window), gRenderer(renderer), gFont(font) {
+GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font,
+                 ImGuiIO& io)
+    : gWindow(window), gRenderer(renderer), gFont(font), guiIo(io) {
   // Register core classes and systems such as the registry and event dispatcher
   InitCoreSystem();
   RegisterComponent();
@@ -131,7 +138,6 @@ void GEngine::Update(float deltaTime) {
       command->Execute(*this, *registry);
     }
   }
-
   inputSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();
@@ -144,4 +150,6 @@ void GEngine::Update(float deltaTime) {
   resourceNodeSystem->Update();
 
   renderSystem->Update();
+  uiSystem->Update();
+  SDL_RenderPresent(gRenderer);
 }

@@ -34,8 +34,6 @@ void RenderSystem::Update() {
 
   // RenderTexts();
   RenderTexts();
-
-  SDL_RenderPresent(renderer);
 }
 
 void RenderSystem::RenderChunks() {

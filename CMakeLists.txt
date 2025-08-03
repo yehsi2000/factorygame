@@ -36,11 +36,9 @@ add_executable(FactoryGame ${SRC_FILES})
 
 set_target_properties(FactoryGame PROPERTIES PDB_NAME "factorygame_debug_info")
 
-target_include_directories(FactoryGame PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-
 target_include_directories(FactoryGame PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/Lib"
     ${Boost_INCLUDE_DIRS}
 )
 
