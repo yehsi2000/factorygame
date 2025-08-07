@@ -1,7 +1,6 @@
 #include "System/CameraSystem.h"
 
 #include "Components/CameraComponent.h"
-#include "Components/MovementComponent.h"
 #include "Components/TransformComponent.h"
 
 CameraSystem::CameraSystem(Registry* r, EntityID player)

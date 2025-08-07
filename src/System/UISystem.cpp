@@ -10,7 +10,9 @@ void UISystem::Update() {
   ImGui_ImplSDLRenderer2_NewFrame();
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
+  bool a = true;
   {
+    ImGui::ShowDemoWindow(&a);
     static float f = 0.0f;
     static int counter = 0;
 

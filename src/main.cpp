@@ -8,15 +8,12 @@
 #include "Core/GameState.h"
 #include "Core/World.h"
 #include "SDL.h"
-#include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
 void GameLoop(GEngine *engine) {
-  // const auto tick = std::chrono::milliseconds(100);
-  float currentTime;
   float deltaTime;
   std::chrono::steady_clock::time_point startTimeChrono;
   std::chrono::steady_clock::time_point currentTimeChrono;
@@ -32,11 +29,6 @@ void GameLoop(GEngine *engine) {
     deltaTime /= 1000.f;
     prevTimeChrono = currentTimeChrono;
 
-    currentTime =
-        std::chrono::duration<float, std::chrono::milliseconds::period>(
-            currentTimeChrono - startTimeChrono)
-            .count();
-    currentTime /= 1000.f;
     engine->Update(deltaTime);
   }
 }

@@ -6,9 +6,9 @@
 InteractionSystem::InteractionSystem(Registry* registry, World* world,
                                      EventDispatcher* dispatcher,
                                      CommandQueue* commandQueue)
-    : registry(registry),
+    : commandQueue(commandQueue),
+      registry(registry),
       world(world),
-      commandQueue(commandQueue),
       handle(dispatcher->Subscribe<InteractEvent>(
           [this](const InteractEvent& event) {
             this->OnInteractEvent(event);

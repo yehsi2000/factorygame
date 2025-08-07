@@ -3,7 +3,6 @@
 #include <iostream>
 #include <memory>
 
-#include "SDL.h"
 #include "SDL_image.h"
 
 SDL_Texture* AssetManager::getTexture(const std::string& path,

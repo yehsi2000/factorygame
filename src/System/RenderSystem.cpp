@@ -1,7 +1,6 @@
 ﻿#include "System/RenderSystem.h"
 
 #include <algorithm>
-#include <format>
 #include <vector>
 
 #include "Components/CameraComponent.h"
@@ -13,7 +12,6 @@
 #include "Core/Chunk.h"
 #include "Core/Entity.h"
 #include "Core/TileData.h"
-#include "SDL.h"
 #include "SDL_ttf.h"
 
 RenderSystem::RenderSystem(Registry* r, SDL_Renderer* render, TTF_Font* f) {

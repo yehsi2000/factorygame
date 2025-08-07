@@ -6,20 +6,18 @@
 
 #include "Components/InteractionComponent.h"
 #include "Components/TimerComponent.h"
-#include "Core/CommandQueue.h"
+#include "Components/TransformComponent.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
-#include "SDL.h"
 #include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
 
 std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
   using boost::hash_combine;
@@ -78,17 +76,6 @@ void InputSystem::Update() {
       inputState.mouseDeltaY = event.motion.yrel;
       inputState.mouseX = event.motion.x;
       inputState.mouseY = event.motion.y;
-      // Registry* registry = engine->GetRegistry();
-      // EntityID player = engine->GetPlayer();
-      // if (registry->HasComponent<InteractionComponent>(player)) {
-      //   if (registry->GetComponent<InteractionComponent>(player).type ==
-      //       InteractionType::MOUSE) {
-      //     registry->RemoveComponent<InteractionComponent>(player);
-      //     TimerManager* timerManager = engine->GetTimerManager();
-      //     util::DetachTimer(*registry, *timerManager, player,
-      //                       TimerId::Interact);
-      //   }
-      // }
     }
     if (engine->GetGuiIO().WantCaptureKeyboard) {
     } else if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
@@ -101,8 +88,10 @@ void InputSystem::Update() {
       }
     }
   }
-  auto keystate = SDL_GetKeyboardState(nullptr);
-  HandleInputAxis(keystate);
+  if (!engine->GetGuiIO().WantCaptureKeyboard) {
+    auto keystate = SDL_GetKeyboardState(nullptr);
+    HandleInputAxis(keystate);
+  }
 }
 
 void InputSystem::HandleInputAction(InputAction action, InputType type) {

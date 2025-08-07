@@ -4,14 +4,10 @@
 #include <map>
 #include <random>
 
-#include "Components/ChunkComponent.h"
-#include "Components/TransformComponent.h"
 #include "Core/Chunk.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
-#include "Core/World.h"
-#include "SDL.h"
 #include "SDL_ttf.h"
 
 class Registry;

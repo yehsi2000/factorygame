@@ -3,7 +3,6 @@
 
 #include <map>
 #include <string>
-#include <vector>
 
 // single anim sequence info (ex: "walk", "idle", "attack")
 struct AnimationSequence {
