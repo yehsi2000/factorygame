@@ -1,9 +1,6 @@
 ﻿#ifndef COMPONENTS_RESOURCENODECOMPONENT_
 #define COMPONENTS_RESOURCENODECOMPONENT_
 
-#include <memory>
-
-#include "Core/Entity.h"
 #include "Core/Item.h"
 
 using rsrc_amt_t = unsigned long long;

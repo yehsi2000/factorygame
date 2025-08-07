@@ -1,6 +1,4 @@
-﻿#include <easy/profiler.h>
-
-#include <chrono>
+﻿#include <chrono>
 #include <iostream>
 #include <memory>
 

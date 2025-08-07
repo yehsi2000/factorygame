@@ -6,7 +6,6 @@
 #include <unordered_map>
 
 #include "SDL.h"
-#include "SDL_image.h"
 
 struct TextureDeleter {
   void operator()(SDL_Texture* texture) const {

@@ -1,7 +1,6 @@
 #ifndef COMPONENTS_CHUNKCOMPONENT_
 #define COMPONENTS_CHUNKCOMPONENT_
 
-#include "Core/TileData.h"
 #include "SDL.h"
 
 struct ChunkComponent {

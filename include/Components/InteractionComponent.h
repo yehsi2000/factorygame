@@ -2,7 +2,6 @@
 #define COMPONENTS_INTERACTIONCOMPONENT_
 
 #include "Core/Entity.h"
-#include "Core/TileData.h"
 #include "Core/Type.h"
 
 enum class InteractionType { INVALID, KEYBOARD, MOUSE };

@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <iostream>
 #include <queue>
-#include <string>
-#include <typeinfo>
 
 #include "Core/ComponentArray.h"
 #include "Core/InputState.h"
@@ -148,4 +146,4 @@ class Registry {
   inline InputState& GetInputState() { return inputState; }
 };
 
-#endif /* CORE_REGISTRY_ */
+#endif/* CORE_REGISTRY_ */

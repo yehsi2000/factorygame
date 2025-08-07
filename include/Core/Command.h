@@ -1,7 +1,6 @@
 #ifndef CORE_COMMAND_
 #define CORE_COMMAND_
 
-// Forward declarations to avoid circular dependencies
 class GEngine;
 class Registry;
 

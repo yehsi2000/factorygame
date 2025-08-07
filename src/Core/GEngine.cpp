@@ -1,7 +1,5 @@
 ﻿#include "Core/GEngine.h"
 
-#include <easy/profiler.h>
-
 #include <cassert>
 
 #include "Components/AnimationComponent.h"
