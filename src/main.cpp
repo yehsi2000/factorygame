@@ -8,7 +8,6 @@
 #include "Core/GameState.h"
 #include "Core/World.h"
 #include "SDL.h"
-#include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"

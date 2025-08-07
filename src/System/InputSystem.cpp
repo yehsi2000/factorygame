@@ -78,17 +78,6 @@ void InputSystem::Update() {
       inputState.mouseDeltaY = event.motion.yrel;
       inputState.mouseX = event.motion.x;
       inputState.mouseY = event.motion.y;
-      // Registry* registry = engine->GetRegistry();
-      // EntityID player = engine->GetPlayer();
-      // if (registry->HasComponent<InteractionComponent>(player)) {
-      //   if (registry->GetComponent<InteractionComponent>(player).type ==
-      //       InteractionType::MOUSE) {
-      //     registry->RemoveComponent<InteractionComponent>(player);
-      //     TimerManager* timerManager = engine->GetTimerManager();
-      //     util::DetachTimer(*registry, *timerManager, player,
-      //                       TimerId::Interact);
-      //   }
-      // }
     }
     if (engine->GetGuiIO().WantCaptureKeyboard) {
     } else if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
@@ -101,8 +90,10 @@ void InputSystem::Update() {
       }
     }
   }
-  auto keystate = SDL_GetKeyboardState(nullptr);
-  HandleInputAxis(keystate);
+  if (!engine->GetGuiIO().WantCaptureKeyboard) {
+    auto keystate = SDL_GetKeyboardState(nullptr);
+    HandleInputAxis(keystate);
+  }
 }
 
 void InputSystem::HandleInputAction(InputAction action, InputType type) {

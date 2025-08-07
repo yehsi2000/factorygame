@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <format>
 #include <iostream>
 #include <map>
 #include <random>
@@ -14,17 +13,15 @@
 #include "Components/TransformComponent.h"
 #include "Core/AssetManager.h"
 #include "Core/Chunk.h"
-#include "Core/GEngine.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
 #include "Core/World.h"
 #include "FastNoiseLite.h"
-#include "SDL.h"
 #include "SDL_ttf.h"
 
 World::World(SDL_Renderer* renderer, Registry* registry, TTF_Font* font)
-    : renderer(renderer), registry(registry), font(font) {
+    : font(font), renderer(renderer), registry(registry) {
   std::random_device rd;
   randomGenerator.seed(rd());
   distribution = std::normal_distribution<float>(0.0, 1.0);
@@ -190,6 +187,8 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
         case TileType::Stone:
           srcRect = {192, 0, 64, 64};
           break;
+        default:
+          break;
       }
 
       // Destination rectangle for this tile in the chunk texture
@@ -258,7 +257,7 @@ void World::GenerateChunk(Chunk& chunk) {
 
       float oreValue = oreNoise.GetNoise((float)worldTileX, (float)worldTileY);
       float oreThreshold = 0.5f;
-      TileData* tile = chunk.GetTile(x, y);
+      //TileData* tile = chunk.GetTile(x, y);
 
       if (oreValue > oreThreshold &&
           chunk.GetTile(x, y)->type != TileType::Water) {
@@ -280,7 +279,7 @@ void World::GenerateChunk(Chunk& chunk) {
 
           TextComponent textComp;
           snprintf(textComp.text, sizeof(textComp.text), "init");
-          textComp.color = SDL_Color{255, 255, 255};
+          textComp.color = SDL_Color{255, 255, 255, 255};
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
           SDL_Texture* spritesheet = AssetManager::getInstance().getTexture(

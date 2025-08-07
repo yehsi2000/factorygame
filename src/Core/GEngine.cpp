@@ -3,7 +3,6 @@
 #include <easy/profiler.h>
 
 #include <cassert>
-#include <type_traits>
 
 #include "Components/AnimationComponent.h"
 #include "Components/CameraComponent.h"
@@ -23,11 +22,9 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GameState.h"
-#include "Core/Item.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
-#include "SDL.h"
 #include "System/AnimationSystem.h"
 #include "System/CameraSystem.h"
 #include "System/InventorySystem.h"
@@ -39,8 +36,6 @@
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
 
 void GEngine::InitCoreSystem() {
   commandQueue = std::make_unique<CommandQueue>();

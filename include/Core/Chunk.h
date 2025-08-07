@@ -11,15 +11,15 @@ constexpr int CHUNK_WIDTH = 8;
 constexpr int CHUNK_HEIGHT = 8;
 
 class Chunk {
- public:
+public:
   Chunk(int _chunkX, int _chunkY);
   Vec2 GetLocalTileCoords(int worldTileX, int worldTileY) const;
-  TileData* GetTile(int localX, int localY);
+  TileData *GetTile(int localX, int localY);
   const int chunkX;
   const int chunkY;
   EntityID chunkEntity = 0;
 
- private:
+private:
   std::vector<TileData> tiles;
 };
 

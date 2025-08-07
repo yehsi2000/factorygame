@@ -2,10 +2,7 @@
 
 #include <Components/TextComponent.h>
 
-#include <format>
-
 #include "Components/ResourceNodeComponent.h"
-#include "Core/Item.h"
 #include "Core/Registry.h"
 
 ResourceNodeSystem::ResourceNodeSystem(Registry* r) { registry = r; }

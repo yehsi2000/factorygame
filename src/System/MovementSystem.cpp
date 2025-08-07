@@ -10,7 +10,6 @@
 #include "Components/MovementComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Entity.h"
-#include "Core/GEngine.h"
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 
