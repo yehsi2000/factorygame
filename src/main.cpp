@@ -39,21 +39,20 @@ int main(int argc, char *argv[]) {
 
   std::cout << "SDL initialized " << SDL_GetTicks() << std::endl;
 
-  SDL_Window *window =
-      SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
-                       SDL_WINDOWPOS_CENTERED, 1280, 960, SDL_WINDOW_RESIZABLE);
+  SDL_Window *window = SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
+                                        SDL_WINDOWPOS_CENTERED, 960, 540, 0);
 
   SDL_Renderer *renderer = SDL_CreateRenderer(
       window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
   std::cout << "SDL window created " << SDL_GetTicks() << std::endl;
-  TTF_Font *font = TTF_OpenFont("C:\\Windows\\Fonts\\gulim.ttc", 16);
+  TTF_Font *font = TTF_OpenFont("C:\\Windows\\Fonts\\NotoSansKR-VF.ttf", 16);
   if (font == NULL) {
     printf("Could not open font! (%s)\n", TTF_GetError());
     return -1;
   }
   std::cout << "font file opened " << SDL_GetTicks() << std::endl;
-
+  SDL_StopTextInput();
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
@@ -61,6 +60,7 @@ int main(int argc, char *argv[]) {
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.ConfigFlags |=
       ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+  io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\NotoSansKR-VF.ttf");
   ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer2_Init(renderer);
 

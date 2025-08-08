@@ -1,8 +1,8 @@
 ﻿#ifndef CORE_EVENT_
 #define CORE_EVENT_
-#include <memory>
 
 #include "Core/Entity.h"
+#include "Core/Item.h"
 
 struct Event {
   virtual ~Event() = default;
@@ -11,6 +11,22 @@ struct Event {
 struct InteractEvent : public Event {
   InteractEvent(EntityID i) : instigator(i) {}
   EntityID instigator;
+};
+
+struct ItemAddEvent : public Event {
+  ItemAddEvent(EntityID target, ItemID item, int amt)
+      : target(target), item(item), amount(amt) {};
+  EntityID target;
+  ItemID item;
+  int amount;
+};
+
+struct ItemConsumeEvent : public Event {
+  ItemConsumeEvent(EntityID target, ItemID item, int amt)
+      : target(target), item(item), amount(amt) {};
+  EntityID target;
+  ItemID item;
+  int amount;
 };
 
 struct XAxisEvent : public Event {

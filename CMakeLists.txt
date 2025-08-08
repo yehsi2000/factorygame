@@ -57,6 +57,9 @@ endif()
 
 cmake_policy(SET CMP0077 NEW)
 
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
 if(MSVC)
     target_compile_options(FactoryGame PRIVATE "/wd4819;")
 endif()

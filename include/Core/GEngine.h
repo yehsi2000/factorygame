@@ -56,7 +56,6 @@ class GEngine {
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
   TTF_Font* gFont;
-  ImGuiIO& guiIo;
 
   bool bIsRunning = true;
 
@@ -88,7 +87,9 @@ class GEngine {
   inline TTF_Font* GetFont() { return gFont; }
   inline World* GetWorld() { return world.get(); }
   inline bool IsRunning() const { return bIsRunning; }
-  inline ImGuiIO& GetGuiIO() { return guiIo; }
+  inline void ToggleInventory() {
+    if (uiSystem) uiSystem->ToggleInventory();
+  }
 };
 
 #endif /* CORE_GENGINE_ */

@@ -10,7 +10,7 @@
 #include "Core/Entity.h"
 
 class IComponentArray {
- public:
+public:
   virtual ~IComponentArray() = default;
   virtual void entityDestroyed(EntityID entity) = 0;
   virtual bool hasEntity(EntityID entity) = 0;
@@ -20,9 +20,8 @@ class IComponentArray {
 
 // TODO : in case of bottleneck -> refactor to entt-style sparse map
 // (using pagenation, tombstone, reverse iteration)
-template <typename T>
-class ComponentArray : public IComponentArray {
- private:
+template <typename T> class ComponentArray : public IComponentArray {
+private:
   // contiguous memory allocation for fast read
   // TODO : non-pod component's reallocation is expensive
   std::vector<T> componentArray;
@@ -32,8 +31,8 @@ class ComponentArray : public IComponentArray {
   // componentArray index -> entityID (for quick remove)
   std::unordered_map<std::size_t, EntityID> indexToEntityMap;
 
- public:
-  void addData(EntityID entity, T&& component) {
+public:
+  void addData(EntityID entity, T &&component) {
     assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
 
@@ -61,7 +60,7 @@ class ComponentArray : public IComponentArray {
   }
 
   template <typename... Args>
-  void emplaceData(EntityID entity, Args&&... args) {
+  void emplaceData(EntityID entity, Args &&...args) {
     assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
     std::size_t newIndex = componentArray.size();
@@ -70,14 +69,13 @@ class ComponentArray : public IComponentArray {
     componentArray.push_back(T{std::forward<Args>(args)...});
   }
 
-  T& getData(EntityID entity) {
+  T &getData(EntityID entity) {
     assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
            "Retrieving non-existent component.");
     return componentArray[entityToIndexMap[entity]];
   }
 
-  template <typename Func>
-  void forEach(Func func) {
+  template <typename Func> void forEach(Func func) {
     for (int i = static_cast<int>(componentArray.size()) - 1; i >= 0; --i) {
       func(indexToEntityMap.at(i), componentArray[i]);
     }
@@ -86,7 +84,7 @@ class ComponentArray : public IComponentArray {
   std::vector<EntityID> getAllEntities() override {
     std::vector<EntityID> res;
     res.reserve(entityToIndexMap.size());
-    for (auto& [id, _] : entityToIndexMap) {
+    for (auto &[id, _] : entityToIndexMap) {
       res.push_back(id);
     }
     return res;

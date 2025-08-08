@@ -19,6 +19,7 @@
 #include "Core/AssetManager.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
+#include "Core/GEngine.h"
 #include "Core/GameState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
@@ -45,21 +46,22 @@ void GEngine::InitCoreSystem() {
   assert(registry && "Fail to initialize registry");
 
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
-  inputSystem = std::make_unique<InputSystem>(this);
-  inputSystem->RegisterInputBindings();
-  inventorySystem = std::make_unique<InventorySystem>();
+  refinerySystem = std::make_unique<RefinerySystem>(registry.get());
+  resourceNodeSystem = std::make_unique<ResourceNodeSystem>(registry.get());
   movementSystem =
       std::make_unique<MovementSystem>(registry.get(), timerManager.get());
-  refinerySystem = std::make_unique<RefinerySystem>(registry.get());
-  renderSystem =
-      std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
-  resourceNodeSystem = std::make_unique<ResourceNodeSystem>(registry.get());
   timerSystem =
       std::make_unique<TimerSystem>(registry.get(), timerManager.get());
-  timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
   interactionSystem = std::make_unique<InteractionSystem>(
       registry.get(), world.get(), dispatcher.get(), commandQueue.get());
-  uiSystem = std::make_unique<UISystem>(gRenderer, guiIo);
+  renderSystem =
+      std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
+  inputSystem = std::make_unique<InputSystem>(this);
+  timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
+  uiSystem = std::make_unique<UISystem>(this);
+  inventorySystem = std::make_unique<InventorySystem>(this);
+
+  inputSystem->RegisterInputBindings();
 }
 
 void GEngine::RegisterComponent() {
@@ -106,7 +108,7 @@ void GEngine::GeneratePlayer() {
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font,
                  ImGuiIO& io)
-    : gWindow(window), gRenderer(renderer), gFont(font), guiIo(io) {
+    : gWindow(window), gRenderer(renderer), gFont(font) {
   // Register core classes and systems such as the registry and event dispatcher
   InitCoreSystem();
   RegisterComponent();

@@ -12,25 +12,25 @@
 // A handle to an event subscription.
 // When the handle is destroyed, the subscription is automatically removed.
 class EventHandle {
- public:
-  EventHandle(class EventDispatcher* dispatcher, std::type_index typeIndex,
+public:
+  EventHandle(class EventDispatcher *dispatcher, std::type_index typeIndex,
               size_t id);
   ~EventHandle();
 
-  EventHandle(const EventHandle&) = delete;
-  EventHandle& operator=(const EventHandle&) = delete;
-  EventHandle(EventHandle&& other) noexcept;
-  EventHandle& operator=(EventHandle&& other) noexcept;
+  EventHandle(const EventHandle &) = delete;
+  EventHandle &operator=(const EventHandle &) = delete;
+  EventHandle(EventHandle &&other) noexcept;
+  EventHandle &operator=(EventHandle &&other) noexcept;
 
- private:
-  class EventDispatcher* dispatcher;
+private:
+  class EventDispatcher *dispatcher;
   std::type_index typeIndex;
   size_t callbackID;
 };
 
 class EventDispatcher {
   friend class EventHandle;
-  using Callback = std::function<void(const Event&)>;
+  using Callback = std::function<void(const Event &)>;
   using CallbackID = size_t;
 
   std::unordered_map<std::type_index,
@@ -38,19 +38,19 @@ class EventDispatcher {
       listeners;
   CallbackID nextCallbackID = 1;
 
- public:
+public:
   EventDispatcher() = default;
-  EventDispatcher(const EventDispatcher&) = delete;
-  EventDispatcher& operator=(const EventDispatcher&) = delete;
+  EventDispatcher(const EventDispatcher &) = delete;
+  EventDispatcher &operator=(const EventDispatcher &) = delete;
 
   // Subscribes a callback function to a specific event type.
   // Returns a handle that automatically unsubscribes when it goes out of scope.
   template <typename EventType>
-  EventHandle Subscribe(std::function<void(const EventType&)> callback) {
+  EventHandle Subscribe(std::function<void(const EventType &)> callback) {
     CallbackID id = nextCallbackID++;
     listeners[typeid(EventType)].emplace_back(
-        id, [cb = std::move(callback)](const Event& evt) {
-          if (auto* e = dynamic_cast<const EventType*>(&evt)) {
+        id, [cb = std::move(callback)](const Event &evt) {
+          if (auto *e = dynamic_cast<const EventType *>(&evt)) {
             cb(*e);
           }
         });
@@ -58,10 +58,10 @@ class EventDispatcher {
   }
 
   // Publishes an event to all subscribed listeners immediately.
-  void Publish(const Event& event) {
+  void Publish(const Event &event) {
     auto it = listeners.find(typeid(event));
     if (it != listeners.end()) {
-      for (const auto& pair : it->second) {
+      for (const auto &pair : it->second) {
         pair.second(event);
       }
     }
@@ -69,15 +69,15 @@ class EventDispatcher {
 
   // Overload to accept shared_ptr for convenience, but still dispatches
   // immediately.
-  void Publish(const std::shared_ptr<const Event>& event) {
+  void Publish(const std::shared_ptr<const Event> &event) {
     if (event) {
       Publish(*event);
     }
   }
 
- private:
+private:
   // Called by EventHandle destructor to remove the subscription.
-  void Unsubscribe(const std::type_index& ti, CallbackID id);
+  void Unsubscribe(const std::type_index &ti, CallbackID id);
 };
 
 #endif /* CORE_EVENTDISPATCHER_ */

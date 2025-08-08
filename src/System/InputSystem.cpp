@@ -13,6 +13,7 @@
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
+#include "System/InputSystem.h"
 #include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
@@ -32,12 +33,15 @@ std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
   return seed;
 }
 
+InputSystem::InputSystem(GEngine* e) : engine(e), io(ImGui::GetIO()) {}
+
 void InputSystem::RegisterInputBindings() {
   keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYDOWN}] =
       InputAction::StartInteraction;
   keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYUP}] =
       InputAction::StopInteraction;
   keyBindings[KeyEvent{SDL_SCANCODE_ESCAPE, SDL_KEYDOWN}] = InputAction::Quit;
+  keyBindings[KeyEvent{SDL_SCANCODE_I, SDL_KEYDOWN}] = InputAction::Inventory;
 }
 
 void InputSystem::Update() {
@@ -56,7 +60,7 @@ void InputSystem::Update() {
       engine->GetDispatcher()->Publish(QuitEvent{});
       return;  // Stop all input handling if quit event occurs
     }
-    if (engine->GetGuiIO().WantCaptureMouse) {
+    if (io.WantCaptureMouse) {
     } else if (event.type == SDL_MOUSEBUTTONDOWN) {
       if (event.button.button == SDL_BUTTON_LEFT) {
         HandleInputAction(InputAction::StartInteraction, InputType::MOUSE);
@@ -77,9 +81,16 @@ void InputSystem::Update() {
       inputState.mouseX = event.motion.x;
       inputState.mouseY = event.motion.y;
     }
-    if (engine->GetGuiIO().WantCaptureKeyboard) {
-    } else if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
-               event.type == SDL_KEYUP) {
+
+    if (!io.WantCaptureKeyboard) {
+      auto keystate = SDL_GetKeyboardState(nullptr);
+      HandleInputAxis(keystate);
+    }
+
+    // if (io.WantCaptureKeyboard) {
+    // } else
+    if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
+        event.type == SDL_KEYUP) {
       auto scancode = event.key.keysym.scancode;
       auto it = keyBindings.find(
           KeyEvent{scancode, static_cast<SDL_EventType>(event.type)});
@@ -88,13 +99,11 @@ void InputSystem::Update() {
       }
     }
   }
-  if (!engine->GetGuiIO().WantCaptureKeyboard) {
-    auto keystate = SDL_GetKeyboardState(nullptr);
-    HandleInputAxis(keystate);
-  }
 }
 
 void InputSystem::HandleInputAction(InputAction action, InputType type) {
+  engine->GetRegistry()->GetInputState().xAxis = 0;
+  engine->GetRegistry()->GetInputState().yAxis = 0;
   Registry& registry = *engine->GetRegistry();
   TimerManager& timerManager = *engine->GetTimerManager();
   EntityID player = engine->GetPlayer();
@@ -160,6 +169,9 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
         registry.RemoveComponent<InteractionComponent>(player);
         util::DetachTimer(registry, timerManager, player, TimerId::Interact);
       }
+      break;
+    case InputAction::Inventory:
+      engine->ToggleInventory();
       break;
     case InputAction::Quit:
       engine->GetDispatcher()->Publish(QuitEvent{});

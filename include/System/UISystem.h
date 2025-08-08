@@ -4,14 +4,19 @@
 #include "SDL.h"
 #include "imgui.h"
 
+class GEngine;
+
 class UISystem {
  public:
-  UISystem(SDL_Renderer* r, ImGuiIO& io);
+  UISystem(GEngine *engine);
   void Update();
+  inline void ToggleInventory() { showInventory = !showInventory; }
 
  private:
-  SDL_Renderer* renderer;
-  ImGuiIO& io;
+  GEngine *engine;
+  bool showInventory = false;
+  bool demoShow = true;
+  void Inventory();
 };
 
 #endif /* SYSTEM_UISYSTEM_ */

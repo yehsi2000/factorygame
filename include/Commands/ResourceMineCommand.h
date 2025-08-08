@@ -5,34 +5,36 @@
 
 #include "Core/Command.h"
 #include "Core/Entity.h"
+#include "Core/Event.h"
 #include "Core/GEngine.h"
 #include "Core/Registry.h"
 
-// A command to execute a generic interaction.
-// In a real game, this would likely take an entity ID for the instigator
-// and the target of the interaction.
+// A command to execute mining interaction with resource node
 class ResourceMineCommand : public Command {
  public:
   ResourceMineCommand(EntityID instigator, EntityID target)
-      : target(target), instigator(instigator) {}
+      : instigator(instigator), target(target) {}
 
-  void Execute(GEngine& engine, Registry& registry) override {
+  void Execute(GEngine &engine, Registry &registry) override {
     if (registry.HasComponent<ResourceNodeComponent>(target)) {
-      ResourceNodeComponent& resource =
+      ResourceNodeComponent &resource =
           registry.GetComponent<ResourceNodeComponent>(target);
+      if (resource.LeftResource == 0) return;
+
       resource.LeftResource--;
       if (registry.HasComponent<InventoryComponent>(instigator)) {
-        InventoryComponent& inventory =
+        InventoryComponent &inventory =
             registry.GetComponent<InventoryComponent>(instigator);
-        inventory.items[OreToItemMapper::instance().get(resource.Ore)]++;
+        engine.GetDispatcher()->Publish(ItemAddEvent(
+            instigator, OreToItemMapper::instance().get(resource.Ore), 1));
       }
     }
     std::cout << "Interaction Command Executed!" << std::endl;
   }
 
  private:
-  EntityID target;
   EntityID instigator;
+  EntityID target;
 };
 
 #endif /* COMMANDS_RESOURCEMINECOMMAND_ */

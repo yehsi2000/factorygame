@@ -1,23 +1,38 @@
 ﻿#include "System/InventorySystem.h"
 
-#include "Components/InventoryComponent.h"
+#include <algorithm>
+#include <memory>
 
-InventorySystem::~InventorySystem() = default;
+#include "Commands/InventoryCommand.h"
+#include "Core/Event.h"
+#include "Core/GEngine.h"
 
-bool InventorySystem::consume(InventoryComponent& inv, ItemID itemID, int n) {
-  if (inv.items.find(itemID) != inv.items.end() && inv.items[itemID] >= n) {
-    inv.items[itemID] -= n;
-    if (inv.items[itemID] == 0) inv.items.erase(itemID);
-    return true;
-  }
-  return false;
+InventorySystem::InventorySystem(GEngine *engine)
+    : engine(engine),
+      addEventHandle(engine->GetDispatcher()->Subscribe<ItemAddEvent>(
+          [this](const ItemAddEvent &e) { this->AddItem(e); })),
+      consumeEventHandle(engine->GetDispatcher()->Subscribe<ItemConsumeEvent>(
+          [this](const ItemConsumeEvent &e) { this->ConsumeItem(e); })) {}
+
+void InventorySystem::AddItem(const ItemAddEvent &e) {
+  if (e.amount == 0) return;
+  Registry *reg = engine->GetRegistry();
+  if (!reg->HasComponent<InventoryComponent>(e.target)) return;
+  CommandQueue *cq = engine->GetCommandQueue();
+  cq->Enqueue(std::make_unique<InventoryCommand>(e.target, e.item, e.amount));
 }
 
-void InventorySystem::add(InventoryComponent& inv, ItemID itemID, int n) {
-  inv.items[itemID] += n;
-}
+void InventorySystem::ConsumeItem(const ItemConsumeEvent &e) {
+  if (e.amount == 0) return;
+  Registry *reg = engine->GetRegistry();
+  if (!reg->HasComponent<InventoryComponent>(e.target)) return;
+  InventoryComponent &inv = reg->GetComponent<InventoryComponent>(e.target);
 
-int InventorySystem::get(InventoryComponent& inv, ItemID itemID) const {
-  auto pos = inv.items.find(itemID);
-  return (pos != inv.items.end()) ? pos->second : 0;
+  if (std::find_if(inv.items.begin(), inv.items.end(), [&e](const auto &p) {
+        return p.first == e.item;
+      }) == inv.items.end())
+    return;
+
+  CommandQueue *cq = engine->GetCommandQueue();
+  cq->Enqueue(std::make_unique<InventoryCommand>(e.target, e.item, -e.amount));
 }
