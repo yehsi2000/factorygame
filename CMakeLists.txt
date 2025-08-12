@@ -6,11 +6,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(BUILD_STATIC ON)
 
 if(BUILD_STATIC)
-    set(BUILD_SHARED_LIBS OFF)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static library" FORCE)
     set(SDL_SHARED OFF)
     set(SDL_STATIC ON)
+    set(SDL2IMAGE_DEPS_SHARED OFF)
 else()
-    set(BUILD_SHARED_LIBS ON)
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library" FORCE)
     set(SDL_SHARED ON)
     set(SDL_STATIC OFF)
 endif()
@@ -35,7 +36,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.
 
 add_executable(FactoryGame ${SRC_FILES})
 
-set_target_properties(FactoryGame PROPERTIES PDB_NAME "factorygame_debug_info")
+set_target_properties(FactoryGame PROPERTIES PDB_NAME "FactoryGame")
 
 target_include_directories(FactoryGame PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"

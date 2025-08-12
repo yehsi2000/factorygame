@@ -1,12 +1,10 @@
+.*
 build
-.vscode
-.cache
 vendored
 assets
 CMake*
 out
-.vs
 !CMakeLists.txt
 *.md
-!README.md
 *.ini
+!README.md
