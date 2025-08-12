@@ -1,6 +1,10 @@
 #ifndef COMMANDS_RESOURCEMINECOMMAND_
 #define COMMANDS_RESOURCEMINECOMMAND_
 
+#include <Common.h>
+#include <Components/ResourceNodeComponent.h>
+#include <Components/SpriteComponent.h>
+
 #include <iostream>
 
 #include "Core/Command.h"
@@ -20,13 +24,28 @@ class ResourceMineCommand : public Command {
       ResourceNodeComponent &resource =
           registry.GetComponent<ResourceNodeComponent>(target);
       if (resource.LeftResource == 0) return;
-
-      resource.LeftResource--;
       if (registry.HasComponent<InventoryComponent>(instigator)) {
         InventoryComponent &inventory =
             registry.GetComponent<InventoryComponent>(instigator);
+        if (inventory.items.size() < inventory.column * inventory.row)
+          resource.LeftResource--;
         engine.GetDispatcher()->Publish(ItemAddEvent(
             instigator, OreToItemMapper::instance().get(resource.Ore), 1));
+      }
+      if (registry.HasComponent<SpriteComponent>(target)) {
+        auto &sprite = registry.GetComponent<SpriteComponent>(target);
+        auto &resource = registry.GetComponent<ResourceNodeComponent>(target);
+        World *world = engine.GetWorld();
+        rsrc_amt_t minIron = world->GetMinironOreAmount();
+        rsrc_amt_t maxIron = world->GetMaxironOreAmount();
+
+        int richnessIndex =
+            (IRON_SPRITESHEET_HEIGHT - 1) -
+            std::min(
+                7.0f,
+                std::floor(static_cast<float>(resource.LeftResource - minIron) /
+                           static_cast<float>(maxIron - minIron) * 8.f));
+        sprite.srcRect = {0, richnessIndex * 128, 128, 128};
       }
     }
     std::cout << "Interaction Command Executed!" << std::endl;

@@ -4,7 +4,6 @@
 #include <algorithm>
 
 #include "Core/Command.h"
-#include "Core/Event.h"
 #include "Core/GEngine.h"
 #include "Core/Item.h"
 
@@ -21,20 +20,21 @@ class InventoryCommand : public Command {
         registry.GetComponent<InventoryComponent>(target);
     // add item
     if (amount > 0) {
-      auto it = std::find_if(inventory.items.begin(), inventory.items.end(),
-                             [this](const auto &itempair) {
-                               return itempair.first == this->item;
-                             });
       int maxStackSize = ItemDatabase::instance().get(item).maxStackSize;
+      auto it = std::find_if(inventory.items.begin(), inventory.items.end(),
+                             [this, maxStackSize](const auto &itempair) {
+                               return (itempair.first == this->item &&
+                                       itempair.second < maxStackSize);
+                             });
       if (it != inventory.items.end()) {
         it->second += amount;
         if (it->second > maxStackSize) {
-          amount -= (maxStackSize - it->second);
+          amount = (it->second - maxStackSize);
           it->second = maxStackSize;
         } else {
           amount = 0;
         }
-            }
+      }
       while (amount > maxStackSize) {
         amount -= maxStackSize;
         inventory.items.push_back(std::make_pair(item, maxStackSize));

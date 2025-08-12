@@ -4,6 +4,7 @@
 #include <map>
 #include <random>
 
+#include "Components/ResourceNodeComponent.h"
 #include "Core/Chunk.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
@@ -36,6 +37,8 @@ class World {
   TileData* GetTileAtTileCoords(int tileX, int tileY);
 
   const std::map<ChunkCoord, Chunk>& GetActiveChunks() const;
+  inline rsrc_amt_t GetMinironOreAmount() const { return minironOreAmount; }
+  inline rsrc_amt_t GetMaxironOreAmount() const { return maxironOreAmount; }
 
  private:
   void LoadChunk(int chunkX, int chunkY);
@@ -51,6 +54,8 @@ class World {
   std::normal_distribution<float> distribution;
   std::map<ChunkCoord, Chunk> activeChunks;
   std::map<ChunkCoord, Chunk> chunkCache;
+  rsrc_amt_t minironOreAmount;
+  rsrc_amt_t maxironOreAmount = 10000;
   int viewDistance = 2;  // 플레이어로부터 몇 청크까지 로드할 것인가
 };
 

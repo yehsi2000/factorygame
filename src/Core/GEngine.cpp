@@ -47,7 +47,8 @@ void GEngine::InitCoreSystem() {
 
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
-  resourceNodeSystem = std::make_unique<ResourceNodeSystem>(registry.get());
+  resourceNodeSystem =
+      std::make_unique<ResourceNodeSystem>(registry.get(), world.get());
   movementSystem =
       std::make_unique<MovementSystem>(registry.get(), timerManager.get());
   timerSystem =

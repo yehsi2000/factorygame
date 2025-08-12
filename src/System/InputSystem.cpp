@@ -161,7 +161,7 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
             InteractionComponent{player, tilecoord, interactionType, 1.f});
 
         util::AttachTimer(registry, timerManager, player, TimerId::Interact,
-                          1.f, true);
+                          1.0f, true);
       }
       break;
     case InputAction::StopInteraction:

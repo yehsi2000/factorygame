@@ -4,8 +4,10 @@
 
 #include "Components/ResourceNodeComponent.h"
 #include "Core/Registry.h"
+#include "Core/World.h"
 
-ResourceNodeSystem::ResourceNodeSystem(Registry* r) { registry = r; }
+ResourceNodeSystem::ResourceNodeSystem(Registry* r, World* world)
+    : registry(r), world(world) {}
 
 void ResourceNodeSystem::Update() {
   for (EntityID entity : registry->view<ResourceNodeComponent>()) {
