@@ -12,6 +12,7 @@
 #include "Core/Entity.h"
 #include "Core/InputState.h"
 #include "Core/Registry.h"
+#include "Core/TimerManager.h"
 
 MovementSystem::MovementSystem(Registry* r, TimerManager* tm)
     : registry(r), timerManager(tm) {}

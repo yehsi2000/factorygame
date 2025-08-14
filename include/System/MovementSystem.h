@@ -1,8 +1,8 @@
 ﻿#ifndef SYSTEM_MOVEMENTSYSTEM_
 #define SYSTEM_MOVEMENTSYSTEM_
 
-#include "Core/Registry.h"
-#include "Core/TimerManager.h"
+class Registry;
+class TimerManager;
 
 class MovementSystem {
   Registry* registry;

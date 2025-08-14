@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include "Components/InventoryComponent.h"
 #include "Core/Command.h"
 #include "Core/GEngine.h"
 #include "Core/Item.h"

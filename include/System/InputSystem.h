@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <unordered_map>
 
-#include "Core/CommandQueue.h"
 #include "SDL.h"
 #include "imgui.h"
 
@@ -29,14 +28,18 @@ class InputSystem {
   std::unordered_map<KeyEvent, InputAction, KeyEventHasher> keyBindings;
   GEngine* engine;
   ImGuiIO& io;
-  double maxInteractionRadius = 3000.0;
+  double maxInteractionRadius = 200.0;
 
  public:
   InputSystem(GEngine* e);
   void Update();
-  void RegisterInputBindings();
+  void InitInputSystem();
+
   void HandleInputAction(InputAction action, InputType type);
   void HandleInputAxis(const Uint8* keyState);
+
+ private:
+  void RegisterInputBindings();
 };
 
 #endif /* SYSTEM_INPUTSYSTEM_ */

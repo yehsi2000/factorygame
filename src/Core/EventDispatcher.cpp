@@ -1,7 +1,5 @@
 #include "Core/EventDispatcher.h"
 
-// --- EventHandle Implementation ---
-
 EventHandle::EventHandle(EventDispatcher* dispatcher, std::type_index typeIndex,
                          size_t id)
     : dispatcher(dispatcher), typeIndex(typeIndex), callbackID(id) {}

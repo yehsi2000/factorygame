@@ -1,7 +1,7 @@
 ﻿#ifndef SYSTEM_ANIMATIONSYSTEM_
 #define SYSTEM_ANIMATIONSYSTEM_
 
-#include "Core/Registry.h"
+class Registry;
 
 class AnimationSystem {
   Registry* registry;

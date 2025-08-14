@@ -2,16 +2,20 @@
 #define SYSTEM_CAMERASYSTEM_
 
 #include "Core/Entity.h"
-#include "Core/Registry.h"
 #include "Core/Type.h"
 
+class GEngine;
+class Registry;
+
 class CameraSystem {
+  GEngine* engine;
   Registry* registry;
-  EntityID playerEntity;
   EntityID cameraEntity;
+  EntityID playerEntity = INVALID_ENTITY;
 
  public:
-  CameraSystem(Registry* r, EntityID player);
+  CameraSystem(GEngine* e);
+  void InitCameraSystem();
 
   void Update(float deltaTime);
 
@@ -27,8 +31,6 @@ class CameraSystem {
  private:
   void UpdateCameraFollow(float deltaTime);
   void UpdateCameraDrag(float deltaTime);
-
-  EntityID CreateCameraEntity();
 };
 
 #endif /* SYSTEM_CAMERASYSTEM_ */

@@ -2,6 +2,9 @@
 
 #include "Commands/ResourceMineCommand.h"
 #include "Components/InteractionComponent.h"
+#include "Core/CommandQueue.h"
+#include "Core/Registry.h"
+#include "Core/World.h"
 
 InteractionSystem::InteractionSystem(Registry* registry, World* world,
                                      EventDispatcher* dispatcher,

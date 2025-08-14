@@ -26,6 +26,8 @@
 #include "Core/World.h"
 #include "System/AnimationSystem.h"
 #include "System/CameraSystem.h"
+#include "System/InputSystem.h"
+#include "System/InteractionSystem.h"
 #include "System/InventorySystem.h"
 #include "System/MovementSystem.h"
 #include "System/RefinerySystem.h"
@@ -37,14 +39,6 @@
 #include "imgui.h"
 
 void GEngine::InitCoreSystem() {
-  commandQueue = std::make_unique<CommandQueue>();
-  registry = std::make_unique<Registry>();
-  dispatcher = std::make_unique<EventDispatcher>();
-  timerManager = std::make_unique<TimerManager>();
-  world = std::make_unique<World>(gRenderer, registry.get(), gFont);
-
-  assert(registry && "Fail to initialize registry");
-
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
   resourceNodeSystem =
@@ -61,8 +55,10 @@ void GEngine::InitCoreSystem() {
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
   uiSystem = std::make_unique<UISystem>(this);
   inventorySystem = std::make_unique<InventorySystem>(this);
+  cameraSystem = std::make_unique<CameraSystem>(this);
 
-  inputSystem->RegisterInputBindings();
+  cameraSystem->InitCameraSystem();
+  inputSystem->InitInputSystem();
 }
 
 void GEngine::RegisterComponent() {
@@ -109,16 +105,28 @@ void GEngine::GeneratePlayer() {
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font,
                  ImGuiIO& io)
-    : gWindow(window), gRenderer(renderer), gFont(font) {
-  // Register core classes and systems such as the registry and event dispatcher
-  InitCoreSystem();
+    : gWindow(window),
+      gRenderer(renderer),
+      gFont(font),
+      registry(std::make_unique<Registry>()),
+      timerManager(std::make_unique<TimerManager>()),
+      dispatcher(std::make_unique<EventDispatcher>()),
+      commandQueue(std::make_unique<CommandQueue>()),
+      world(std::make_unique<World>(renderer, registry.get(), font)),
+      GameEndHandle(GetDispatcher()->Subscribe<QuitEvent>(
+          [this](const QuitEvent&) { bIsRunning = false; })) {
+  assert(registry && "Fail to initialize GEngine : Invalid registry");
+  assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
+  assert(dispatcher && "Fail to initialize GEngine : Invalid dispatcher");
+  assert(commandQueue && "Fail to initialize GEngine : Invalid command queue");
+  assert(world && "Fail to initialize GEngine : Invalid world");
+
   RegisterComponent();
+  InitCoreSystem();
   GeneratePlayer();
-  cameraSystem = std::make_unique<CameraSystem>(registry.get(), player);
-  GameEndHandle =
-      std::make_unique<EventHandle>(GetDispatcher()->Subscribe<QuitEvent>(
-          [this](const QuitEvent&) { this->bIsRunning = false; }));
 }
+
+GEngine::~GEngine() = default;
 
 void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
   if (currentState) currentState->Exit();
@@ -149,3 +157,5 @@ void GEngine::Update(float deltaTime) {
   uiSystem->Update();
   SDL_RenderPresent(gRenderer);
 }
+
+void GEngine::ToggleInventory() { uiSystem->ToggleInventory(); }

@@ -5,6 +5,7 @@
 #include <map>
 #include <random>
 
+#include "Common.h"
 #include "Components/ChunkComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/ResourceNodeComponent.h"
@@ -19,7 +20,6 @@
 #include "Core/World.h"
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
-#include "Common.h"
 
 World::World(SDL_Renderer* renderer, Registry* registry, TTF_Font* font)
     : font(font), renderer(renderer), registry(registry) {
@@ -259,8 +259,8 @@ void World::GenerateChunk(Chunk& chunk) {
       int worldTileY = chunk.chunkY * CHUNK_HEIGHT + y;
 
       float oreValue = oreNoise.GetNoise((float)worldTileX, (float)worldTileY);
-      
-      //TileData* tile = chunk.GetTile(x, y);
+
+      // TileData* tile = chunk.GetTile(x, y);
 
       if (oreValue > oreThreshold &&
           chunk.GetTile(x, y)->type != TileType::Water) {
@@ -268,8 +268,9 @@ void World::GenerateChunk(Chunk& chunk) {
 
         if (tile->occupyingEntity == INVALID_ENTITY) {
           EntityID oreNode = registry->CreateEntity();
-          
-          rsrc_amt_t oreAmount = static_cast<rsrc_amt_t>(static_cast<float>(maxironOreAmount) * oreValue);
+
+          rsrc_amt_t oreAmount = static_cast<rsrc_amt_t>(
+              static_cast<float>(maxironOreAmount) * oreValue);
 
           registry->AddComponent<TransformComponent>(
               oreNode,
@@ -290,13 +291,15 @@ void World::GenerateChunk(Chunk& chunk) {
           SpriteComponent spriteComp;
           spriteComp.texture = spritesheet;
           // tile->debugValue = oreAmount;
-          
 
           int richnessIndex =
-              (IRON_SPRITESHEET_HEIGHT - 1)
-              - std::min(7.0f, std::floor(static_cast<float>(oreAmount - minironOreAmount) /
-                                       static_cast<float>(maxironOreAmount - minironOreAmount) *
-                                       8.f));
+              (IRON_SPRITESHEET_HEIGHT - 1) -
+              std::min(
+                  7.0f,
+                  std::floor(
+                      static_cast<float>(oreAmount - minironOreAmount) /
+                      static_cast<float>(maxironOreAmount - minironOreAmount) *
+                      8.f));
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
           spriteComp.renderRect = {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);

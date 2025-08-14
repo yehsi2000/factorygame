@@ -1,11 +1,12 @@
 #ifndef SYSTEM_INTERACTIONSYSTEM_
 #define SYSTEM_INTERACTIONSYSTEM_
 
-#include "Core/CommandQueue.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
-#include "Core/Registry.h"
-#include "Core/World.h"
+
+class CommandQueue;
+class Registry;
+class World;
 
 class InteractionSystem {
  public:

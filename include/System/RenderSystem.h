@@ -1,10 +1,11 @@
 ﻿#ifndef SYSTEM_RENDERSYSTEM_
 #define SYSTEM_RENDERSYSTEM_
 
-#include "Core/Registry.h"
 #include "Core/Type.h"
-#include "SDL.h"
 #include "SDL_ttf.h"
+
+class Registry;
+class SDL_Renderer;
 
 class RenderSystem {
   Registry* registry;

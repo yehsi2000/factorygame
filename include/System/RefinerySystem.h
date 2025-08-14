@@ -3,7 +3,8 @@
 
 #include "Components/RefineryComponent.h"
 #include "Core/Entity.h"
-#include "Core/Registry.h"
+
+class Registry;
 
 class RefinerySystem {
   Registry* registry;

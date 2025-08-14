@@ -3,14 +3,13 @@
 
 #include <cassert>
 #include <cstddef>
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
 #include "Core/Entity.h"
 
 class IComponentArray {
-public:
+ public:
   virtual ~IComponentArray() = default;
   virtual void entityDestroyed(EntityID entity) = 0;
   virtual bool hasEntity(EntityID entity) = 0;
@@ -20,8 +19,9 @@ public:
 
 // TODO : in case of bottleneck -> refactor to entt-style sparse map
 // (using pagenation, tombstone, reverse iteration)
-template <typename T> class ComponentArray : public IComponentArray {
-private:
+template <typename T>
+class ComponentArray : public IComponentArray {
+ private:
   // contiguous memory allocation for fast read
   // TODO : non-pod component's reallocation is expensive
   std::vector<T> componentArray;
@@ -31,7 +31,7 @@ private:
   // componentArray index -> entityID (for quick remove)
   std::unordered_map<std::size_t, EntityID> indexToEntityMap;
 
-public:
+ public:
   void addData(EntityID entity, T &&component) {
     assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
@@ -75,7 +75,8 @@ public:
     return componentArray[entityToIndexMap[entity]];
   }
 
-  template <typename Func> void forEach(Func func) {
+  template <typename Func>
+  void forEach(Func func) {
     for (int i = static_cast<int>(componentArray.size()) - 1; i >= 0; --i) {
       func(indexToEntityMap.at(i), componentArray[i]);
     }

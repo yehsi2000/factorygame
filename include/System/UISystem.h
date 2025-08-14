@@ -1,9 +1,6 @@
 ﻿#ifndef SYSTEM_UISYSTEM_
 #define SYSTEM_UISYSTEM_
 
-#include "SDL.h"
-#include "imgui.h"
-
 class GEngine;
 
 class UISystem {

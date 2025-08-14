@@ -4,7 +4,6 @@
 #include <format>
 
 #include "Components/InventoryComponent.h"
-#include "Core/Entity.h"
 #include "Core/GEngine.h"
 #include "Core/Registry.h"
 #include "imgui.h"

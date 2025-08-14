@@ -4,6 +4,7 @@
 #include "Components/InactiveComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Core/Entity.h"
+#include "Core/Registry.h"
 
 AnimationSystem::AnimationSystem(Registry* r) { registry = r; }
 

@@ -1,12 +1,12 @@
 #ifndef COMMANDS_RESOURCEMINECOMMAND_
 #define COMMANDS_RESOURCEMINECOMMAND_
 
-#include <Common.h>
-#include <Components/ResourceNodeComponent.h>
-#include <Components/SpriteComponent.h>
-
 #include <iostream>
 
+#include "Common.h"
+#include "Components/InventoryComponent.h"
+#include "Components/ResourceNodeComponent.h"
+#include "Components/SpriteComponent.h"
 #include "Core/Command.h"
 #include "Core/Entity.h"
 #include "Core/Event.h"

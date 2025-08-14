@@ -35,6 +35,8 @@ std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
 
 InputSystem::InputSystem(GEngine* e) : engine(e), io(ImGui::GetIO()) {}
 
+void InputSystem::InitInputSystem() { RegisterInputBindings(); }
+
 void InputSystem::RegisterInputBindings() {
   keyBindings[KeyEvent{SDL_SCANCODE_J, SDL_KEYDOWN}] =
       InputAction::StartInteraction;

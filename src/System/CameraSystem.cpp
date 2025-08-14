@@ -2,13 +2,22 @@
 
 #include "Components/CameraComponent.h"
 #include "Components/TransformComponent.h"
+#include "Core/GEngine.h"
+#include "Core/Registry.h"
 
-CameraSystem::CameraSystem(Registry* r, EntityID player)
-    : registry(r), playerEntity(player) {
-  cameraEntity = CreateCameraEntity();
+CameraSystem::CameraSystem(GEngine* e) : engine(e) {
+  registry = engine->GetRegistry();
+  assert(registry && "Fail to initialize CameraSystem : Invalid registry");
+}
+
+void CameraSystem::InitCameraSystem() {
+  EntityID camera = registry->CreateEntity();
+  registry->EmplaceComponent<CameraComponent>(camera);
+  cameraEntity = camera;
 }
 
 void CameraSystem::Update(float deltaTime) {
+  playerEntity = engine->GetPlayer();
   UpdateCameraFollow(deltaTime);
   UpdateCameraDrag(deltaTime);
 }
@@ -36,7 +45,9 @@ Vec2f CameraSystem::ScreenToWorld(Vec2f screenPos, int screenWidth,
 }
 
 void CameraSystem::UpdateCameraFollow(float deltaTime) {
-  if (!registry->HasComponent<CameraComponent>(cameraEntity)) return;
+  if (playerEntity != INVALID_ENTITY &&
+      !registry->HasComponent<CameraComponent>(cameraEntity))
+    return;
 
   auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
@@ -71,7 +82,9 @@ void CameraSystem::UpdateCameraFollow(float deltaTime) {
 }
 
 void CameraSystem::UpdateCameraDrag(float deltaTime) {
-  if (!registry->HasComponent<CameraComponent>(cameraEntity)) return;
+  if (playerEntity != INVALID_ENTITY &&
+      !registry->HasComponent<CameraComponent>(cameraEntity))
+    return;
 
   auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
   const auto& input = registry->GetInputState();
@@ -138,10 +151,4 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   } else {
     inactiveTime = 0.0f;
   }
-}
-
-EntityID CameraSystem::CreateCameraEntity() {
-  EntityID camera = registry->CreateEntity();
-  registry->EmplaceComponent<CameraComponent>(camera);
-  return camera;
 }
