@@ -29,6 +29,10 @@ struct ItemConsumeEvent : public Event {
   int amount;
 };
 
+struct ToggleInventoryEvent : public Event {
+  ToggleInventoryEvent() = default;
+};
+
 struct XAxisEvent : public Event {
   XAxisEvent(float i) : val(i) {}
   float val;

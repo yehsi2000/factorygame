@@ -28,14 +28,17 @@ class TimerExpireSystem;
 class TimerSystem;
 class UISystem;
 
-class GEngine {
-  EntityID player;
+/**
+ * @brief Main Engine Class
+ * 
+ */
+class GEngine {  
+  EntityID player; ///< Local player ID
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
   TTF_Font* gFont;
 
-  std::vector<EntityID> entities;
-  std::unique_ptr<GameState> currentState;
+  std::unique_ptr<GameState> currentState; ///< Current GameState
 
   std::unique_ptr<Registry> registry;
   std::unique_ptr<TimerManager> timerManager;
@@ -43,7 +46,7 @@ class GEngine {
   std::unique_ptr<CommandQueue> commandQueue;
   std::unique_ptr<World> world;
 
-  EventHandle GameEndHandle;
+  EventHandle GameEndHandle; ///< EventHandle subscribing GameEnd Event
 
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<CameraSystem> cameraSystem;
@@ -60,8 +63,6 @@ class GEngine {
 
   bool bIsRunning = true;
 
-  EntityID nextID = 1;
-
   GEngine(const GEngine&) = delete;
   GEngine& operator=(const GEngine&) = delete;
   GEngine(GEngine&&) = delete;
@@ -71,13 +72,25 @@ class GEngine {
   void GeneratePlayer();
 
  public:
-  GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font,
-          ImGuiIO& io);
+ /**
+  * @brief Construct a new GEngine object
+  * @note initializes Registry, TimeManager, Eventdispatcher, CommandQueue, World, GameEndHandle.
+  */
+  GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font);
   ~GEngine();
 
+  /**
+   * @brief Change GameState to given state
+   * 
+   * @param newState new GameState to shift
+   */
   void ChangeState(std::unique_ptr<GameState> newState);
+  /**
+   * @brief Process all pending command and update every system
+   * 
+   * @param deltaTime
+   */
   void Update(float deltaTime);
-  void ToggleInventory();
 
   inline EventDispatcher* GetDispatcher() { return dispatcher.get(); }
   inline CommandQueue* GetCommandQueue() { return commandQueue.get(); }

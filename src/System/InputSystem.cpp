@@ -173,7 +173,7 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
       }
       break;
     case InputAction::Inventory:
-      engine->ToggleInventory();
+      engine->GetDispatcher()->Publish(ToggleInventoryEvent{});
       break;
     case InputAction::Quit:
       engine->GetDispatcher()->Publish(QuitEvent{});

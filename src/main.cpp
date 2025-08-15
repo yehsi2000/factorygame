@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   ImGui_ImplSDLRenderer2_Init(renderer);
 
   std::unique_ptr<GEngine> engine =
-      std::make_unique<GEngine>(window, renderer, font, io);
+      std::make_unique<GEngine>(window, renderer, font);
 
   engine->ChangeState(std::make_unique<MainMenuState>());
 

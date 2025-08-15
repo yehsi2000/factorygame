@@ -10,7 +10,13 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
-UISystem::UISystem(GEngine *engine) : engine(engine) {}
+UISystem::UISystem(GEngine *engine)
+    : engine(engine),
+      showInventoryEvent(
+          engine->GetDispatcher()->Subscribe<ToggleInventoryEvent>(
+              [this](ToggleInventoryEvent e) {
+                showInventory = !showInventory;
+              })) {}
 
 void UISystem::Update() {
   ImGui_ImplSDLRenderer2_NewFrame();

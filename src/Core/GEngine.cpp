@@ -103,8 +103,7 @@ void GEngine::GeneratePlayer() {
   registry->EmplaceComponent<InventoryComponent>(player);
 }
 
-GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font,
-                 ImGuiIO& io)
+GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
     : gWindow(window),
       gRenderer(renderer),
       gFont(font),
@@ -157,5 +156,3 @@ void GEngine::Update(float deltaTime) {
   uiSystem->Update();
   SDL_RenderPresent(gRenderer);
 }
-
-void GEngine::ToggleInventory() { uiSystem->ToggleInventory(); }
