@@ -1,10 +1,11 @@
 ﻿#include "System/UISystem.h"
 
 #include <algorithm>
-#include <format>
+#include <string>
 
 #include "Components/InventoryComponent.h"
 #include "Core/GEngine.h"
+#include "Core/Item.h"
 #include "Core/Registry.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -37,6 +38,7 @@ void UISystem::Inventory() {
       registry->GetComponent<InventoryComponent>(engine->GetPlayer());
   int row = invcomp.row;
   int column = invcomp.column;
+
   ImGui::Begin("Inventory", &showInventory,
                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
   for (int r = 0; r < row; ++r) {
@@ -57,9 +59,7 @@ void UISystem::Inventory() {
       }
       ImVec2 text_pos = ImGui::GetCursorScreenPos();
 
-      char str[5] = {};
-      std::to_chars(str, str + 5, invcomp.items[idx].second);
-      ImGui::Text("%s", str);
+      ImGui::Text("%s", std::to_string(invcomp.items[idx].second).c_str());
 
       ImGui::SetNextItemAllowOverlap();
       ImGui::SetCursorScreenPos(text_pos);
@@ -71,19 +71,22 @@ void UISystem::Inventory() {
                                       .get(invcomp.items[idx].first)
                                       .description.c_str());
       if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-        ImGui::SetDragDropPayload("DND_ITEM", &idx, sizeof(int));
+        payload = ItemPayload{idx, invcomp.items[idx].first,
+                              invcomp.items[idx].second};
+        ImGui::SetDragDropPayload("DND_ITEM", &payload, sizeof(ItemPayload));
         ImGui::Text("Dragging %s", "iteminfo");
         ImGui::EndDragDropSource();
       }
-
       if (ImGui::BeginDragDropTarget()) {
         if (const ImGuiPayload *payload =
                 ImGui::AcceptDragDropPayload("DND_ITEM")) {
-          IM_ASSERT(payload->DataSize == sizeof(int));
-          int payload_n = *(const int *)payload->Data;
+          IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
+          ItemPayload *payload_ptr = static_cast<ItemPayload *>(payload->Data);
           // swap items
-          if (payload_n < invcomp.items.size())
-            std::swap(invcomp.items[idx], invcomp.items[payload_n]);
+          if (payload_ptr->itemIdx < invcomp.items.size()) {
+            std::swap(invcomp.items[idx], invcomp.items[payload_ptr->itemIdx]);
+            *payload_ptr = {0, ItemID::None, 0};
+          }
         }
         ImGui::EndDragDropTarget();
       }

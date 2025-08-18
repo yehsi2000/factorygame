@@ -7,7 +7,7 @@
 #include "SDL.h"
 #include "imgui.h"
 
-enum class InputAction { StartInteraction, StopInteraction, Inventory, Quit };
+enum class InputAction { StartInteraction, StopInteraction, Inventory, MouseDrop, Quit };
 enum class InputType { KEYBOARD, MOUSE };
 
 class GEngine;
@@ -35,7 +35,7 @@ class InputSystem {
   void Update();
   void InitInputSystem();
 
-  void HandleInputAction(InputAction action, InputType type);
+  void HandleInputAction(InputAction action, InputType type, void* params = nullptr);
   void HandleInputAxis(const Uint8* keyState);
 
  private:

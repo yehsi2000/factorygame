@@ -142,7 +142,7 @@ void RenderSystem::RenderTexts() {
       Vec2f screenPos = WorldToScreen(transform.position, cameraPos,
                                       screenWidth, screenHeight);
       SDL_Surface* textSurface =
-          TTF_RenderUTF8_Blended(font, "inactive", SDL_Color(255, 0, 0));
+          TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
       SDL_Texture* textTexture =
           SDL_CreateTextureFromSurface(renderer, textSurface);
       SDL_FreeSurface(textSurface);

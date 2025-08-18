@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   std::cout << "SDL initialized " << SDL_GetTicks() << std::endl;
 
   SDL_Window *window = SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
-                                        SDL_WINDOWPOS_CENTERED, 960, 540, 0);
+                                        SDL_WINDOWPOS_CENTERED, 960*2, 540*2, 0);
 
   SDL_Renderer *renderer = SDL_CreateRenderer(
       window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   std::cout << "font file opened " << SDL_GetTicks() << std::endl;
   SDL_StopTextInput();
   IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
+  ImGuiContext* uiCtx = ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |=
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls

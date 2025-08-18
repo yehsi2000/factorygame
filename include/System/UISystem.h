@@ -2,6 +2,7 @@
 #define SYSTEM_UISYSTEM_
 
 #include "Core/EventDispatcher.h"
+
 class GEngine;
 
 class UISystem {
@@ -15,6 +16,7 @@ class UISystem {
   EventHandle showInventoryEvent;
   bool showInventory = false;
   bool demoShow = true;
+  ItemPayload payload;
   void Inventory();
 };
 

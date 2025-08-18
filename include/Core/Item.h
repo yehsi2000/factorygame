@@ -35,8 +35,9 @@ enum class OreType {
 struct ItemData {
   ItemID id;
   ItemCategory category;
-  std::u8string name;
-  std::u8string description;
+  std::string name;
+  std::string description;
+  
   int maxStackSize = 50;
   // std::string iconPath;
 };
@@ -90,17 +91,23 @@ class ItemDatabase {
  private:
   std::map<ItemID, ItemData> db;
   ItemDatabase() {
-    db[ItemID::IronOre] = {ItemID::IronOre, ItemCategory::Ore, u8"철광석",
-                           u8"제련하여 철 주괴로 만들 수 있습니다.", 100};
+    db[ItemID::IronOre] = {ItemID::IronOre, ItemCategory::Ore, "철광석",
+                           "제련하여 철 주괴로 만들 수 있습니다.", 100};
     db[ItemID::IronIngot] = {
-        ItemID::IronIngot, ItemCategory::Ingot, u8"철주괴",
-        u8"철로 된 주괴. 다른 철강 제품을 만드는데 사용된다.", 100};
-    db[ItemID::CopperOre] = {ItemID::CopperOre, ItemCategory::Ore, u8"구리광석",
-                             u8"제련하여 구리 주괴로 만들 수 있습니다.", 100};
+        ItemID::IronIngot, ItemCategory::Ingot, "철주괴",
+        "철로 된 주괴. 다른 철강 제품을 만드는데 사용된다.", 100};
+    db[ItemID::CopperOre] = {ItemID::CopperOre, ItemCategory::Ore, "구리광석",
+                             "제련하여 구리 주괴로 만들 수 있습니다.", 100};
     db[ItemID::CopperIngot] = {
-        ItemID::CopperIngot, ItemCategory::Ingot, u8"구리주괴",
-        u8"구리로 된 주괴. 다른 구리 제품을 만드는데 사용된다.", 100};
+        ItemID::CopperIngot, ItemCategory::Ingot, "구리주괴",
+        "구리로 된 주괴. 다른 구리 제품을 만드는데 사용된다.", 100};
   }
+};
+
+struct ItemPayload{
+  int itemIdx;
+  ItemID id;
+  int amount;
 };
 
 #endif /* CORE_ITEM_ */

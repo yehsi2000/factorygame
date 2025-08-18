@@ -2,7 +2,7 @@
 
 #include <Components/CameraComponent.h>
 
-#include <format>
+#include <string>
 
 #include "Components/InteractionComponent.h"
 #include "Components/TimerComponent.h"
@@ -11,14 +11,17 @@
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
 #include "Core/InputState.h"
+#include "Core/Item.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "System/InputSystem.h"
 #include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
+#include "boost/format.hpp"
 #include "boost/functional/hash.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
+#include "imgui_internal.h"
 
 std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
   using boost::hash_combine;
@@ -63,6 +66,12 @@ void InputSystem::Update() {
       return;  // Stop all input handling if quit event occurs
     }
     if (io.WantCaptureMouse) {
+      if (event.type == SDL_MOUSEBUTTONUP) {
+        ImGuiContext* ctx = ImGui::GetCurrentContext();
+        ImGuiWindow* window = ctx->HoveredWindow;
+        if (window == nullptr && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+          HandleInputAction(InputAction::MouseDrop, InputType::MOUSE, ctx);
+      }
     } else if (event.type == SDL_MOUSEBUTTONDOWN) {
       if (event.button.button == SDL_BUTTON_LEFT) {
         HandleInputAction(InputAction::StartInteraction, InputType::MOUSE);
@@ -103,7 +112,8 @@ void InputSystem::Update() {
   }
 }
 
-void InputSystem::HandleInputAction(InputAction action, InputType type) {
+void InputSystem::HandleInputAction(InputAction action, InputType type,
+                                    void* params) {
   engine->GetRegistry()->GetInputState().xAxis = 0;
   engine->GetRegistry()->GetInputState().yAxis = 0;
   Registry& registry = *engine->GetRegistry();
@@ -111,6 +121,17 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
   EntityID player = engine->GetPlayer();
 
   switch (action) {
+    case InputAction::MouseDrop: {
+      ImGuiContext* ctx = static_cast<ImGuiContext*>(params);
+      if (ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
+        ItemPayload* payload_ptr =
+            static_cast<ItemPayload*>(ctx->DragDropPayload.Data);
+        std::cout << "id = "
+                  << ItemDatabase::instance().get(payload_ptr->id).name.c_str()
+                  << "amount = " << payload_ptr->amount << std::endl;
+        *payload_ptr = {0, ItemID::None, 0};
+      }
+    } break;
     case InputAction::StartInteraction:
       if (!registry.HasComponent<InteractionComponent>(player)) {
         const auto& playerTransform =
@@ -152,11 +173,13 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
             engine->GetWorld()->GetTileCoordFromWorldPosition(
                 playerTransform.position);
 
-        std::cout << std::format(
-            "targettile = {}:{}, playertile = {}:{} type : {}\n", tilecoord.x,
-            tilecoord.y, playertilecoord.x, playertilecoord.y,
-            (interactionType == InteractionType::KEYBOARD ? "keyboard"
-                                                          : "mouse"));
+        std::cout << boost::format(
+                         "targettile = %d:%d, playertile = %d:%d type : %s\n") %
+                         tilecoord.x % tilecoord.y % playertilecoord.x %
+                         playertilecoord.y %
+                         (interactionType == InteractionType::KEYBOARD
+                              ? "keyboard"
+                              : "mouse");
 
         registry.AddComponent<InteractionComponent>(
             player,
