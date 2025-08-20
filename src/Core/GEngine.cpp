@@ -84,7 +84,7 @@ void GEngine::GeneratePlayer() {
   registry->AddComponent<TransformComponent>(player,
                                              TransformComponent{{0, 0}});
 
-  SDL_Texture* playerIdleSpritesheet = AssetManager::getInstance().getTexture(
+  SDL_Texture* playerIdleSpritesheet = AssetManager::Instance().getTexture(
       "assets/img/character/Miner_IdleAnimation.png", gRenderer);
   registry->AddComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet,

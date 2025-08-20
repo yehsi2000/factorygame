@@ -17,7 +17,7 @@ struct TextureDeleter {
 
 class AssetManager {
  public:
-  static AssetManager& getInstance() {
+  static AssetManager& Instance() {
     static AssetManager instance;
     return instance;
   }

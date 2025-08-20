@@ -165,7 +165,7 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
   SDL_RenderClear(renderer);
 
   // Get the tileset texture for drawing individual tiles
-  SDL_Texture* tilesetTexture = AssetManager::getInstance().getTexture(
+  SDL_Texture* tilesetTexture = AssetManager::Instance().getTexture(
       "assets/img/tile/dirt-1.png", renderer);
 
   // Draw all tiles in the chunk to the texture
@@ -252,7 +252,6 @@ void World::GenerateChunk(Chunk& chunk) {
   float oreThreshold = 0.5f;
   minironOreAmount = oreThreshold * static_cast<float>(maxironOreAmount);
   // oreNoise.SetSeed(randomGenerator());
-
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       int worldTileX = chunk.chunkX * CHUNK_WIDTH + x;
@@ -286,8 +285,8 @@ void World::GenerateChunk(Chunk& chunk) {
           textComp.color = SDL_Color{255, 255, 255, 255};
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
-          SDL_Texture* spritesheet = AssetManager::getInstance().getTexture(
-              "assets/img/tile/iron-ore.png", renderer);
+          SDL_Texture* spritesheet = AssetManager::Instance().getTexture(
+              "assets/img/entity/iron-ore.png", renderer);
           SpriteComponent spriteComp;
           spriteComp.texture = spritesheet;
           // tile->debugValue = oreAmount;

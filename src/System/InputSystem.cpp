@@ -2,8 +2,6 @@
 
 #include <Components/CameraComponent.h>
 
-#include <string>
-
 #include "Components/InteractionComponent.h"
 #include "Components/TimerComponent.h"
 #include "Components/TransformComponent.h"
@@ -36,7 +34,8 @@ std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
   return seed;
 }
 
-InputSystem::InputSystem(GEngine* e) : engine(e), io(ImGui::GetIO()) {}
+InputSystem::InputSystem(GEngine* e)
+    : engine(e), io(ImGui::GetIO()), isDraggingOutside(false) {}
 
 void InputSystem::InitInputSystem() { RegisterInputBindings(); }
 
@@ -66,9 +65,18 @@ void InputSystem::Update() {
       return;  // Stop all input handling if quit event occurs
     }
     if (io.WantCaptureMouse) {
-      if (event.type == SDL_MOUSEBUTTONUP) {
-        ImGuiContext* ctx = ImGui::GetCurrentContext();
-        ImGuiWindow* window = ctx->HoveredWindow;
+      // Dragging from UI
+      ImGuiContext* ctx = ImGui::GetCurrentContext();
+      ImGuiWindow* window = ctx->HoveredWindow;
+      if (window == nullptr && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+        if (!isDraggingOutside) {
+          isDraggingOutside = true;
+          std::cout << "start dragging outside!" << std::endl;
+        }
+      } else {
+        isDraggingOutside = false;
+      }
+      if (isDraggingOutside && event.type == SDL_MOUSEBUTTONUP) {
         if (window == nullptr && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
           HandleInputAction(InputAction::MouseDrop, InputType::MOUSE, ctx);
       }
@@ -126,9 +134,14 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
       if (ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
         ItemPayload* payload_ptr =
             static_cast<ItemPayload*>(ctx->DragDropPayload.Data);
-        std::cout << "id = "
-                  << ItemDatabase::instance().get(payload_ptr->id).name.c_str()
-                  << "amount = " << payload_ptr->amount << std::endl;
+        // std::cout << "id = "
+        //           <<
+        //           ItemDatabase::instance().get(payload_ptr->id).name.c_str()
+        //           << "amount = " << payload_ptr->amount << std::endl;
+
+        engine->GetDispatcher()->Publish(
+            ItemConsumeEvent{player, payload_ptr->id, payload_ptr->amount});
+
         *payload_ptr = {0, ItemID::None, 0};
       }
     } break;

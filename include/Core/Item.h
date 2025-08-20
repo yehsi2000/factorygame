@@ -1,7 +1,6 @@
 ﻿#ifndef CORE_ITEM_
 #define CORE_ITEM_
 
-#include <map>
 #include <string>
 #include <unordered_map>
 
@@ -13,16 +12,17 @@ enum class ItemID {
   // Stone,
   // Wood,
 
-  IronIngot,
-  CopperIngot,
+  IronPlate,
+  CopperPlate,
 
+  MiningDrill,
   // ConveyorBelt,
   // Smelter,
   // Assembler
   MaxItemID
 };
 
-enum class ItemCategory { Ore, Ingot };
+enum class ItemCategory { Ore, Ingot, Buildable, Invalid };
 
 enum class OreType {
   Iron = 0,
@@ -33,11 +33,11 @@ enum class OreType {
 };
 
 struct ItemData {
-  ItemID id;
   ItemCategory category;
   std::string name;
   std::string description;
-  
+  std::string icon;
+
   int maxStackSize = 50;
   // std::string iconPath;
 };
@@ -89,22 +89,33 @@ class ItemDatabase {
   }
 
  private:
-  std::map<ItemID, ItemData> db;
+  std::unordered_map<ItemID, ItemData> db;
   ItemDatabase() {
-    db[ItemID::IronOre] = {ItemID::IronOre, ItemCategory::Ore, "철광석",
-                           "제련하여 철 주괴로 만들 수 있습니다.", 100};
-    db[ItemID::IronIngot] = {
-        ItemID::IronIngot, ItemCategory::Ingot, "철주괴",
-        "철로 된 주괴. 다른 철강 제품을 만드는데 사용된다.", 100};
-    db[ItemID::CopperOre] = {ItemID::CopperOre, ItemCategory::Ore, "구리광석",
-                             "제련하여 구리 주괴로 만들 수 있습니다.", 100};
-    db[ItemID::CopperIngot] = {
-        ItemID::CopperIngot, ItemCategory::Ingot, "구리주괴",
-        "구리로 된 주괴. 다른 구리 제품을 만드는데 사용된다.", 100};
+    db[ItemID::IronOre] = {ItemCategory::Ore, "철광석",
+                           "제련하여 철 주괴로 만들 수 있습니다.",
+                           "assets/icon/iron-ore.png", 100};
+
+    db[ItemID::IronPlate] = {
+        ItemCategory::Ingot, "철판",
+        "철을 판 형태로 가공한 물건. 다른 철강 제품을 만드는데 사용된다.",
+        "assets/icon/iron-plate.png", 100};
+
+    db[ItemID::CopperOre] = {ItemCategory::Ore, "구리광석",
+                             "제련하여 구리 주괴로 만들 수 있습니다.",
+                             "assets/icon/copper-ore.png", 100};
+
+    db[ItemID::CopperPlate] = {
+        ItemCategory::Ingot, "구리판",
+        "구리를 판 형태로 가공한 물건. 다른 구리 제품을 만드는데 사용된다.",
+        "assets/icon/copper-plate.png", 100};
+
+    db[ItemID::MiningDrill] = {ItemCategory::Buildable, "채굴기",
+                               "현재 타일 아래의 광물을 채굴합니다.",
+                               "assets/icon/mining-drill.png", 10};
   }
 };
 
-struct ItemPayload{
+struct ItemPayload {
   int itemIdx;
   ItemID id;
   int amount;

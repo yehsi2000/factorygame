@@ -12,20 +12,22 @@
 #include "imgui_impl_sdlrenderer2.h"
 
 void GameLoop(GEngine *engine) {
-  float deltaTime;
-  std::chrono::steady_clock::time_point startTimeChrono;
-  std::chrono::steady_clock::time_point currentTimeChrono;
-  std::chrono::steady_clock::time_point prevTimeChrono;
+  using namespace std::chrono;
 
-  startTimeChrono = std::chrono::steady_clock::now();
-  currentTimeChrono = prevTimeChrono = startTimeChrono;
+  steady_clock::time_point startTime;
+  steady_clock::time_point curTime;
+  steady_clock::time_point prevTime;
+  float deltaTime;
+
+  startTime = steady_clock::now();
+  curTime = prevTime = startTime;
+
   while (engine->IsRunning()) {
-    currentTimeChrono = std::chrono::steady_clock::now();
-    deltaTime = std::chrono::duration<float, std::chrono::milliseconds::period>(
-                    currentTimeChrono - prevTimeChrono)
-                    .count();
+    curTime = steady_clock::now();
+    deltaTime =
+        duration<float, milliseconds::period>(curTime - prevTime).count();
     deltaTime /= 1000.f;
-    prevTimeChrono = currentTimeChrono;
+    prevTime = curTime;
 
     engine->Update(deltaTime);
   }
@@ -37,24 +39,33 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  std::cout << "SDL initialized " << SDL_GetTicks() << std::endl;
+  SDL_Window *window =
+      SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
+                       SDL_WINDOWPOS_CENTERED, 960 * 2, 540 * 2, 0);
 
-  SDL_Window *window = SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
-                                        SDL_WINDOWPOS_CENTERED, 960*2, 540*2, 0);
+  if (window == NULL) {
+    std::cout << "Could not create window:" << SDL_GetError() << ".\n";
+    exit(-1);
+  }
 
   SDL_Renderer *renderer = SDL_CreateRenderer(
       window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
-  std::cout << "SDL window created " << SDL_GetTicks() << std::endl;
+  if (renderer == NULL) {
+    std::cout << "Could not create renderer:" << SDL_GetError() << ".\n";
+    exit(-1);
+  }
+
   TTF_Font *font = TTF_OpenFont("C:\\Windows\\Fonts\\NotoSansKR-VF.ttf", 16);
   if (font == NULL) {
     printf("Could not open font! (%s)\n", TTF_GetError());
     return -1;
   }
-  std::cout << "font file opened " << SDL_GetTicks() << std::endl;
+
   SDL_StopTextInput();
+
   IMGUI_CHECKVERSION();
-  ImGuiContext* uiCtx = ImGui::CreateContext();
+  ImGuiContext *uiCtx = ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |=
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls

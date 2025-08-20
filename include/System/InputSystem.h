@@ -29,6 +29,7 @@ class InputSystem {
   GEngine* engine;
   ImGuiIO& io;
   double maxInteractionRadius = 200.0;
+  bool isDraggingOutside;
 
  public:
   InputSystem(GEngine* e);
