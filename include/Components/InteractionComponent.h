@@ -9,7 +9,7 @@ enum class InteractionType { INVALID, KEYBOARD, MOUSE };
 struct InteractionComponent {
   EntityID interactor;  // if timer exist related to interaction, it should be
                         // attached to interactor
-  Vec2 targetTileCoord;
+  Vec2 targettileIndex;
   InteractionType type;
   float interactionTime;
   bool isInteracting = false;

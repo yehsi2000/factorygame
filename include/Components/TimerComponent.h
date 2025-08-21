@@ -10,7 +10,8 @@ constexpr TimerHandle INVALID_TIMER_HANDLE = 0;
 
 // An enum to identify the purpose of a timer.
 enum class TimerId : int {
-  Interact,
+  Mine,
+  AssemblingMachineCraft,
   MaxTimers  // Represents the maximum number of timer types.
 };
 

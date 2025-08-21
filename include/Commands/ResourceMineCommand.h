@@ -56,4 +56,4 @@ class ResourceMineCommand : public Command {
   EntityID target;
 };
 
-#endif /* COMMANDS_RESOURCEMINECOMMAND_ */
+#endif/* COMMANDS_RESOURCEMINECOMMAND_ */

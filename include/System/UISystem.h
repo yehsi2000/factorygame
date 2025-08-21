@@ -2,6 +2,8 @@
 #define SYSTEM_UISYSTEM_
 
 #include "Core/EventDispatcher.h"
+#include "Core/Entity.h"
+#include "Core/Recipe.h"
 
 class GEngine;
 
@@ -18,6 +20,8 @@ class UISystem {
   bool demoShow = true;
   ItemPayload payload;
   void Inventory();
+  void AssemblingMachineUI();
+  void AssemblingMachineRecipeSelection(EntityID entity);
 };
 
 #endif /* SYSTEM_UISYSTEM_ */

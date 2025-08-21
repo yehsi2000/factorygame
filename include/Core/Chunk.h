@@ -13,7 +13,7 @@ constexpr int CHUNK_HEIGHT = 8;
 class Chunk {
 public:
   Chunk(int _chunkX, int _chunkY);
-  Vec2 GetLocalTileCoords(int worldTileX, int worldTileY) const;
+  Vec2 GetLocalTileIndex(int worldTileX, int worldTileY) const;
   TileData *GetTile(int localX, int localY);
   const int chunkX;
   const int chunkY;

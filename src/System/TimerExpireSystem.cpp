@@ -5,36 +5,40 @@
 #include "Core/GEngine.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
+#include <Commands/ResourceMineCommand.h>
+#include <Components/InteractionComponent.h>
+#include <Components/PlayerStateComponent.h>
 
 void TimerExpireSystem::Update() {
-  auto view = engine->GetRegistry()->view<TimerExpiredTag>();
+  Registry* registry = engine->GetRegistry();
+  auto view = registry->view<TimerExpiredTag>();
   for (auto entity : view) {
     const auto& tag =
-        engine->GetRegistry()->GetComponent<TimerExpiredTag>(entity);
+        registry->GetComponent<TimerExpiredTag>(entity);
 
     // Find the handle for the expired timer
     TimerHandle handle = INVALID_TIMER_HANDLE;
     auto& timerComp =
-        engine->GetRegistry()->GetComponent<TimerComponent>(entity);
+        registry->GetComponent<TimerComponent>(entity);
     handle = timerComp.timers[static_cast<int>(tag.expiredId)];
 
     if (handle != INVALID_TIMER_HANDLE) {
       TimerInstance* timer = engine->GetTimerManager()->GetTimer(handle);
       if (timer) {
-        // 1. Publish the high-level event
         switch (tag.expiredId) {
-          case TimerId::Interact:
-            engine->GetDispatcher()->Publish(InteractEvent(entity));
+          case TimerId::Mine:
+            if(registry->HasComponent<PlayerStateComponent>(entity)){
+              const auto& stat = registry->GetComponent<PlayerStateComponent>(entity);
+              engine->GetCommandQueue()->Enqueue(std::make_unique<ResourceMineCommand>(entity, stat.interactingEntity));
+            }
             break;
           default:
             break;
         }
 
-        // 2. Handle repeating or one-shot logic
         if (timer->isRepeating) {
-          timer->elapsed = 0.0f;  // Reset for the next cycle
+          timer->elapsed = 0.0f;
         } else {
-          // Remove handle from component and destroy the timer instance
           timerComp.timers[static_cast<int>(tag.expiredId)] =
               INVALID_TIMER_HANDLE;
           engine->GetTimerManager()->DestroyTimer(handle);
@@ -42,7 +46,6 @@ void TimerExpireSystem::Update() {
       }
     }
 
-    // 3. Remove the tag so it's not processed again
     engine->GetRegistry()->RemoveComponent<TimerExpiredTag>(entity);
   }
 }

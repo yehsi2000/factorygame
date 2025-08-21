@@ -12,10 +12,10 @@
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "SDL_ttf.h"
-#include "System/AnimationSystem.h"
 #include "imgui.h"
 
 class AnimationSystem;
+class AssemblingMachineSystem;
 class CameraSystem;
 class InputSystem;
 class InteractionSystem;
@@ -49,6 +49,7 @@ class GEngine {
   EventHandle GameEndHandle; ///< EventHandle subscribing GameEnd Event
 
   std::unique_ptr<AnimationSystem> animationSystem;
+  std::unique_ptr<AssemblingMachineSystem> assemblingMachineSystem;
   std::unique_ptr<CameraSystem> cameraSystem;
   std::unique_ptr<InputSystem> inputSystem;
   std::unique_ptr<InventorySystem> inventorySystem;
@@ -91,6 +92,8 @@ class GEngine {
    * @param deltaTime
    */
   void Update(float deltaTime);
+
+  Vec2 GetScreenSize();
 
   inline EventDispatcher* GetDispatcher() { return dispatcher.get(); }
   inline CommandQueue* GetCommandQueue() { return commandQueue.get(); }

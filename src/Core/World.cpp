@@ -6,6 +6,7 @@
 #include <random>
 
 #include "Common.h"
+#include "Components/BuildingComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/ResourceNodeComponent.h"
@@ -34,9 +35,9 @@ void World::Update(EntityID player) {
   const Vec2f playerPosition =
       registry->GetComponent<TransformComponent>(player).position;
 
-  int playerChunkX = floor(playerPosition.x / (CHUNK_WIDTH * TILE_PIXEL_WIDTH));
+  int playerChunkX = floor(playerPosition.x / (CHUNK_WIDTH * TILE_PIXEL_SIZE));
   int playerChunkY =
-      floor(playerPosition.y / (CHUNK_HEIGHT * TILE_PIXEL_HEIGHT));
+      floor(playerPosition.y / (CHUNK_HEIGHT * TILE_PIXEL_SIZE));
 
   auto it = activeChunks.begin();
   while (it != activeChunks.end()) {
@@ -70,28 +71,28 @@ TileData* World::GetTileAtWorldPosition(Vec2f position) {
 }
 
 TileData* World::GetTileAtWorldPosition(float worldX, float worldY) {
-  int tileX = static_cast<int>(worldX) / TILE_PIXEL_WIDTH;
-  int tileY = static_cast<int>(worldY) / TILE_PIXEL_HEIGHT;
+  int tileX = static_cast<int>(worldX) / TILE_PIXEL_SIZE;
+  int tileY = static_cast<int>(worldY) / TILE_PIXEL_SIZE;
 
-  return GetTileAtTileCoords(tileX, tileY);
+  return GetTileAtTileIndex(tileX, tileY);
 }
 
-Vec2 World::GetTileCoordFromWorldPosition(Vec2f position) {
-  return GetTileCoordFromWorldPosition(position.x, position.y);
+Vec2 World::GetTileIndexFromWorldPosition(Vec2f position) {
+  return GetTileIndexFromWorldPosition(position.x, position.y);
 }
 
-Vec2 World::GetTileCoordFromWorldPosition(float worldX, float worldY) {
-  int tileX = static_cast<int>(worldX) / TILE_PIXEL_WIDTH;
-  int tileY = static_cast<int>(worldY) / TILE_PIXEL_HEIGHT;
+Vec2 World::GetTileIndexFromWorldPosition(float worldX, float worldY) {
+  int tileX = static_cast<int>(worldX) / TILE_PIXEL_SIZE;
+  int tileY = static_cast<int>(worldY) / TILE_PIXEL_SIZE;
 
   return Vec2(tileX, tileY);
 }
 
-TileData* World::GetTileAtTileCoords(Vec2 tileCoord) {
-  return GetTileAtTileCoords(tileCoord.x, tileCoord.y);
+TileData* World::GetTileAtTileIndex(Vec2 tileIndex) {
+  return GetTileAtTileIndex(tileIndex.x, tileIndex.y);
 }
 
-TileData* World::GetTileAtTileCoords(int tileX, int tileY) {
+TileData* World::GetTileAtTileIndex(int tileX, int tileY) {
   int chunkX = tileX / CHUNK_WIDTH;
   int chunkY = tileY / CHUNK_HEIGHT;
 
@@ -100,7 +101,7 @@ TileData* World::GetTileAtTileCoords(int tileX, int tileY) {
 
   auto it = activeChunks.find({chunkX, chunkY});
   if (it != activeChunks.end()) {
-    Vec2 localCoords = it->second.GetLocalTileCoords(tileX, tileY);
+    Vec2 localCoords = it->second.GetLocalTileIndex(tileX, tileY);
     return it->second.GetTile(localCoords.x, localCoords.y);
   }
 
@@ -109,6 +110,73 @@ TileData* World::GetTileAtTileCoords(int tileX, int tileY) {
 
 const std::map<ChunkCoord, Chunk>& World::GetActiveChunks() const {
   return activeChunks;
+}
+
+bool World::CanPlaceBuilding(Vec2 tileIndex, int width, int height) const {
+  return CanPlaceBuilding(tileIndex.x, tileIndex.y, width, height);
+}
+
+bool World::CanPlaceBuilding(int tileX, int tileY, int width, int height) const {
+  // Check if all tiles for this building are available
+  for (int dy = 0; dy < height; ++dy) {
+    for (int dx = 0; dx < width; ++dx) {
+      int checkX = tileX + dx;
+      int checkY = tileY + dy;
+      
+      // Get tile data (const cast is safe here since we're only checking)
+      TileData* tile = const_cast<World*>(this)->GetTileAtTileIndex(checkX, checkY);
+      if (!tile) {
+        return false; // Tile doesn't exist (chunk not loaded)
+      }
+      
+      if (tile->occupyingEntity != INVALID_ENTITY) {
+        return false; // Tile is already occupied
+      }
+      
+      if (tile->type == TileType::Water || tile->type == TileType::Invalid) {
+        return false; // Cannot build on water or invalid tiles
+      }
+    }
+  }
+  return true;
+}
+
+void World::PlaceBuilding(EntityID entity, Vec2 tileIndex, int width, int height) {
+  PlaceBuilding(entity, tileIndex.x, tileIndex.y, width, height);
+}
+
+void World::PlaceBuilding(EntityID entity, int tileX, int tileY, int width, int height) {
+  std::vector<Vec2> occupiedTiles;
+  
+  // Mark all tiles as occupied by this building
+  for (int dy = 0; dy < height; ++dy) {
+    for (int dx = 0; dx < width; ++dx) {
+      int checkX = tileX + dx;
+      int checkY = tileY + dy;
+      
+      TileData* tile = GetTileAtTileIndex(checkX, checkY);
+      if (tile) {
+        tile->occupyingEntity = entity;
+        occupiedTiles.push_back({checkX, checkY});
+      }
+    }
+  }
+  
+  // Store occupied tiles in the building component for cleanup
+  if (registry->HasComponent<BuildingComponent>(entity)) {
+    auto& building = registry->GetComponent<BuildingComponent>(entity);
+    building.occupiedTiles = occupiedTiles;
+  }
+}
+
+void World::RemoveBuilding(EntityID entity, const std::vector<Vec2>& occupiedTiles) {
+  // Clear all tiles that this building occupied
+  for (const Vec2& tileIndex : occupiedTiles) {
+    TileData* tile = GetTileAtTileIndex(tileIndex);
+    if (tile && tile->occupyingEntity == entity) {
+      tile->occupyingEntity = INVALID_ENTITY;
+    }
+  }
 }
 
 void World::LoadChunk(int chunkX, int chunkY) {
@@ -155,7 +223,7 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
   // Create a texture for the entire chunk
   SDL_Texture* chunkTexture = SDL_CreateTexture(
       renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-      CHUNK_WIDTH * TILE_PIXEL_WIDTH, CHUNK_HEIGHT * TILE_PIXEL_HEIGHT);
+      CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE);
 
   // Set the texture as the render target
   SDL_SetRenderTarget(renderer, chunkTexture);
@@ -193,8 +261,8 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
       }
 
       // Destination rectangle for this tile in the chunk texture
-      SDL_Rect destRect = {x * TILE_PIXEL_WIDTH, y * TILE_PIXEL_HEIGHT,
-                           TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT};
+      SDL_Rect destRect = {x * TILE_PIXEL_SIZE, y * TILE_PIXEL_SIZE,
+                           TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
 
       // Render the tile to the chunk texture
       SDL_RenderCopy(renderer, tilesetTexture, &srcRect, &destRect);
@@ -274,8 +342,8 @@ void World::GenerateChunk(Chunk& chunk) {
           registry->AddComponent<TransformComponent>(
               oreNode,
               TransformComponent{
-                  {static_cast<float>(worldTileX * TILE_PIXEL_WIDTH),
-                   static_cast<float>(worldTileY * TILE_PIXEL_HEIGHT)}});
+                  {static_cast<float>(worldTileX * TILE_PIXEL_SIZE),
+                   static_cast<float>(worldTileY * TILE_PIXEL_SIZE)}});
 
           registry->AddComponent<ResourceNodeComponent>(
               oreNode, ResourceNodeComponent{oreAmount, OreType::Iron});
@@ -300,7 +368,7 @@ void World::GenerateChunk(Chunk& chunk) {
                       static_cast<float>(maxironOreAmount - minironOreAmount) *
                       8.f));
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
-          spriteComp.renderRect = {0, 0, TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT};
+          spriteComp.renderRect = {0, 0, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);
           tile->occupyingEntity = oreNode;
           tile->type = TileType::Stone;
@@ -315,9 +383,9 @@ void World::GenerateChunk(Chunk& chunk) {
 
   // Calculate world position of the chunk (top-left corner)
   float worldX =
-      static_cast<float>(chunk.chunkX * CHUNK_WIDTH * TILE_PIXEL_WIDTH);
+      static_cast<float>(chunk.chunkX * CHUNK_WIDTH * TILE_PIXEL_SIZE);
   float worldY =
-      static_cast<float>(chunk.chunkY * CHUNK_HEIGHT * TILE_PIXEL_HEIGHT);
+      static_cast<float>(chunk.chunkY * CHUNK_HEIGHT * TILE_PIXEL_SIZE);
 
   // Add transform component for positioning
   registry->EmplaceComponent<TransformComponent>(

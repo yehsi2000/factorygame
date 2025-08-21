@@ -2,7 +2,6 @@
 #define UTIL_MATHUTIL_
 
 #include "Core/Type.h"
-#include "cmath"
 
 namespace util {
 
@@ -23,15 +22,15 @@ T clamp(T value, T min, T max) {
   return value;
 }
 
-double dist(Vec2f a, Vec2f b) {
-  double dx = static_cast<double>(a.x - b.x);
-  double dy = static_cast<double>(a.y - b.y);
-  return static_cast<double>(std::sqrt(dx * dx + dy * dy));
-}
+double dist(Vec2f a, Vec2f b);
 
-double dist(Vec2 a, Vec2 b) {
-  return std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-}
+double dist(Vec2 a, Vec2 b);
+
+Vec2f WorldToScreen(Vec2f worldPos, Vec2f cameraPos, int screenWidth,
+                    int screenHeight);
+
+Vec2f ScreenToWorld(Vec2f screenPos, Vec2f cameraPos, int screenWidth,
+                    int screenHeight);
 
 }  // namespace util
 

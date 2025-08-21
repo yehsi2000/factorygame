@@ -17,19 +17,19 @@ private:
 
   uint32_t livingEntityCount = 0;
 
-  std::unordered_map<const char *, std::shared_ptr<IComponentArray>>
+  std::unordered_map<const char *, std::unique_ptr<IComponentArray>>
       componentArrays{};
 
   template <typename T> const char *GetComponentTypeName() {
     return typeid(T).name();
   }
 
-  template <typename T> std::shared_ptr<ComponentArray<T>> GetComponentArray() {
+  template <typename T> ComponentArray<T>* GetComponentArray() {
     const char *typeName = GetComponentTypeName<T>();
     assert(componentArrays.count(typeName) &&
            "Component type not registered before use.");
-    return std::static_pointer_cast<ComponentArray<T>>(
-        componentArrays[typeName]);
+    return static_cast<ComponentArray<T>*>(
+        componentArrays[typeName].get());
   }
 
   template <typename T> std::size_t GetComponentArraySize() {
@@ -71,7 +71,7 @@ public:
   template <typename T> void RegisterComponent() {
     const char *typeName = GetComponentTypeName<T>();
     if (componentArrays.find(typeName) == componentArrays.end()) {
-      componentArrays[typeName] = std::make_shared<ComponentArray<T>>();
+      componentArrays[typeName] = std::make_unique<ComponentArray<T>>();
     }
   }
 
@@ -109,7 +109,7 @@ public:
     }
 
     // Get all component arrays
-    std::vector<std::shared_ptr<IComponentArray>> arrays;
+    std::vector<IComponentArray*> arrays;
     (arrays.push_back(GetComponentArray<TComponent>()), ...);
 
     // Find smallest array

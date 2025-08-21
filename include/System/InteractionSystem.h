@@ -4,22 +4,17 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 
-class CommandQueue;
-class Registry;
-class World;
+class GEngine;
 
 class InteractionSystem {
  public:
-  InteractionSystem(Registry* registry, World* world,
-                    EventDispatcher* dispatcher, CommandQueue* commandQueue);
+  InteractionSystem(GEngine* engine);
   void Update();  // In case the system needs a per-frame update in the future.
 
  private:
-  void OnInteractEvent(const InteractEvent& event);
+  void OnInteractEvent(const PlayerInteractEvent& event);
 
-  CommandQueue* commandQueue;
-  Registry* registry;
-  World* world;
+  GEngine* engine;
   EventHandle handle;
 };
 

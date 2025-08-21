@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "Components/CameraComponent.h"
+#include "Components/BuildingPreviewComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/SpriteComponent.h"
@@ -13,33 +13,37 @@
 #include "Core/Entity.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
+#include "Core/World.h"
 #include "SDL.h"
 #include "SDL_ttf.h"
+#include "Util/CameraUtil.h"
 
-RenderSystem::RenderSystem(Registry* r, SDL_Renderer* render, TTF_Font* f) {
-  registry = r;
-  renderer = render;
-  font = f;
-}
+RenderSystem::RenderSystem(Registry* r, SDL_Renderer* render, World* world, TTF_Font* f) :
+  registry(r), renderer(render), world(world), font(f) {}
 
 void RenderSystem::Update() {
   SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
   SDL_RenderClear(renderer);
 
-  // Render chunks first (background)
-  RenderChunks();
-
-  // Render other entities on top
-  RenderEntities();
-
-  // RenderTexts();
-  RenderTexts();
-}
-
-void RenderSystem::RenderChunks() {
-  Vec2f cameraPos = GetCameraPosition();
+  Vec2f cameraPos = util::GetCameraPosition(registry);
   int screenWidth, screenHeight;
   SDL_GetRendererOutputSize(renderer, &screenWidth, &screenHeight);
+  Vec2 screenSize {screenWidth, screenHeight};
+
+  // Render chunks first (background)
+  RenderChunks(cameraPos,screenSize);
+
+  // Render other entities on top
+  RenderEntities(cameraPos,screenSize);
+
+  // Render building previews on top of entities
+  RenderBuildingPreviews(cameraPos,screenSize);
+
+  // RenderTexts();
+  RenderTexts(cameraPos,screenSize);
+}
+
+void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize) {
 
   // Render all chunks that have a ChunkComponent
   auto chunkView = registry->view<ChunkComponent, TransformComponent>();
@@ -53,31 +57,27 @@ void RenderSystem::RenderChunks() {
 
     // Convert world position to screen position
     Vec2f screenPos =
-        WorldToScreen(transform.position, cameraPos, screenWidth, screenHeight);
+        util::WorldToScreen(transform.position, cameraPos, screenSize);
 
     // Cull chunks that are off-screen
-    if (screenPos.x + CHUNK_WIDTH * TILE_PIXEL_WIDTH < 0 ||
-        screenPos.x > screenWidth ||
-        screenPos.y + CHUNK_HEIGHT * TILE_PIXEL_HEIGHT < 0 ||
-        screenPos.y > screenHeight) {
+    if (screenPos.x + CHUNK_WIDTH * TILE_PIXEL_SIZE < 0 ||
+        screenPos.x > screenSize.x ||
+        screenPos.y + CHUNK_HEIGHT * TILE_PIXEL_SIZE < 0 ||
+        screenPos.y > screenSize.y) {
       continue;
     }
 
     if (chunk.chunkTexture) {
       SDL_Rect destRect = {
           static_cast<int>(screenPos.x), static_cast<int>(screenPos.y),
-          CHUNK_WIDTH * TILE_PIXEL_WIDTH, CHUNK_HEIGHT * TILE_PIXEL_HEIGHT};
+          CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE};
 
       SDL_RenderCopy(renderer, chunk.chunkTexture, nullptr, &destRect);
     }
   }
 }
 
-void RenderSystem::RenderEntities() {
-  Vec2f cameraPos = GetCameraPosition();
-  int screenWidth, screenHeight;
-  SDL_GetRendererOutputSize(renderer, &screenWidth, &screenHeight);
-
+void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize) {
   // Render all regular entities with SpriteComponent
   auto view = registry->view<SpriteComponent, TransformComponent>();
 
@@ -86,7 +86,8 @@ void RenderSystem::RenderEntities() {
 
   for (EntityID entity : view) {
     if (registry->HasComponent<InactiveComponent>(entity) ||
-        registry->HasComponent<ChunkComponent>(entity)) {
+        registry->HasComponent<ChunkComponent>(entity) ||
+        registry->HasComponent<BuildingPreviewComponent>(entity)) {
       continue;
     }
 
@@ -109,14 +110,14 @@ void RenderSystem::RenderEntities() {
 
     // Convert world position to screen position
     Vec2f screenPos =
-        WorldToScreen(transform.position, cameraPos, screenWidth, screenHeight);
+        util::WorldToScreen(transform.position, cameraPos, screenSize);
 
     // Simple culling - skip entities that are clearly off-screen
     float entityWidth = sprite.renderRect.w * transform.scale.x;
     float entityHeight = sprite.renderRect.h * transform.scale.y;
 
-    if (screenPos.x + entityWidth < 0 || screenPos.x > screenWidth ||
-        screenPos.y + entityHeight < 0 || screenPos.y > screenHeight) {
+    if (screenPos.x + entityWidth < 0 || screenPos.x > screenSize.x ||
+        screenPos.y + entityHeight < 0 || screenPos.y > screenSize.y) {
       continue;
     }
 
@@ -130,17 +131,13 @@ void RenderSystem::RenderEntities() {
   }
 }
 
-void RenderSystem::RenderTexts() {
-  Vec2f cameraPos = GetCameraPosition();
-  int screenWidth, screenHeight;
-  SDL_GetRendererOutputSize(renderer, &screenWidth, &screenHeight);
-
+void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
   for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       const auto& transform =
           registry->GetComponent<TransformComponent>(entity);
-      Vec2f screenPos = WorldToScreen(transform.position, cameraPos,
-                                      screenWidth, screenHeight);
+      Vec2f screenPos = util::WorldToScreen(transform.position, cameraPos,
+                                      screenSize);
       SDL_Surface* textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
       SDL_Texture* textTexture =
@@ -161,10 +158,10 @@ void RenderSystem::RenderTexts() {
     const auto& text = registry->GetComponent<TextComponent>(entity);
     const auto& transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =
-        WorldToScreen(transform.position, cameraPos, screenWidth, screenHeight);
+        util::WorldToScreen(transform.position, cameraPos, screenSize);
 
-    if (screenPos.x < 0 || screenPos.x > screenWidth || screenPos.y < 0 ||
-        screenPos.y > screenHeight) {
+    if (screenPos.x < 0 || screenPos.x > screenSize.x || screenPos.y < 0 ||
+        screenPos.y > screenSize.y) {
       continue;
     }
 
@@ -183,21 +180,74 @@ void RenderSystem::RenderTexts() {
   }
 }
 
-Vec2f RenderSystem::GetCameraPosition() const {
-  // Find the first entity with a CameraComponent
-  auto cameraView = registry->view<CameraComponent>();
+void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
+  // Render all building previews
+  auto previewView = registry->view<BuildingPreviewComponent, TransformComponent>();
+  
+  for (EntityID entity : previewView) {
+    if (registry->HasComponent<InactiveComponent>(entity)) {
+      continue;
+    }
 
-  for (EntityID entity : cameraView) {
-    const auto& camera = registry->GetComponent<CameraComponent>(entity);
-    return camera.position;
+    const auto& preview = registry->GetComponent<BuildingPreviewComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
+
+    // Calculate the starting tile position (top-left corner of building)
+    Vec2f startWorldPos = {
+      transform.position.x - (preview.width * TILE_PIXEL_SIZE) / 2.0f,
+      transform.position.y - (preview.height * TILE_PIXEL_SIZE) / 2.0f
+    };
+    Vec2 tileindex = world->GetTileIndexFromWorldPosition(transform.position);
+    // Render colored tile backgrounds
+    for (int dy = 0; dy < preview.height; dy++) {
+      for (int dx = 0; dx < preview.width; dx++) {
+        Vec2f tileWorldPos = {
+          startWorldPos.x + dx * TILE_PIXEL_SIZE,
+          startWorldPos.y + dy * TILE_PIXEL_SIZE
+        };
+        
+        Vec2f screenPos = util::WorldToScreen(tileWorldPos, cameraPos, screenSize);
+        
+        SDL_Rect tileRect = {
+          static_cast<int>(screenPos.x),
+          static_cast<int>(screenPos.y),
+          TILE_PIXEL_SIZE,
+          TILE_PIXEL_SIZE
+        };
+        
+        // Set color based on validity - use more visible alpha values
+        if (world->CanPlaceBuilding(tileindex + Vec2{dx,dy},1,1)) {
+          SDL_SetRenderDrawColor(renderer, 0, 255, 0, 80); // Green with transparency
+        } else {
+          SDL_SetRenderDrawColor(renderer, 255, 0, 0, 80); // Red with transparency
+        }
+        
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_RenderFillRect(renderer, &tileRect);
+      }
+    }
+
+    // Render the building sprite if available and placement is valid
+    if (registry->HasComponent<SpriteComponent>(entity)) {
+      const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
+      
+      Vec2f screenPos = util::WorldToScreen(transform.position, cameraPos, screenSize);
+      
+      SDL_Rect destRect = {
+        static_cast<int>(screenPos.x) - sprite.renderRect.w / 2,
+        static_cast<int>(screenPos.y) - sprite.renderRect.h / 2,
+        sprite.renderRect.w,
+        sprite.renderRect.h
+      };
+
+      // Render with transparency
+      SDL_SetTextureAlphaMod(sprite.texture, 128); // 50% transparency
+      SDL_RenderCopyEx(renderer, sprite.texture, &sprite.srcRect, &destRect,
+                       transform.rotation, nullptr, sprite.flip);
+      SDL_SetTextureAlphaMod(sprite.texture, 255); // Reset to full opacity
+    }
   }
 
-  // Default camera position if no camera found
-  return {0.0f, 0.0f};
-}
-
-Vec2f RenderSystem::WorldToScreen(Vec2f worldPos, Vec2f cameraPos,
-                                  int screenWidth, int screenHeight) const {
-  return {worldPos.x - cameraPos.x + screenWidth / 2.0f,
-          worldPos.y - cameraPos.y + screenHeight / 2.0f};
+  // Reset render state
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }

@@ -6,7 +6,7 @@ Chunk::Chunk(int _chunkX, int _chunkY) : chunkX(_chunkX), chunkY(_chunkY) {
   tiles.resize(CHUNK_WIDTH * CHUNK_HEIGHT);
 }
 
-Vec2 Chunk::GetLocalTileCoords(int worldTileX, int worldTileY) const {
+Vec2 Chunk::GetLocalTileIndex(int worldTileX, int worldTileY) const {
   int localX = worldTileX - (chunkX * CHUNK_WIDTH);
   int localY = worldTileY - (chunkY * CHUNK_HEIGHT);
 

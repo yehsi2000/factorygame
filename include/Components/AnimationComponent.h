@@ -17,6 +17,7 @@ struct AnimationSequence {
 struct AnimationComponent {
   std::map<std::string, AnimationSequence> animations;
   std::string currentAnimationName;
+  
   int currentFrameIndex = 0;
   float frameTimer = 0.f;
   bool isPlaying = true;

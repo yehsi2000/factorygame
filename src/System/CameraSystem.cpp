@@ -22,28 +22,6 @@ void CameraSystem::Update(float deltaTime) {
   UpdateCameraDrag(deltaTime);
 }
 
-Vec2f CameraSystem::GetCameraPosition() const {
-  if (registry->HasComponent<CameraComponent>(cameraEntity)) {
-    const auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
-    return camera.position;
-  }
-  return {0.0f, 0.0f};
-}
-
-Vec2f CameraSystem::WorldToScreen(Vec2f worldPos, int screenWidth,
-                                  int screenHeight) const {
-  Vec2f cameraPos = GetCameraPosition();
-  return {worldPos.x - cameraPos.x + screenWidth / 2.0f,
-          worldPos.y - cameraPos.y + screenHeight / 2.0f};
-}
-
-Vec2f CameraSystem::ScreenToWorld(Vec2f screenPos, int screenWidth,
-                                  int screenHeight) const {
-  Vec2f cameraPos = GetCameraPosition();
-  return {screenPos.x + cameraPos.x - screenWidth / 2.0f,
-          screenPos.y + cameraPos.y - screenHeight / 2.0f};
-}
-
 void CameraSystem::UpdateCameraFollow(float deltaTime) {
   if (playerEntity != INVALID_ENTITY &&
       !registry->HasComponent<CameraComponent>(cameraEntity))
@@ -99,15 +77,14 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   if (input.rightMousePressed && !playerIsMoving) {
     camera.isDragging = true;
     camera.isFollowing = false;
-    camera.dragStartPos = {(float)input.mouseX, (float)input.mouseY};
+    camera.dragStartPos = Vec2f(input.mousepos);
     camera.cameraStartPos = camera.position;
   }
 
   // Continue dragging
   if (camera.isDragging && input.rightMouseDown) {
-    Vec2f currentMousePos = {(float)input.mouseX, (float)input.mouseY};
-    Vec2f mouseDelta = {currentMousePos.x - camera.dragStartPos.x,
-                        currentMousePos.y - camera.dragStartPos.y};
+    Vec2f currentMousePos = input.mousepos;
+    Vec2f mouseDelta = Vec2f(input.mousepos) - camera.dragStartPos;
 
     // Update camera position (invert delta for natural dragging feel)
     camera.position = {camera.cameraStartPos.x - mouseDelta.x,

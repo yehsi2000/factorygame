@@ -6,6 +6,8 @@
 
 #include "SDL.h"
 #include "imgui.h"
+#include "Core/Item.h"
+#include "Core/Entity.h"
 
 enum class InputAction { StartInteraction, StopInteraction, Inventory, MouseDrop, Quit };
 enum class InputType { KEYBOARD, MOUSE };
@@ -30,6 +32,11 @@ class InputSystem {
   ImGuiIO& io;
   double maxInteractionRadius = 200.0;
   bool isDraggingOutside;
+  
+  // Building preview state
+  bool isPreviewingBuilding;
+  ItemID previewingItemID;
+  EntityID previewEntity;
 
  public:
   InputSystem(GEngine* e);
@@ -41,6 +48,9 @@ class InputSystem {
 
  private:
   void RegisterInputBindings();
+  void CreatePreviewEntity(ItemID itemID);
+  void DestroyPreviewEntity();
+  void UpdatePreviewEntity();
 };
 
 #endif /* SYSTEM_INPUTSYSTEM_ */

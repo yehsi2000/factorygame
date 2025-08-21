@@ -18,16 +18,7 @@ class CameraSystem {
   void InitCameraSystem();
 
   void Update(float deltaTime);
-
-  // Get camera position for rendering
-  Vec2f GetCameraPosition() const;
-
-  // Convert world coordinates to screen coordinates
-  Vec2f WorldToScreen(Vec2f worldPos, int screenWidth, int screenHeight) const;
-
-  // Convert screen coordinates to world coordinates
-  Vec2f ScreenToWorld(Vec2f screenPos, int screenWidth, int screenHeight) const;
-
+  
  private:
   void UpdateCameraFollow(float deltaTime);
   void UpdateCameraDrag(float deltaTime);

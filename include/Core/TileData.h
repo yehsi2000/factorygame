@@ -5,8 +5,7 @@
 
 enum class TileType { Invalid, Dirt, Grass, Water, Stone };
 
-constexpr int TILE_PIXEL_WIDTH = 64;
-constexpr int TILE_PIXEL_HEIGHT = 64;
+constexpr int TILE_PIXEL_SIZE = 64;
 
 struct TileData {
   TileType type = TileType::Invalid;

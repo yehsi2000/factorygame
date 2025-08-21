@@ -16,9 +16,9 @@ enum class ItemID {
   CopperPlate,
 
   MiningDrill,
+  AssemblingMachine,
   // ConveyorBelt,
   // Smelter,
-  // Assembler
   MaxItemID
 };
 
@@ -112,6 +112,10 @@ class ItemDatabase {
     db[ItemID::MiningDrill] = {ItemCategory::Buildable, "채굴기",
                                "현재 타일 아래의 광물을 채굴합니다.",
                                "assets/icon/mining-drill.png", 10};
+
+    db[ItemID::AssemblingMachine] = {ItemCategory::Buildable, "조립기",
+                                     "다양한 아이템을 조립하여 새로운 제품을 만듭니다.",
+                                     "assets/icon/assembling-machine.png", 5};
   }
 };
 

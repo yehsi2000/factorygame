@@ -3,6 +3,9 @@
 #include <cassert>
 
 #include "Components/AnimationComponent.h"
+#include "Components/AssemblingMachineComponent.h"
+#include "Components/BuildingComponent.h"
+#include "Components/BuildingPreviewComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/InactiveComponent.h"
@@ -10,6 +13,7 @@
 #include "Components/InventoryComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
+#include "Components/PlayerStateComponent.h"
 #include "Components/RefineryComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
@@ -25,6 +29,7 @@
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "System/AnimationSystem.h"
+#include "System/AssemblingMachineSystem.h"
 #include "System/CameraSystem.h"
 #include "System/InputSystem.h"
 #include "System/InteractionSystem.h"
@@ -40,6 +45,8 @@
 
 void GEngine::InitCoreSystem() {
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
+  assemblingMachineSystem = std::make_unique<AssemblingMachineSystem>(
+      registry.get(), timerManager.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
   resourceNodeSystem =
       std::make_unique<ResourceNodeSystem>(registry.get(), world.get());
@@ -47,10 +54,10 @@ void GEngine::InitCoreSystem() {
       std::make_unique<MovementSystem>(registry.get(), timerManager.get());
   timerSystem =
       std::make_unique<TimerSystem>(registry.get(), timerManager.get());
-  interactionSystem = std::make_unique<InteractionSystem>(
-      registry.get(), world.get(), dispatcher.get(), commandQueue.get());
+
   renderSystem =
-      std::make_unique<RenderSystem>(registry.get(), gRenderer, gFont);
+      std::make_unique<RenderSystem>(registry.get(), gRenderer, world.get(), gFont);
+  interactionSystem = std::make_unique<InteractionSystem>(this);
   inputSystem = std::make_unique<InputSystem>(this);
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
   uiSystem = std::make_unique<UISystem>(this);
@@ -63,6 +70,9 @@ void GEngine::InitCoreSystem() {
 
 void GEngine::RegisterComponent() {
   registry->RegisterComponent<AnimationComponent>();
+  registry->RegisterComponent<AssemblingMachineComponent>();
+  registry->RegisterComponent<BuildingComponent>();
+  registry->RegisterComponent<BuildingPreviewComponent>();
   registry->RegisterComponent<CameraComponent>();
   registry->RegisterComponent<ChunkComponent>();
   registry->RegisterComponent<InactiveComponent>();
@@ -70,6 +80,7 @@ void GEngine::RegisterComponent() {
   registry->RegisterComponent<MovableComponent>();
   registry->RegisterComponent<InteractionComponent>();
   registry->RegisterComponent<MovementComponent>();
+  registry->RegisterComponent<PlayerStateComponent>();
   registry->RegisterComponent<RefineryComponent>();
   registry->RegisterComponent<ResourceNodeComponent>();
   registry->RegisterComponent<SpriteComponent>();
@@ -89,8 +100,8 @@ void GEngine::GeneratePlayer() {
   registry->AddComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet,
                               {0, 0, 16, 16},
-                              {TILE_PIXEL_WIDTH / 2, TILE_PIXEL_HEIGHT / 2,
-                               TILE_PIXEL_WIDTH, TILE_PIXEL_HEIGHT},
+                              {TILE_PIXEL_SIZE / 2, TILE_PIXEL_SIZE / 2,
+                               TILE_PIXEL_SIZE, TILE_PIXEL_SIZE},
                               SDL_FLIP_NONE,
                               render_order_t(100)});
 
@@ -98,9 +109,16 @@ void GEngine::GeneratePlayer() {
   anim.animations["PlayerIdle"] = {0, 12, 8.f, 16, 16, true};
   anim.currentAnimationName = "PlayerIdle";
   registry->AddComponent<AnimationComponent>(player, std::move(anim));
-  registry->EmplaceComponent<MovementComponent>(player);
+  registry->EmplaceComponent<MovementComponent>(
+      player, MovementComponent{.speed = 300.f});
+  registry->EmplaceComponent<PlayerStateComponent>(
+      player, PlayerStateComponent{.isMining = false,
+                                   .interactingEntity = INVALID_ENTITY});
   registry->EmplaceComponent<MovableComponent>(player);
   registry->EmplaceComponent<InventoryComponent>(player);
+
+  // testing assembly machine
+  dispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 1));
 }
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
@@ -148,6 +166,7 @@ void GEngine::Update(float deltaTime) {
   world->Update(player);
   movementSystem->Update(deltaTime);
   animationSystem->Update(deltaTime);
+  assemblingMachineSystem->Update(deltaTime);
   cameraSystem->Update(deltaTime);
   refinerySystem->Update();
   resourceNodeSystem->Update();
@@ -155,4 +174,10 @@ void GEngine::Update(float deltaTime) {
   renderSystem->Update();
   uiSystem->Update();
   SDL_RenderPresent(gRenderer);
+}
+
+Vec2 GEngine::GetScreenSize() {
+  int w, h;
+  SDL_GetWindowSize(gWindow, &w, &h);
+  return Vec2(w, h);
 }

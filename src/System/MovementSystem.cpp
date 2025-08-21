@@ -38,9 +38,6 @@ void MovementSystem::Update(float deltaTime) {
 
     trans.position.x += (ix / length) * move.speed * deltaTime;
     trans.position.y += (iy / length) * move.speed * deltaTime;
-    if (registry->HasComponent<InteractionComponent>(entity)) {
-      registry->RemoveComponent<InteractionComponent>(entity);
-      util::DetachTimer(*registry, *timerManager, entity, TimerId::Interact);
-    }
+    //TODO : stop interacting
   }
 }

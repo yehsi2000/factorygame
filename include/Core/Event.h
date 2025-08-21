@@ -8,9 +8,9 @@ struct Event {
   virtual ~Event() = default;
 };
 
-struct InteractEvent : public Event {
-  InteractEvent(EntityID i) : instigator(i) {}
-  EntityID instigator;
+struct PlayerInteractEvent : public Event {
+  PlayerInteractEvent(EntityID i) : target(i) {}
+  EntityID target;
 };
 
 struct ItemAddEvent : public Event {

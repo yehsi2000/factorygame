@@ -25,7 +25,7 @@ namespace util {
  * @param duration The duration of the timer in seconds.
  * @param isRepeating Whether the timer should repeat after expiring.
  */
-void AttachTimer(Registry& registry, TimerManager& timerManager,
+void AttachTimer(Registry* registry, TimerManager* timerManager,
                  EntityID entity, TimerId id, float duration, bool isRepeating);
 
 /**
@@ -39,7 +39,7 @@ void AttachTimer(Registry& registry, TimerManager& timerManager,
  * @param entity The ID of the entity to detach the timer from.
  * @param id The semantic ID of the timer to detach.
  */
-void DetachTimer(Registry& registry, TimerManager& timerManager,
+void DetachTimer(Registry* registry, TimerManager* timerManager,
                  EntityID entity, TimerId id);
 
 }  // namespace util

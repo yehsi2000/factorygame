@@ -2,10 +2,7 @@
 #define COMPONENTS_MOVEMENTCOMPONENT_
 
 struct MovementComponent {
-  float speed = 300.f;  // per pixel
-  // // direction vector
-  // float dx = 0.f;
-  // float dy = 0.f;
+  float speed=0.f;  // per pixel
 };
 
 #endif /* COMPONENTS_MOVEMENTCOMPONENT_ */

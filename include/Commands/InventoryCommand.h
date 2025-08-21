@@ -46,6 +46,7 @@ class InventoryCommand : public Command {
     }
     // consume item
     else {
+      amount *= -1;
       while (amount) {
         auto it = std::find_if(inventory.items.begin(), inventory.items.end(),
                                [this](const auto &itempair) {

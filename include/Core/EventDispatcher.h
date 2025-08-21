@@ -67,14 +67,6 @@ public:
     }
   }
 
-  // Overload to accept shared_ptr for convenience, but still dispatches
-  // immediately.
-  void Publish(const std::shared_ptr<const Event> &event) {
-    if (event) {
-      Publish(*event);
-    }
-  }
-
 private:
   // Called by EventHandle destructor to remove the subscription.
   void Unsubscribe(const std::type_index &ti, CallbackID id);
