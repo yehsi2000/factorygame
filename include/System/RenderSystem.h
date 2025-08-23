@@ -21,8 +21,10 @@ class RenderSystem {
  private:
   void RenderChunks(Vec2f cameraPos, Vec2 screenSize);
   void RenderEntities(Vec2f cameraPos, Vec2 screenSize);
+  bool OffScreen(Vec2f screenPos, Vec2 screenSize, Vec2f entitySize);
   void RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize);
   void RenderTexts(Vec2f cameraPos, Vec2 screenSize);
+  void RenderDebugRect(Vec2f cameraPos, Vec2 screenSize);
 };
 
 #endif /* SYSTEM_RENDERSYSTEM_ */

@@ -3,7 +3,6 @@
 
 #include "Core/EventDispatcher.h"
 #include "Core/Entity.h"
-#include "Core/Recipe.h"
 
 class GEngine;
 
@@ -17,11 +16,12 @@ class UISystem {
   GEngine *engine;
   EventHandle showInventoryEvent;
   bool showInventory = false;
-  bool demoShow = true;
+  bool demoShow = false;
   ItemPayload payload;
   void Inventory();
   void AssemblingMachineUI();
   void AssemblingMachineRecipeSelection(EntityID entity);
+  void MiningDrillUI();
 };
 
 #endif /* SYSTEM_UISYSTEM_ */

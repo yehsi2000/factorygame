@@ -15,9 +15,11 @@ class InventorySystem {
  private:
   EventHandle addEventHandle;
   EventHandle consumeEventHandle;
+  EventHandle moveEventHandle;
   GEngine *engine;
   void AddItem(const ItemAddEvent &e);
   void ConsumeItem(const ItemConsumeEvent &e);
+  void MoveItem(const ItemMoveEvent &e);
 };
 
 #endif /* SYSTEM_INVENTORYSYSTEM_ */

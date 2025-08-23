@@ -20,6 +20,7 @@ class CameraSystem;
 class InputSystem;
 class InteractionSystem;
 class InventorySystem;
+class MiningDrillSystem;
 class MovementSystem;
 class RefinerySystem;
 class RenderSystem;
@@ -33,12 +34,10 @@ class UISystem;
  * 
  */
 class GEngine {  
-  EntityID player; ///< Local player ID
+  
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
   TTF_Font* gFont;
-
-  std::unique_ptr<GameState> currentState; ///< Current GameState
 
   std::unique_ptr<Registry> registry;
   std::unique_ptr<TimerManager> timerManager;
@@ -48,11 +47,15 @@ class GEngine {
 
   EventHandle GameEndHandle; ///< EventHandle subscribing GameEnd Event
 
+  EntityID player; ///< Local player ID
+  std::unique_ptr<GameState> currentState; ///< Current GameState
+
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<AssemblingMachineSystem> assemblingMachineSystem;
   std::unique_ptr<CameraSystem> cameraSystem;
   std::unique_ptr<InputSystem> inputSystem;
   std::unique_ptr<InventorySystem> inventorySystem;
+  std::unique_ptr<MiningDrillSystem> miningDrillSystem;
   std::unique_ptr<MovementSystem> movementSystem;
   std::unique_ptr<RefinerySystem> refinerySystem;
   std::unique_ptr<RenderSystem> renderSystem;

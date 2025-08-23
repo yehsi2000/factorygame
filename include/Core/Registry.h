@@ -52,7 +52,7 @@ public:
     EntityID id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;
-    std::cout << "Created entity with ID:" << id << std::endl;
+    //std::cout << "Created entity with ID:" << id << std::endl;
     return id;
   }
 

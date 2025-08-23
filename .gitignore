@@ -8,3 +8,5 @@ out
 *.md
 *.ini
 !README.md
+include/lib/freetype
+include/lib/ft2build.h

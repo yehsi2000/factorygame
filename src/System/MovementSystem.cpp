@@ -5,7 +5,6 @@
 #include <cmath>  // for std::sqrt
 
 #include "Components/InactiveComponent.h"
-#include "Components/InteractionComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
 #include "Components/TransformComponent.h"

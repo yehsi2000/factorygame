@@ -1,16 +1,14 @@
 #include "System/InteractionSystem.h"
 
-#include "Commands/AssemblingMachineInteractCommand.h"
-#include "Commands/ResourceMineCommand.h"
+#include <Components/MiningDrillComponent.h>
+#include <Components/PlayerStateComponent.h>
+
 #include "Components/AssemblingMachineComponent.h"
-#include "Components/InteractionComponent.h"
 #include "Components/ResourceNodeComponent.h"
-#include "Core/CommandQueue.h"
 #include "Core/GEngine.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
 #include "Util/TimerUtil.h"
-#include <Components/PlayerStateComponent.h>
 
 InteractionSystem::InteractionSystem(GEngine* engine)
     : engine(engine),
@@ -20,32 +18,49 @@ InteractionSystem::InteractionSystem(GEngine* engine)
           })) {}
 
 void InteractionSystem::OnInteractEvent(const PlayerInteractEvent& event) {
-  Registry* registry = engine->GetRegistry();
+  Registry* reg = engine->GetRegistry();
   World* world = engine->GetWorld();
 
-  if (!registry || !world) return;
+  if (!reg || !world) return;
 
   EntityID player = engine->GetPlayer();
-  EntityID targetEntity = event.target;
 
-  if (targetEntity == INVALID_ENTITY) return;
+  TileData* tile = world->GetTileAtTileIndex(event.target);
+  if (!tile) return;
 
-  if (registry->HasComponent<ResourceNodeComponent>(targetEntity)) {
-    if(!registry->HasComponent<PlayerStateComponent>(player)) return;
+  // Target occupying entity first
+  EntityID targetEntity = tile->occupyingEntity;
 
-    auto& state = registry->GetComponent<PlayerStateComponent>(player);
+  // Target Ore if there's no entity
+  if (targetEntity == INVALID_ENTITY && tile->oreEntity != INVALID_ENTITY) {
+    targetEntity = tile->oreEntity;
+  }
+
+  if (reg->HasComponent<ResourceNodeComponent>(targetEntity)) {
+    if (!reg->HasComponent<PlayerStateComponent>(player)) return;
+    auto& state = reg->GetComponent<PlayerStateComponent>(player);
     state.isMining = true;
     state.interactingEntity = targetEntity;
 
-    util::AttachTimer(registry, engine->GetTimerManager(), player,
+    util::AttachTimer(reg, engine->GetTimerManager(), player,
                       TimerId::Mine, 1.0f, true);
-    
-  } else if (registry->HasComponent<AssemblingMachineComponent>(targetEntity)) {
-    engine->GetCommandQueue()->Enqueue(
-        std::make_unique<AssemblingMachineInteractCommand>(player,
-                                                           targetEntity));
+
+  } else if (reg->HasComponent<AssemblingMachineComponent>(targetEntity)) {
+    auto& machine =
+        reg->GetComponent<AssemblingMachineComponent>(targetEntity);
+
+    machine.showUI = true;
+    // If no recipe is selected, show recipe selection
+    if (machine.currentRecipe == RecipeID::None) {
+      machine.showRecipeSelection = true;
+    } else {
+      machine.showRecipeSelection = false;
+    }
+
+  } else if (reg->HasComponent<MiningDrillComponent>(targetEntity)) {
+    auto& drill = reg->GetComponent<MiningDrillComponent>(targetEntity);
+    drill.showUI = true;
   }
 }
 
-void InteractionSystem::Update() {
-}
+void InteractionSystem::Update() {}

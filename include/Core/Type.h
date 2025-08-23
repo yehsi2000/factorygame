@@ -1,11 +1,13 @@
 ﻿#ifndef CORE_TYPE_
 #define CORE_TYPE_
 
+#include <iostream>
+
 struct Vec2f;
 
 struct Vec2 {
   int x, y;
-  constexpr Vec2(int _x=0, int _y=0) : x(_x), y(_y) {}
+  constexpr Vec2(int _x = 0, int _y = 0) : x(_x), y(_y) {}
   constexpr Vec2(float _x, float _y)
       : x(static_cast<int>(_x)), y(static_cast<int>(_y)) {}
 
@@ -31,7 +33,7 @@ constexpr Vec2 operator/(const Vec2 a, const int b) {
 
 struct Vec2f {
   float x, y;
-  constexpr Vec2f(float _x =0.f, float _y=0.f) : x(_x), y(_y) {}
+  constexpr Vec2f(float _x = 0.f, float _y = 0.f) : x(_x), y(_y) {}
 
   constexpr Vec2f(const Vec2& other)
       : x(static_cast<float>(other.x)), y(static_cast<float>(other.y)) {}
@@ -56,6 +58,16 @@ constexpr Vec2f operator/(Vec2f a, float b) {
     return {a.x / b, a.y / b};
   else
     return a;
+}
+
+constexpr std::ostream& operator<<(std::ostream& out, const Vec2f& a) {
+  out << "( " << a.x << ", " << a.y << " )";
+  return out;
+}
+
+constexpr std::ostream& operator<<(std::ostream& out, const Vec2& a) {
+  out << "( " << a.x << ", " << a.y << " )";
+  return out;
 }
 
 #endif /* CORE_TYPE_ */

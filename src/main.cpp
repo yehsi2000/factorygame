@@ -8,6 +8,7 @@
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
+#include "imgui_freetype.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
@@ -39,9 +40,8 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  SDL_Window *window =
-      SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
-                       SDL_WINDOWPOS_CENTERED, 960 * 2, 540 * 2, 0);
+  SDL_Window *window = SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
+                                        SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
 
   if (window == NULL) {
     std::cout << "Could not create window:" << SDL_GetError() << ".\n";
@@ -69,7 +69,9 @@ int main(int argc, char *argv[]) {
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |=
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+  io.Fonts->FontLoaderFlags = ImGuiFreeTypeBuilderFlags_Bold;
   io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\NotoSansKR-VF.ttf");
+
   ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer2_Init(renderer);
 

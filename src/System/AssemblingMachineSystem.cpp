@@ -11,7 +11,7 @@
 
 AssemblingMachineSystem::AssemblingMachineSystem(Registry* r, TimerManager* tm) : registry(r), timerManager(tm) {}
 
-void AssemblingMachineSystem::Update(float deltaTime) {
+void AssemblingMachineSystem::Update() {
   auto view = registry->view<AssemblingMachineComponent>();
   
   for (auto entity : view) {

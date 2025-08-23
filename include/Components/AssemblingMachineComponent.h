@@ -33,4 +33,4 @@ struct AssemblingMachineComponent {
   bool showRecipeSelection = true; // true when no recipe selected
 };
 
-#endif /* COMPONENTS_ASSEMBLINGMACHINECOMPONENT_ */
+#endif/* COMPONENTS_ASSEMBLINGMACHINECOMPONENT_ */

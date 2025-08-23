@@ -9,7 +9,7 @@
 #include "Core/Item.h"
 #include "Core/Entity.h"
 
-enum class InputAction { StartInteraction, StopInteraction, Inventory, MouseDrop, Quit };
+enum class InputAction { StartInteraction, StopInteraction, Inventory, MouseDrop, Debug, Quit };
 enum class InputType { KEYBOARD, MOUSE };
 
 class GEngine;

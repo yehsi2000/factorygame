@@ -3,14 +3,15 @@
 
 #include "Core/Entity.h"
 #include "Core/Item.h"
+#include "Core/Type.h"
 
 struct Event {
   virtual ~Event() = default;
 };
 
 struct PlayerInteractEvent : public Event {
-  PlayerInteractEvent(EntityID i) : target(i) {}
-  EntityID target;
+  PlayerInteractEvent(Vec2 t) : target(t) {}
+  Vec2 target;
 };
 
 struct ItemAddEvent : public Event {
@@ -25,6 +26,15 @@ struct ItemConsumeEvent : public Event {
   ItemConsumeEvent(EntityID target, ItemID item, int amt)
       : target(target), item(item), amount(amt) {};
   EntityID target;
+  ItemID item;
+  int amount;
+};
+
+struct ItemMoveEvent : public Event {
+  ItemMoveEvent(EntityID source, EntityID dest, ItemID item, int amt)
+      : source(source), dest(dest) , item(item), amount(amt) {};
+  EntityID source;
+  EntityID dest;
   ItemID item;
   int amount;
 };

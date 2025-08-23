@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 project(FactoryGame)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 set(BUILD_STATIC ON)
 
@@ -41,6 +41,7 @@ set_target_properties(FactoryGame PROPERTIES PDB_NAME "FactoryGame")
 target_include_directories(FactoryGame PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/Lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_ttf/external/freetype/include"
     ${Boost_INCLUDE_DIRS}
 )
 

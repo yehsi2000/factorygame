@@ -27,7 +27,7 @@ class ResourceMineCommand : public Command {
       if (registry.HasComponent<InventoryComponent>(instigator)) {
         InventoryComponent &inventory =
             registry.GetComponent<InventoryComponent>(instigator);
-        if (inventory.items.size() < inventory.column * inventory.row)
+        if (inventory.items.size() <= inventory.column * inventory.row)
           resource.LeftResource--;
         engine.GetDispatcher()->Publish(ItemAddEvent(
             instigator, OreToItemMapper::instance().get(resource.Ore), 1));

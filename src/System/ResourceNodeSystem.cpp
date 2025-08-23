@@ -10,6 +10,7 @@ ResourceNodeSystem::ResourceNodeSystem(Registry* r, World* world)
     : registry(r), world(world) {}
 
 void ResourceNodeSystem::Update() {
+  //Show Resource Amount
   for (EntityID entity : registry->view<ResourceNodeComponent>()) {
     if (registry->HasComponent<TextComponent>(entity)) {
       const ResourceNodeComponent& resource =

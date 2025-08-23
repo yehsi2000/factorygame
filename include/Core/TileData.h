@@ -9,7 +9,8 @@ constexpr int TILE_PIXEL_SIZE = 64;
 
 struct TileData {
   TileType type = TileType::Invalid;
-  EntityID occupyingEntity = INVALID_ENTITY;  // entity on this tile
+  EntityID occupyingEntity = INVALID_ENTITY;
+  EntityID oreEntity = INVALID_ENTITY;
   float debugValue;
 };
 

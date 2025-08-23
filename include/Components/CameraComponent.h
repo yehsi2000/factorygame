@@ -13,7 +13,7 @@ struct CameraComponent {
   Vec2f dragStartPos;    // Mouse position when drag started
   Vec2f cameraStartPos;  // Camera position when drag started
 
-  CameraComponent(Vec2f initialPos = {0.0f, 0.0f}, float speed = 10.f)
+  constexpr CameraComponent(Vec2f initialPos = {0.0f, 0.0f}, float speed = 10.f)
       : position(initialPos),
         target(initialPos),
         offset{0.0f, 0.0f},

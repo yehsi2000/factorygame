@@ -15,7 +15,7 @@ class AssemblingMachineSystem {
 
 public:
   AssemblingMachineSystem(Registry* r, TimerManager* tm);
-  void Update(float deltaTime);
+  void Update();
   
   // Recipe management
   void SetRecipe(EntityID entity, RecipeID recipeId);
@@ -42,4 +42,4 @@ private:
   void UpdateAnimationState(EntityID entity, AssemblingMachineComponent& machine);
 };
 
-#endif /* SYSTEM_ASSEMBLINGMACHINESYSTEM_ */
+#endif/* SYSTEM_ASSEMBLINGMACHINESYSTEM_ */

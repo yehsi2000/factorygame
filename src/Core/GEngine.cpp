@@ -8,9 +8,10 @@
 #include "Components/BuildingPreviewComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
+#include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
-#include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
+#include "Components/MiningDrillComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
 #include "Components/PlayerStateComponent.h"
@@ -34,6 +35,7 @@
 #include "System/InputSystem.h"
 #include "System/InteractionSystem.h"
 #include "System/InventorySystem.h"
+#include "System/MiningDrillSystem.h"
 #include "System/MovementSystem.h"
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
@@ -55,8 +57,10 @@ void GEngine::InitCoreSystem() {
   timerSystem =
       std::make_unique<TimerSystem>(registry.get(), timerManager.get());
 
-  renderSystem =
-      std::make_unique<RenderSystem>(registry.get(), gRenderer, world.get(), gFont);
+  renderSystem = std::make_unique<RenderSystem>(registry.get(), gRenderer,
+                                                world.get(), gFont);
+  miningDrillSystem = std::make_unique<MiningDrillSystem>(
+      registry.get(), world.get(), timerManager.get());
   interactionSystem = std::make_unique<InteractionSystem>(this);
   inputSystem = std::make_unique<InputSystem>(this);
   timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
@@ -75,10 +79,11 @@ void GEngine::RegisterComponent() {
   registry->RegisterComponent<BuildingPreviewComponent>();
   registry->RegisterComponent<CameraComponent>();
   registry->RegisterComponent<ChunkComponent>();
+  registry->RegisterComponent<DebugRectComponent>();
   registry->RegisterComponent<InactiveComponent>();
   registry->RegisterComponent<InventoryComponent>();
+  registry->RegisterComponent<MiningDrillComponent>();
   registry->RegisterComponent<MovableComponent>();
-  registry->RegisterComponent<InteractionComponent>();
   registry->RegisterComponent<MovementComponent>();
   registry->RegisterComponent<PlayerStateComponent>();
   registry->RegisterComponent<RefineryComponent>();
@@ -92,15 +97,14 @@ void GEngine::RegisterComponent() {
 
 void GEngine::GeneratePlayer() {
   player = registry->CreateEntity();
-  registry->AddComponent<TransformComponent>(player,
-                                             TransformComponent{{0, 0}});
+  registry->EmplaceComponent<TransformComponent>(player);
 
   SDL_Texture* playerIdleSpritesheet = AssetManager::Instance().getTexture(
       "assets/img/character/Miner_IdleAnimation.png", gRenderer);
-  registry->AddComponent<SpriteComponent>(
+  registry->EmplaceComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet,
                               {0, 0, 16, 16},
-                              {TILE_PIXEL_SIZE / 2, TILE_PIXEL_SIZE / 2,
+                              {-TILE_PIXEL_SIZE / 2, -TILE_PIXEL_SIZE / 2,
                                TILE_PIXEL_SIZE, TILE_PIXEL_SIZE},
                               SDL_FLIP_NONE,
                               render_order_t(100)});
@@ -115,10 +119,12 @@ void GEngine::GeneratePlayer() {
       player, PlayerStateComponent{.isMining = false,
                                    .interactingEntity = INVALID_ENTITY});
   registry->EmplaceComponent<MovableComponent>(player);
-  registry->EmplaceComponent<InventoryComponent>(player);
+  registry->EmplaceComponent<InventoryComponent>(player, InventoryComponent{.row=4, .column=4});
 
   // testing assembly machine
+  
   dispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 1));
+  dispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 1));
 }
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
@@ -163,16 +169,20 @@ void GEngine::Update(float deltaTime) {
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();
   interactionSystem->Update();
+
   world->Update(player);
   movementSystem->Update(deltaTime);
   animationSystem->Update(deltaTime);
-  assemblingMachineSystem->Update(deltaTime);
-  cameraSystem->Update(deltaTime);
+  assemblingMachineSystem->Update();
+  miningDrillSystem->Update();
   refinerySystem->Update();
   resourceNodeSystem->Update();
 
+  cameraSystem->Update(deltaTime);
+
+  //Rendering
   renderSystem->Update();
-  uiSystem->Update();
+  uiSystem->Update(); // Display UI on very top
   SDL_RenderPresent(gRenderer);
 }
 
