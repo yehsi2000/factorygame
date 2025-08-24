@@ -2,11 +2,12 @@
 
 #include <Util/TimerUtil.h>
 
-#include <cmath>  // for std::sqrt
+#include <cmath>
 
 #include "Components/InactiveComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
+#include "Components/PlayerStateComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Entity.h"
 #include "Core/InputState.h"
@@ -37,6 +38,13 @@ void MovementSystem::Update(float deltaTime) {
 
     trans.position.x += (ix / length) * move.speed * deltaTime;
     trans.position.y += (iy / length) * move.speed * deltaTime;
-    //TODO : stop interacting
+    
+    // Stop player interaction
+    if (registry->HasComponent<PlayerStateComponent>(entity)) {
+      auto& playerState = registry->GetComponent<PlayerStateComponent>(entity);
+      playerState.isMining = false;
+      playerState.interactingEntity = INVALID_ENTITY;
+      util::DetachTimer(registry, timerManager, entity, TimerId::Mine);
+    }
   }
 }

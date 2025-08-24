@@ -12,7 +12,7 @@ class InteractionSystem {
   void Update();  // In case the system needs a per-frame update in the future.
 
  private:
-  void OnInteractEvent(const PlayerInteractEvent& event);
+  void OnPlayerInteractEvent(const PlayerInteractEvent& event);
 
   GEngine* engine;
   EventHandle handle;

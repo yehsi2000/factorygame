@@ -293,6 +293,7 @@ void World::GenerateChunk(Chunk& chunk) {
   int cx = chunk.chunkX;
   int cy = chunk.chunkY;
   EntityID chunkDebugRect = registry->CreateEntity();
+  #ifdef DRAW_DEBUG_RECTS
   registry->EmplaceComponent<DebugRectComponent>(
       chunkDebugRect,
       DebugRectComponent{0, 0, TILE_PIXEL_SIZE * CHUNK_WIDTH,
@@ -308,12 +309,13 @@ void World::GenerateChunk(Chunk& chunk) {
            chunk.chunkY);
   textComp.color = SDL_Color{255, 255, 255, 255};
   registry->EmplaceComponent<TextComponent>(chunkDebugRect, textComp);
-
+ #endif
   // terrain generation
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       int worldTileX = chunk.chunkX * CHUNK_WIDTH + x;
       int worldTileY = chunk.chunkY * CHUNK_HEIGHT + y;
+      #ifdef DRAW_DEBUG_RECTS
       EntityID tileDebugRect = registry->CreateEntity();
       registry->EmplaceComponent<DebugRectComponent>(
           tileDebugRect, DebugRectComponent{0, 0, TILE_PIXEL_SIZE,
@@ -328,6 +330,7 @@ void World::GenerateChunk(Chunk& chunk) {
                worldTileY);
       textComp.color = SDL_Color{255, 255, 255, 255};
       registry->EmplaceComponent<TextComponent>(tileDebugRect, textComp);
+       #endif
       float terrainValue = noise.GetNoise((float)worldTileX, (float)worldTileY);
       TileData* tile = chunk.GetTile(x, y);
 

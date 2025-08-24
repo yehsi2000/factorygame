@@ -12,6 +12,8 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
+#define DRAW_DEBUG_RECTS
+
 void GameLoop(GEngine *engine) {
   using namespace std::chrono;
 

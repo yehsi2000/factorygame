@@ -35,8 +35,8 @@ enum class OreType {
 
 struct ItemData {
   ItemCategory category;
-  std::string name;
-  std::string description;
+  std::u8string name;
+  std::u8string description;
   std::string icon;
 
   int maxStackSize = 50;
@@ -92,30 +92,30 @@ class ItemDatabase {
  private:
   std::unordered_map<ItemID, ItemData> db;
   ItemDatabase() {
-    db[ItemID::IronOre] = {ItemCategory::Ore, "철광석",
-                           "제련하여 철 주괴로 만들 수 있습니다.",
+    db[ItemID::IronOre] = {ItemCategory::Ore, u8"철광석",
+                           u8"제련하여 철 주괴로 만들 수 있습니다.",
                            "assets/img/icon/iron-ore.png", 100};
 
     db[ItemID::IronPlate] = {
-        ItemCategory::Ingot, "철판",
-        "철을 판 형태로 가공한 물건. 다른 철강 제품을 만드는데 사용된다.",
+        ItemCategory::Ingot, u8"철판",
+        u8"철을 판 형태로 가공한 물건. 다른 철강 제품을 만드는데 사용된다.",
         "assets/img/icon/iron-plate.png", 100};
 
-    db[ItemID::CopperOre] = {ItemCategory::Ore, "구리광석",
-                             "제련하여 구리 주괴로 만들 수 있습니다.",
+    db[ItemID::CopperOre] = {ItemCategory::Ore, u8"구리광석",
+                             u8"제련하여 구리 주괴로 만들 수 있습니다.",
                              "assets/img/icon/copper-ore.png", 100};
 
     db[ItemID::CopperPlate] = {
-        ItemCategory::Ingot, "구리판",
-        "구리를 판 형태로 가공한 물건. 다른 구리 제품을 만드는데 사용된다.",
+        ItemCategory::Ingot, u8"구리판",
+        u8"구리를 판 형태로 가공한 물건. 다른 구리 제품을 만드는데 사용된다.",
         "assets/img/icon/copper-plate.png", 100};
 
-    db[ItemID::MiningDrill] = {ItemCategory::Buildable, "채굴기",
-                               "현재 타일 아래의 광물을 채굴합니다.",
+    db[ItemID::MiningDrill] = {ItemCategory::Buildable, u8"채굴기",
+                               u8"현재 타일 아래의 광물을 채굴합니다.",
                                "assets/img/icon/mining-drill.png", 10};
 
-    db[ItemID::AssemblingMachine] = {ItemCategory::Buildable, "조립기",
-                                     "다양한 아이템을 조립하여 새로운 제품을 만듭니다.",
+    db[ItemID::AssemblingMachine] = {ItemCategory::Buildable, u8"조립기",
+                                     u8"다양한 아이템을 조립하여 새로운 제품을 만듭니다.",
                                      "assets/img/icon/assembling-machine.png", 5};
   }
 };

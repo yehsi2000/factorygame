@@ -60,12 +60,12 @@ constexpr Vec2f operator/(Vec2f a, float b) {
     return a;
 }
 
-constexpr std::ostream& operator<<(std::ostream& out, const Vec2f& a) {
+inline std::ostream& operator<<(std::ostream& out, const Vec2f& a) {
   out << "( " << a.x << ", " << a.y << " )";
   return out;
 }
 
-constexpr std::ostream& operator<<(std::ostream& out, const Vec2& a) {
+inline std::ostream& operator<<(std::ostream& out, const Vec2& a) {
   out << "( " << a.x << ", " << a.y << " )";
   return out;
 }

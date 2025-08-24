@@ -11,7 +11,7 @@
 constexpr int MAX_ENTITIES = 100000;
 
 class Registry {
-private:
+ private:
   std::queue<EntityID> availableEntities{};
   InputState inputState;
 
@@ -20,28 +20,32 @@ private:
   std::unordered_map<const char *, std::unique_ptr<IComponentArray>>
       componentArrays{};
 
-  template <typename T> const char *GetComponentTypeName() {
+  template <typename T>
+  const char *GetComponentTypeName() {
     return typeid(T).name();
   }
 
-  template <typename T> ComponentArray<T>* GetComponentArray() {
+  template <typename T>
+  ComponentArray<T> *GetComponentArray() {
     const char *typeName = GetComponentTypeName<T>();
-    assert(componentArrays.count(typeName) &&
-           "Component type not registered before use.");
-    return static_cast<ComponentArray<T>*>(
-        componentArrays[typeName].get());
+    if (componentArrays.count(typeName) == 0) {
+      std::cerr << "Assertion failed: Component type '" << typeName
+                << "' not registered before use." << std::endl;
+      std::abort();
+    }
+    return static_cast<ComponentArray<T> *>(componentArrays[typeName].get());
   }
 
-  template <typename T> std::size_t GetComponentArraySize() {
+  template <typename T>
+  std::size_t GetComponentArraySize() {
     const char *typeName = GetComponentTypeName<T>();
-    if (componentArrays.count(typeName) == 0)
-      return 0;
+    if (componentArrays.count(typeName) == 0) return 0;
     return componentArrays.at(typeName)->getSize();
   }
 
-public:
+ public:
   Registry() {
-    for (EntityID entity = 0; entity < MAX_ENTITIES; ++entity) {
+    for (EntityID entity = 1; entity < MAX_ENTITIES; ++entity) {
       availableEntities.push(entity);
     }
   }
@@ -52,7 +56,7 @@ public:
     EntityID id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;
-    //std::cout << "Created entity with ID:" << id << std::endl;
+    // std::cout << "Created entity with ID:" << id << std::endl;
     return id;
   }
 
@@ -68,14 +72,16 @@ public:
   }
 
   // this should called only once
-  template <typename T> void RegisterComponent() {
+  template <typename T>
+  void RegisterComponent() {
     const char *typeName = GetComponentTypeName<T>();
     if (componentArrays.find(typeName) == componentArrays.end()) {
       componentArrays[typeName] = std::make_unique<ComponentArray<T>>();
     }
   }
 
-  template <typename T> void AddComponent(EntityID entity, T &&component) {
+  template <typename T>
+  void AddComponent(EntityID entity, T &&component) {
     GetComponentArray<T>()->addData(entity, std::move(component));
   }
 
@@ -84,15 +90,18 @@ public:
     GetComponentArray<T>()->emplaceData(entity, std::forward<Args>(args)...);
   }
 
-  template <typename T> void RemoveComponent(EntityID entity) {
+  template <typename T>
+  void RemoveComponent(EntityID entity) {
     GetComponentArray<T>()->removeData(entity);
   }
 
-  template <typename T> T &GetComponent(EntityID entity) {
+  template <typename T>
+  T &GetComponent(EntityID entity) {
     return GetComponentArray<T>()->getData(entity);
   }
 
-  template <typename T> bool HasComponent(EntityID entity) {
+  template <typename T>
+  bool HasComponent(EntityID entity) {
     const char *typeName = GetComponentTypeName<T>();
     auto it = componentArrays.find(typeName);
     if (it == componentArrays.end()) {
@@ -102,14 +111,15 @@ public:
   }
 
   // Get all entities with given component
-  template <typename... TComponent> std::vector<EntityID> view() {
+  template <typename... TComponent>
+  std::vector<EntityID> view() {
     // No component
     if constexpr (sizeof...(TComponent) == 0) {
       return {};
     }
 
     // Get all component arrays
-    std::vector<IComponentArray*> arrays;
+    std::vector<IComponentArray *> arrays;
     (arrays.push_back(GetComponentArray<TComponent>()), ...);
 
     // Find smallest array
@@ -130,7 +140,8 @@ public:
     return result;
   }
 
-  template <typename T, typename Func> void forEach(Func func) {
+  template <typename T, typename Func>
+  void forEach(Func func) {
     GetComponentArray<T>()->forEach(func);
   }
 
