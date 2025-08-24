@@ -1,6 +1,7 @@
 ﻿#include "System/TimerExpireSystem.h"
 
 #include "Commands/ResourceMineCommand.h"
+#include "Components/AssemblingMachineComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Components/PlayerStateComponent.h"
 #include "Components/TimerComponent.h"
@@ -13,17 +14,29 @@ void TimerExpireSystem::Update() {
   Registry* reg = engine->GetRegistry();
   auto view = reg->view<TimerExpiredTag>();
   for (auto entity : view) {
-    const auto& tag = reg->GetComponent<TimerExpiredTag>(entity);
+    TimerId expiredId = reg->GetComponent<TimerExpiredTag>(entity).expiredId;
+    // Remove the tag first
+    engine->GetRegistry()->RemoveComponent<TimerExpiredTag>(entity);
 
     // Find the handle for the expired timer
     TimerHandle handle = INVALID_TIMER_HANDLE;
     auto& timerComp = reg->GetComponent<TimerComponent>(entity);
-    handle = timerComp.timers[static_cast<int>(tag.expiredId)];
-
+    handle = timerComp.timers[static_cast<int>(expiredId)];
+    
     if (handle != INVALID_TIMER_HANDLE) {
       TimerInstance* timer = engine->GetTimerManager()->GetTimer(handle);
       if (timer) {
-        switch (tag.expiredId) {
+        // Cleanup timer first
+        if (timer->isRepeating) {
+          timer->elapsed = 0.0f;
+        } else {
+          timerComp.timers[static_cast<int>(expiredId)] =
+              INVALID_TIMER_HANDLE;
+          engine->GetTimerManager()->DestroyTimer(handle);
+        }
+
+        switch (expiredId) {
+          // Mining from player or drill
           case TimerId::Mine:
             if (reg->HasComponent<PlayerStateComponent>(entity)) {
               const auto& stat =
@@ -35,23 +48,23 @@ void TimerExpireSystem::Update() {
               const auto& drill =
                   reg->GetComponent<MiningDrillComponent>(entity);
               engine->GetCommandQueue()->Enqueue(
-                  std::make_unique<ResourceMineCommand>(entity, drill.oreEntity));
+                  std::make_unique<ResourceMineCommand>(entity,
+                                                        drill.oreEntity));
             }
             break;
+
+          // Assembling machine done crafting
+          case TimerId::AssemblingMachineCraft:
+            if (reg->HasComponent<AssemblingMachineComponent>(entity)) {
+              engine->GetDispatcher()->Publish(
+                  AssemblyCraftOutputEvent{entity});
+            }
+            break;
+
           default:
             break;
         }
-
-        if (timer->isRepeating) {
-          timer->elapsed = 0.0f;
-        } else {
-          timerComp.timers[static_cast<int>(tag.expiredId)] =
-              INVALID_TIMER_HANDLE;
-          engine->GetTimerManager()->DestroyTimer(handle);
-        }
       }
     }
-
-    engine->GetRegistry()->RemoveComponent<TimerExpiredTag>(entity);
   }
 }

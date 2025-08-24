@@ -1,6 +1,7 @@
 ﻿#include "System/InputSystem.h"
 
 #include <Components/CameraComponent.h>
+#include <Components/InactiveComponent.h>
 #include <Components/PlayerStateComponent.h>
 
 #include <optional>
@@ -29,7 +30,6 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_internal.h"
-#include <Components/InactiveComponent.h>
 
 std::size_t KeyEventHasher::operator()(const KeyEvent& k) const {
   using boost::hash_combine;
@@ -79,34 +79,47 @@ void InputSystem::Update() {
       engine->GetDispatcher()->Publish(QuitEvent{});
       return;  // Stop all input handling if quit event occurs
     }
+
+    // Handle Mouse Event
     if (io.WantCaptureMouse) {
       // Dragging from UI
       ImGuiContext* ctx = ImGui::GetCurrentContext();
       ImGuiWindow* window = ctx->HoveredWindow;
+
       if (window == nullptr && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
         if (!isDraggingOutside) {
           isDraggingOutside = true;
           std::cout << "start dragging outside!" << std::endl;
 
-          // Check if we're dragging a buildable item
+          // Handle item dragging
           if (ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
             ItemPayload* payload_ptr =
                 static_cast<ItemPayload*>(ctx->DragDropPayload.Data);
-            if (payload_ptr->id != ItemID::None) {
+
+            // Only handle dragging from player inventory
+            if (payload_ptr->owner == engine->GetPlayer() &&
+                payload_ptr->id != ItemID::None) {
               const ItemDatabase& db = ItemDatabase::instance();
+
               if (db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable)) {
                 isPreviewingBuilding = true;
                 previewingItemID = payload_ptr->id;
                 CreatePreviewEntity(payload_ptr->id);
               }
             }
+            // End handling player inventory
           }
+          // End handling item dragging
         }
+
         // Update preview entity position while dragging
         if (isPreviewingBuilding && previewEntity != INVALID_ENTITY) {
           UpdatePreviewEntity();
         }
-      } else {
+      }
+
+      // Not Dragging with left mouse button
+      else {
         if (isDraggingOutside) {
           isDraggingOutside = false;
           isPreviewingBuilding = false;
@@ -118,7 +131,10 @@ void InputSystem::Update() {
         if (window == nullptr && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
           HandleInputAction(InputAction::MouseDrop, InputType::MOUSE, ctx);
       }
-    } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+    }
+
+    // Non UI mouse button event
+    else if (event.type == SDL_MOUSEBUTTONDOWN) {
       if (event.button.button == SDL_BUTTON_LEFT) {
         HandleInputAction(InputAction::StartInteraction, InputType::MOUSE);
       } else {
@@ -133,25 +149,35 @@ void InputSystem::Update() {
         inputState.rightMouseReleased = true;
       }
     }
+
     if (event.type == SDL_MOUSEMOTION) {
       inputState.mousedelta = {event.motion.xrel, event.motion.yrel};
       inputState.mousepos = {event.motion.x, event.motion.y};
     }
 
-    if (!io.WantCaptureKeyboard) {
+    // Handle Keyboard Event
+
+    // UI Keyboard Event
+    if (io.WantCaptureKeyboard) {
+    }
+    // Non UI Keyboard Event
+    else {
       auto keystate = SDL_GetKeyboardState(nullptr);
-      if(keystate[SDL_SCANCODE_K])
+
+      if (keystate[SDL_SCANCODE_K])
         HandleInputAction(InputAction::Debug, InputType::MOUSE);
+
       HandleInputAxis(keystate);
     }
 
-    // if (io.WantCaptureKeyboard) {
-    // } else
     if ((event.type == SDL_KEYDOWN && event.key.repeat == 0) ||
         event.type == SDL_KEYUP) {
       auto scancode = event.key.keysym.scancode;
+
       auto it = keyBindings.find(
           KeyEvent{scancode, static_cast<SDL_EventType>(event.type)});
+
+      // Handle assigned key binding
       if (it != keyBindings.end()) {
         HandleInputAction(it->second, InputType::KEYBOARD);
       }
@@ -165,12 +191,12 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
   reg->GetInputState().xAxis = 0;
   reg->GetInputState().yAxis = 0;
 
-  TimerManager* timerManager = engine->GetTimerManager();
   EntityID player = engine->GetPlayer();
 
   switch (action) {
     case InputAction::MouseDrop: {
       ImGuiContext* ctx = static_cast<ImGuiContext*>(params);
+
       if (ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
         ItemPayload* payload_ptr =
             static_cast<ItemPayload*>(ctx->DragDropPayload.Data);
@@ -179,10 +205,15 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
           const ItemDatabase& db = ItemDatabase::instance();
 
           Vec2f mouseWorldPos = util::ScreenToWorld(
-              reg->GetInputState().mousepos,
-              util::GetCameraPosition(reg), engine->GetScreenSize());
+              reg->GetInputState().mousepos, util::GetCameraPosition(reg),
+              engine->GetScreenSize());
 
-          if (db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable)) {
+          // only handle item inside player's inventory
+          if (payload_ptr->owner != player) break;
+
+          // Check if we're dragging to place building
+          if (db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable) &&
+              isPreviewingBuilding) {
             Vec2 tileIndex = engine->GetWorld()->GetTileIndexFromWorldPosition(
                 mouseWorldPos);
 
@@ -204,7 +235,6 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
             }
 
             if (newBuilding != INVALID_ENTITY) {
-              // Successfully placed building, consume the item
               engine->GetDispatcher()->Publish(
                   ItemConsumeEvent{player, payload_ptr->id, 1});
 
@@ -214,8 +244,14 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
               std::cout << "Cannot place building at " << tileIndex.x << ","
                         << tileIndex.y << std::endl;
             }
-          } else {
-            // Handle non-buildable item dropping (create item entity on ground)
+
+            isPreviewingBuilding = false;
+            previewingItemID = ItemID::None;
+            DestroyPreviewEntity();
+          }
+
+          // Handle non-buildable item drop (create item entity on ground)
+          else if (!db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable)) {
             EntityID itemEntity = reg->CreateEntity();
 
             reg->EmplaceComponent<TransformComponent>(
@@ -236,20 +272,17 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
             engine->GetDispatcher()->Publish(
                 ItemConsumeEvent{player, payload_ptr->id, 1});
 
-            std::cout << "Dropped " << itemData.name << " at world position "
-                      << mouseWorldPos.x << "," << mouseWorldPos.y << std::endl;
+            std::cout << "Dropped " << (const char*)itemData.name.c_str()
+                      << " at world position " << mouseWorldPos.x << ","
+                      << mouseWorldPos.y << std::endl;
 
             ctx->DragDropPayload.Clear();
           }
-
-          isPreviewingBuilding = false;
-          previewingItemID = ItemID::None;
-          DestroyPreviewEntity();
         }
       }
-    } 
-    break;
+    } break;
 
+    // Player started interacting
     case InputAction::StartInteraction: {
       if (!reg->GetComponent<PlayerStateComponent>(player).isMining) {
         const auto& playerTransform =
@@ -277,28 +310,35 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
 
         if (!targetPos.has_value()) break;
 
-        Vec2 tileindex =
-            engine->GetWorld()->GetTileIndexFromWorldPosition(targetPos.value());
+        Vec2 tileindex = engine->GetWorld()->GetTileIndexFromWorldPosition(
+            targetPos.value());
         std::cout << engine->GetWorld()->GetTileIndexFromWorldPosition(
                          targetPos.value())
                   << std::endl;
 
-        engine->GetDispatcher()->Publish(
-            PlayerInteractEvent(tileindex));
+        engine->GetDispatcher()->Publish(PlayerInteractEvent(tileindex));
       }
-    } break;
+      break;
+    } 
+
+    // Player ended interacting
     case InputAction::StopInteraction: {
       if (reg->HasComponent<PlayerStateComponent>(player)) {
         auto& state = reg->GetComponent<PlayerStateComponent>(player);
         if (state.isMining) {
           state.isMining = false;
-          util::DetachTimer(reg, timerManager, player, TimerId::Mine);
+          util::DetachTimer(reg, engine->GetTimerManager(), player, TimerId::Mine);
         }
       }
-    } break;
+      break;
+    } 
+
+    // Open Inventory
     case InputAction::Inventory:
       engine->GetDispatcher()->Publish(ToggleInventoryEvent{});
       break;
+    
+    // Debug
     case InputAction::Debug: {
       auto playerPosition =
           reg->GetComponent<TransformComponent>(player).position;
@@ -309,19 +349,28 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
       int playerChunkY =
           std::floor(playerPosition.y / (CHUNK_HEIGHT * TILE_PIXEL_SIZE));
 
-      Vec2 playerTileIndex = engine->GetWorld()->GetTileIndexFromWorldPosition(playerPosition);
-      auto playerTile = engine->GetWorld()->GetTileAtWorldPosition(playerPosition);
-      auto playerTileformIndex = engine->GetWorld()->GetTileAtTileIndex(playerTileIndex);
+      Vec2 playerTileIndex =
+          engine->GetWorld()->GetTileIndexFromWorldPosition(playerPosition);
+      auto playerTile =
+          engine->GetWorld()->GetTileAtWorldPosition(playerPosition);
+      auto playerTileformIndex =
+          engine->GetWorld()->GetTileAtTileIndex(playerTileIndex);
       bool a = engine->GetWorld()->CanPlaceBuilding(playerTileIndex, 1, 1);
       std::optional<ResourceNodeComponent> rsnode;
       std::optional<TransformComponent> trs;
-      if(reg->HasComponent<ResourceNodeComponent>(playerTile->occupyingEntity))
-        rsnode = reg->GetComponent<ResourceNodeComponent>(playerTile->occupyingEntity);
-      if(reg->HasComponent<TransformComponent>(playerTile->occupyingEntity))
-        trs = reg->GetComponent<TransformComponent>(playerTile->occupyingEntity);
-      bool b = reg->HasComponent<InactiveComponent>(playerTileformIndex->occupyingEntity);
-      std::cout<<"";
-    } break;
+      if (reg->HasComponent<ResourceNodeComponent>(playerTile->occupyingEntity))
+        rsnode = reg->GetComponent<ResourceNodeComponent>(
+            playerTile->occupyingEntity);
+      if (reg->HasComponent<TransformComponent>(playerTile->occupyingEntity))
+        trs =
+            reg->GetComponent<TransformComponent>(playerTile->occupyingEntity);
+      bool b = reg->HasComponent<InactiveComponent>(
+          playerTileformIndex->occupyingEntity);
+      std::cout << "";
+      break;
+    }
+
+    // Quit game
     case InputAction::Quit:
       engine->GetDispatcher()->Publish(QuitEvent{});
       break;
@@ -329,22 +378,34 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
 }
 
 void InputSystem::HandleInputAxis(const Uint8* keyState) {
+
+  // Move Up
   if (keyState[SDL_SCANCODE_W]) {
     engine->GetRegistry()->GetInputState().yAxis = -1.f;
-  } else if (keyState[SDL_SCANCODE_S]) {
+  } 
+  // Move Down
+  else if (keyState[SDL_SCANCODE_S]) {
     engine->GetRegistry()->GetInputState().yAxis = 1.f;
-  } else {
+  } 
+  // Stop Y Axis
+  else {
     engine->GetRegistry()->GetInputState().yAxis = 0.f;
   }
 
+  // Move left
   if (keyState[SDL_SCANCODE_A]) {
     engine->GetRegistry()->GetInputState().xAxis = -1.f;
-  } else if (keyState[SDL_SCANCODE_D]) {
+  } 
+  // Move Right
+  else if (keyState[SDL_SCANCODE_D]) {
     engine->GetRegistry()->GetInputState().xAxis = 1.f;
-  } else {
+  } 
+  // Stop X Axis
+  else {
     engine->GetRegistry()->GetInputState().xAxis = 0.f;
   }
 }
+
 
 void InputSystem::CreatePreviewEntity(ItemID itemID) {
   Registry* reg = engine->GetRegistry();
@@ -363,8 +424,8 @@ void InputSystem::CreatePreviewEntity(ItemID itemID) {
   }
 
   // Add transform component (position will be updated in UpdatePreviewEntity)
-  reg->EmplaceComponent<TransformComponent>(
-      previewEntity, TransformComponent{Vec2f(0, 0)});
+  reg->EmplaceComponent<TransformComponent>(previewEntity,
+                                            TransformComponent{Vec2f(0, 0)});
 
   // Add preview component
   reg->EmplaceComponent<BuildingPreviewComponent>(
@@ -400,7 +461,6 @@ void InputSystem::UpdatePreviewEntity() {
 
   Registry* reg = engine->GetRegistry();
 
-  // Get mouse position in world coordinates
   auto camera = reg->view<CameraComponent>();
   if (camera.empty()) return;
 
@@ -411,17 +471,11 @@ void InputSystem::UpdatePreviewEntity() {
   Vec2 tileIndex =
       engine->GetWorld()->GetTileIndexFromWorldPosition(mouseWorldPos);
 
-  // Get preview component to check building size
   auto& previewComp =
       reg->GetComponent<BuildingPreviewComponent>(previewEntity);
 
-  // Update position to snap to tile grid
   Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
 
-  // std::cout << "snap position : " << snapWorldPos.x << "," << snapWorldPos.y
-  //           << std::endl;
-
-  // Update transform component
   auto& transform = reg->GetComponent<TransformComponent>(previewEntity);
   transform.position = snapWorldPos;
 }

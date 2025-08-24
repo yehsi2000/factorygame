@@ -16,7 +16,7 @@ struct PlayerInteractEvent : public Event {
 
 struct ItemAddEvent : public Event {
   ItemAddEvent(EntityID target, ItemID item, int amt)
-      : target(target), item(item), amount(amt) {};
+      : target(target), item(item), amount(amt) {}
   EntityID target;
   ItemID item;
   int amount;
@@ -24,7 +24,7 @@ struct ItemAddEvent : public Event {
 
 struct ItemConsumeEvent : public Event {
   ItemConsumeEvent(EntityID target, ItemID item, int amt)
-      : target(target), item(item), amount(amt) {};
+      : target(target), item(item), amount(amt) {}
   EntityID target;
   ItemID item;
   int amount;
@@ -32,11 +32,34 @@ struct ItemConsumeEvent : public Event {
 
 struct ItemMoveEvent : public Event {
   ItemMoveEvent(EntityID source, EntityID dest, ItemID item, int amt)
-      : source(source), dest(dest) , item(item), amount(amt) {};
+      : source(source), dest(dest), item(item), amount(amt) {}
   EntityID source;
   EntityID dest;
   ItemID item;
   int amount;
+};
+
+struct AssemblyAddInputEvent : public Event {
+  AssemblyAddInputEvent(EntityID machine, EntityID target, ItemID item, int amt)
+      : machine(machine), target(target), item(item), amount(amt) {}
+  EntityID machine;
+  EntityID target;
+  ItemID item;
+  int amount;
+};
+
+struct AssemblyTakeOutputEvent : public Event {
+  AssemblyTakeOutputEvent(EntityID machine, EntityID target, ItemID item, int amt)
+      : machine(machine), target(target), item(item), amount(amt) {}
+  EntityID machine;
+  EntityID target;
+  ItemID item;
+  int amount;
+};
+
+struct AssemblyCraftOutputEvent : public Event {
+  AssemblyCraftOutputEvent(EntityID machine) : machine(machine) {}
+  EntityID machine;
 };
 
 struct ToggleInventoryEvent : public Event {

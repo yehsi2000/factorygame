@@ -43,12 +43,11 @@
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
-#include "imgui.h"
 
 void GEngine::InitCoreSystem() {
   animationSystem = std::make_unique<AnimationSystem>(registry.get());
   assemblingMachineSystem = std::make_unique<AssemblingMachineSystem>(
-      registry.get(), timerManager.get());
+      registry.get(), dispatcher.get(), timerManager.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
   resourceNodeSystem =
       std::make_unique<ResourceNodeSystem>(registry.get(), world.get());
@@ -119,10 +118,11 @@ void GEngine::GeneratePlayer() {
       player, PlayerStateComponent{.isMining = false,
                                    .interactingEntity = INVALID_ENTITY});
   registry->EmplaceComponent<MovableComponent>(player);
-  registry->EmplaceComponent<InventoryComponent>(player, InventoryComponent{.row=4, .column=4});
+  registry->EmplaceComponent<InventoryComponent>(
+      player, InventoryComponent{.row = 4, .column = 4});
 
   // testing assembly machine
-  
+
   dispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 1));
   dispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 1));
 }
@@ -180,9 +180,9 @@ void GEngine::Update(float deltaTime) {
 
   cameraSystem->Update(deltaTime);
 
-  //Rendering
+  // Rendering
   renderSystem->Update();
-  uiSystem->Update(); // Display UI on very top
+  uiSystem->Update();  // Display UI on very top
   SDL_RenderPresent(gRenderer);
 }
 

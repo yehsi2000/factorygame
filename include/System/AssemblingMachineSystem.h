@@ -3,6 +3,7 @@
 
 #include "Components/AssemblingMachineComponent.h"
 #include "Core/Entity.h"
+#include "Core/EventDispatcher.h"
 #include "Core/Item.h"
 #include "Core/Recipe.h"
 
@@ -11,10 +12,14 @@ class TimerManager;
 
 class AssemblingMachineSystem {
   Registry* registry;
+  EventDispatcher* dispatcher;
   TimerManager* timerManager;
+  EventHandle AddInputHandle;
+  EventHandle TakeOutputHandle;
+  EventHandle CraftOutputHandle;
 
 public:
-  AssemblingMachineSystem(Registry* r, TimerManager* tm);
+  AssemblingMachineSystem(Registry* registry, EventDispatcher* dispatcher, TimerManager* timerManager);
   void Update();
   
   // Recipe management
@@ -22,7 +27,7 @@ public:
   void ClearRecipe(EntityID entity);
   
   // Inventory management
-  bool AddInputItem(EntityID entity, ItemID itemId, int amount);
+  int AddInputItem(EntityID entity, ItemID itemId, int amount);
   int TakeOutputItem(EntityID entity, ItemID itemId, int requestedAmount);
   
   // State queries
@@ -37,7 +42,7 @@ public:
 private:
   void UpdateCrafting(EntityID entity, AssemblingMachineComponent& machine, float deltaTime);
   void ConsumeIngredients(EntityID entity, AssemblingMachineComponent& machine);
-  void ProduceOutput(EntityID entity, AssemblingMachineComponent& machine);
+  void ProduceOutput(EntityID entity);
   void StartCrafting(EntityID entity, AssemblingMachineComponent& machine);
   void UpdateAnimationState(EntityID entity, AssemblingMachineComponent& machine);
 };

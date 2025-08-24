@@ -14,10 +14,10 @@ InteractionSystem::InteractionSystem(GEngine* engine)
     : engine(engine),
       handle(engine->GetDispatcher()->Subscribe<PlayerInteractEvent>(
           [this](const PlayerInteractEvent& event) {
-            this->OnInteractEvent(event);
+            this->OnPlayerInteractEvent(event);
           })) {}
 
-void InteractionSystem::OnInteractEvent(const PlayerInteractEvent& event) {
+void InteractionSystem::OnPlayerInteractEvent(const PlayerInteractEvent& event) {
   Registry* reg = engine->GetRegistry();
   World* world = engine->GetWorld();
 
@@ -36,8 +36,9 @@ void InteractionSystem::OnInteractEvent(const PlayerInteractEvent& event) {
     targetEntity = tile->oreEntity;
   }
 
-  if (reg->HasComponent<ResourceNodeComponent>(targetEntity)) {
-    if (!reg->HasComponent<PlayerStateComponent>(player)) return;
+  if (!reg->HasComponent<PlayerStateComponent>(player)) return;
+
+  if (reg->HasComponent<ResourceNodeComponent>(targetEntity)) {  
     auto& state = reg->GetComponent<PlayerStateComponent>(player);
     state.isMining = true;
     state.interactingEntity = targetEntity;
