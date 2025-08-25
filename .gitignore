@@ -1,6 +1,5 @@
 .*
 build
-vendored
 CMake*
 out
 !CMakeLists.txt
