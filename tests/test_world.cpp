@@ -6,23 +6,24 @@
 
 #include "Components/BuildingComponent.h"
 #include "Components/ChunkComponent.h"
-#include "Components/SpriteComponent.h"
-#include "Components/TransformComponent.h"
-#include "Components/ResourceNodeComponent.h"
 #include "Components/InactiveComponent.h"
+#include "Components/ResourceNodeComponent.h"
+#include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
+#include "Components/TransformComponent.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
 
+
 // Mock SDL renderer and font for testing
 class TestWorld {
- private:
-  SDL_Renderer* mockRenderer;
-  TTF_Font* mockFont = nullptr;
-  Registry* registry;
-  World* world;
+private:
+  SDL_Renderer *mockRenderer;
+  TTF_Font *mockFont = nullptr;
+  Registry *registry;
+  World *world;
 
- public:
+public:
   TestWorld() {
     registry = new Registry();
     registry->RegisterComponent<TransformComponent>();
@@ -34,7 +35,7 @@ class TestWorld {
     registry->RegisterComponent<InactiveComponent>();
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-    SDL_Window* window =
+    SDL_Window *window =
         SDL_CreateWindow("Test", SDL_WINDOWPOS_UNDEFINED,
                          SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_HIDDEN);
     mockRenderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -45,7 +46,7 @@ class TestWorld {
   bool test_tile_coordinate_conversion() {
     // Test world position to tile index conversion
     Vec2 tileIndex = world->GetTileIndexFromWorldPosition(
-        64.0f, 64.0f);  // TILE_PIXEL_SIZE = 64
+        64.0f, 64.0f); // TILE_PIXEL_SIZE = 64
     if (tileIndex.x != 1 || tileIndex.y != 1) {
       std::cerr << "World to tile conversion failed: expected (1,1), got ("
                 << tileIndex.x << "," << tileIndex.y << ")" << std::endl;
@@ -63,7 +64,7 @@ class TestWorld {
 
     // Test fractional coordinates
     tileIndex = world->GetTileIndexFromWorldPosition(
-        96.0f, 32.0f);  // 1.5 tiles, 0.5 tiles
+        96.0f, 32.0f); // 1.5 tiles, 0.5 tiles
     if (tileIndex.x != 1 || tileIndex.y != 0) {
       std::cerr
           << "Fractional coordinate conversion failed: expected (1,0), got ("
@@ -83,10 +84,10 @@ class TestWorld {
     world->Update(player);
 
     // Check that chunks around origin are loaded
-    const auto& activeChunks = world->GetActiveChunks();
+    const auto &activeChunks = world->GetActiveChunks();
 
     // With view distance of 2, we should have chunks from (-2,-2) to (2,2)
-    int expectedChunks = 5 * 5;  // 5x5 grid
+    int expectedChunks = 5 * 5; // 5x5 grid
     if (activeChunks.size() != expectedChunks) {
       std::cerr << "Initial chunk loading failed: expected " << expectedChunks
                 << " chunks, got " << activeChunks.size() << std::endl;
@@ -109,12 +110,15 @@ class TestWorld {
     }
 
     // Move player far away to test chunk unloading
-    auto& transform = registry->GetComponent<TransformComponent>(player);
-    transform.position = Vec2f{CHUNK_WIDTH*TILE_PIXEL_SIZE*world->viewDistance*10.f,CHUNK_HEIGHT*TILE_PIXEL_SIZE*world->viewDistance*10.f};  // Far from origin
+    auto &transform = registry->GetComponent<TransformComponent>(player);
+    transform.position =
+        Vec2f{CHUNK_WIDTH * TILE_PIXEL_SIZE * world->viewDistance * 10.f,
+              CHUNK_HEIGHT * TILE_PIXEL_SIZE * world->viewDistance *
+                  10.f}; // Far from origin
 
     world->Update(player);
 
-    const auto& newActiveChunks = world->GetActiveChunks();
+    const auto &newActiveChunks = world->GetActiveChunks();
 
     // Origin chunk should no longer be active
     if (newActiveChunks.find(origin) != newActiveChunks.end()) {
@@ -156,7 +160,7 @@ class TestWorld {
     }
 
     // Test overlapping placement
-    Vec2 overlappingIndex{2, 2};  // Should overlap with existing building
+    Vec2 overlappingIndex{2, 2}; // Should overlap with existing building
     bool canPlaceOverlap = world->CanPlaceBuilding(overlappingIndex, 2, 2);
     if (canPlaceOverlap) {
       std::cerr << "Overlapping building placement allowed" << std::endl;
@@ -164,7 +168,7 @@ class TestWorld {
     }
 
     // Test adjacent placement (should work)
-    Vec2 adjacentIndex{3, 1};  // Next to existing building
+    Vec2 adjacentIndex{3, 1}; // Next to existing building
     bool canPlaceAdjacent = world->CanPlaceBuilding(adjacentIndex, 1, 1);
     if (!canPlaceAdjacent) {
       std::cerr << "Adjacent building placement rejected" << std::endl;
@@ -194,7 +198,7 @@ class TestWorld {
     }
 
     // Get the occupied tiles from building component
-    auto& buildingComp = registry->GetComponent<BuildingComponent>(building);
+    auto &buildingComp = registry->GetComponent<BuildingComponent>(building);
     std::vector<Vec2> occupiedTiles = buildingComp.occupiedTiles;
 
     // Remove the building
@@ -216,14 +220,14 @@ class TestWorld {
     world->Update(player);
 
     // Test getting tile at world position
-    TileData* tile = world->GetTileAtWorldPosition(64.0f, 64.0f);
+    TileData *tile = world->GetTileAtWorldPosition(64.0f, 64.0f);
     if (!tile) {
       std::cerr << "Could not get tile at valid world position" << std::endl;
       return false;
     }
 
     // Test getting tile at tile index
-    TileData* tileByIndex = world->GetTileAtTileIndex(1, 1);
+    TileData *tileByIndex = world->GetTileAtTileIndex(1, 1);
     if (!tileByIndex) {
       std::cerr << "Could not get tile at valid tile index" << std::endl;
       return false;
@@ -237,7 +241,7 @@ class TestWorld {
     }
 
     // Test getting tile in unloaded chunk (should return nullptr)
-    TileData* farTile = world->GetTileAtTileIndex(1000, 1000);
+    TileData *farTile = world->GetTileAtTileIndex(1000, 1000);
     if (farTile != nullptr) {
       std::cerr << "Getting tile in unloaded chunk should return nullptr"
                 << std::endl;
@@ -268,7 +272,7 @@ class TestWorld {
   }
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   bool all_passed = true;
   TestWorld testWorld;
 
