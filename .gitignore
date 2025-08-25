@@ -5,6 +5,7 @@ out
 !CMakeLists.txt
 *.md
 *.ini
+!.github
 !README.md
 include/lib/freetype
 include/lib/ft2build.h

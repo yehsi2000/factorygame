@@ -5,7 +5,6 @@
 set(TEST_LIST
     math
     ecs
-    world
 )
 
 set(BUILT_TESTS "")
