@@ -27,7 +27,7 @@ add_subdirectory(vendored/SDL_ttf)
 file(GLOB IMGUI_SOURCES "src/lib/*.cpp")
 add_library(imgui_lib STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui_lib PUBLIC 
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/Lib"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_image/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_ttf"
