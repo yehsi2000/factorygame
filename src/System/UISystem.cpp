@@ -1,6 +1,6 @@
 ﻿#include "System/UISystem.h"
 
-#include <Components/MiningDrillComponent.h>
+#include "Components/MiningDrillComponent.h"
 
 #include <algorithm>
 #include <string>
@@ -17,6 +17,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+
 #define TEXTLATER
 
 constexpr float ICONSPRITE_WIDTHF = static_cast<float>(ICONSPRITE_WIDTH);
@@ -44,7 +45,7 @@ constexpr float vT1 = ICONSIZE_TINY / ICONSPRITE_HEIGHTF;
 
 constexpr float invNodeSize = 64.f;
 
-UISystem::UISystem(GEngine* engine)
+UISystem::UISystem(GEngine *engine)
     : engine(engine),
       showInventoryEvent(
           engine->GetDispatcher()->Subscribe<ToggleInventoryEvent>(
@@ -58,8 +59,10 @@ void UISystem::Update() {
 
   ImGui::NewFrame();
   {
-    if (demoShow) ImGui::ShowDemoWindow(&demoShow);
-    if (showInventory) Inventory();
+    if (demoShow)
+      ImGui::ShowDemoWindow(&demoShow);
+    if (showInventory)
+      Inventory();
     AssemblingMachineUI();
     MiningDrillUI();
   }
@@ -70,11 +73,11 @@ void UISystem::Update() {
 }
 
 void UISystem::Inventory() {
-  Registry* reg = engine->GetRegistry();
-  SDL_Renderer* renderer = engine->GetRenderer();
-  InventoryComponent& invComp =
+  Registry *reg = engine->GetRegistry();
+  SDL_Renderer *renderer = engine->GetRenderer();
+  InventoryComponent &invComp =
       reg->GetComponent<InventoryComponent>(engine->GetPlayer());
-  const ItemDatabase& itemdb = ItemDatabase::instance();
+  const ItemDatabase &itemdb = ItemDatabase::instance();
 
   int row = invComp.row;
   int column = invComp.column;
@@ -88,7 +91,8 @@ void UISystem::Inventory() {
       int idx = r * column + c;
       ImGui::PushID(idx);
 
-      if (c != 0) ImGui::SameLine();
+      if (c != 0)
+        ImGui::SameLine();
 
       ImGui::BeginGroup();
 
@@ -98,11 +102,12 @@ void UISystem::Inventory() {
         ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(32, 32, 32));
         ImGui::Button("", ImVec2(invNodeSize, invNodeSize));
         if (ImGui::BeginDragDropTarget()) {
-          if (const ImGuiPayload* payload =
+          if (const ImGuiPayload *payload =
                   ImGui::AcceptDragDropPayload("DND_ITEM")) {
             IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
 
-            ItemPayload* payload_ptr = static_cast<ItemPayload*>(payload->Data);
+            ItemPayload *payload_ptr =
+                static_cast<ItemPayload *>(payload->Data);
             if (payload_ptr->owner != engine->GetPlayer()) {
               if (reg->HasComponent<InventoryComponent>(payload_ptr->owner)) {
                 engine->GetDispatcher()->Publish(
@@ -123,7 +128,7 @@ void UISystem::Inventory() {
         continue;
       }
 
-      auto& [invItemId, invItemAmt] = invComp.items[idx];
+      auto &[invItemId, invItemAmt] = invComp.items[idx];
 
       // item amount on top of inventory item
       ImVec2 start_pos = ImGui::GetCursorScreenPos();
@@ -135,9 +140,9 @@ void UISystem::Inventory() {
           itemdb.get(invItemId).icon.c_str(), renderer));
       ImVec2 iconSize{invNodeSize - padding.x * 2.f,
                       invNodeSize - padding.y * 2.f};
-      ImGui::ImageButton((const char*)itemdata.name.c_str(), iconTexture,
+      ImGui::ImageButton((const char *)itemdata.name.c_str(), iconTexture,
                          iconSize, ImVec2{uB0, vB0}, ImVec2{uB1, vB1});
-      ImGui::SetItemTooltip("%s", (const char*)itemdata.description.c_str());
+      ImGui::SetItemTooltip("%s", (const char *)itemdata.description.c_str());
 
       // Handle dragging start
       if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
@@ -150,11 +155,11 @@ void UISystem::Inventory() {
 
       // Handle dropping inside inventory
       if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload =
+        if (const ImGuiPayload *payload =
                 ImGui::AcceptDragDropPayload("DND_ITEM")) {
           IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
 
-          ItemPayload* payload_ptr = static_cast<ItemPayload*>(payload->Data);
+          ItemPayload *payload_ptr = static_cast<ItemPayload *>(payload->Data);
 
           if (payload_ptr->owner != engine->GetPlayer()) {
             if (reg->HasComponent<InventoryComponent>(payload_ptr->owner)) {
@@ -204,12 +209,13 @@ void UISystem::Inventory() {
 }
 
 void UISystem::AssemblingMachineUI() {
-  Registry* reg = engine->GetRegistry();
-  SDL_Renderer* renderer = engine->GetRenderer();
+  Registry *reg = engine->GetRegistry();
+  SDL_Renderer *renderer = engine->GetRenderer();
 
   // Find all assembling machines that should show UI
   for (auto machineEntity : reg->view<AssemblingMachineComponent>()) {
-    auto& assemblingComp = reg->GetComponent<AssemblingMachineComponent>(machineEntity);
+    auto &assemblingComp =
+        reg->GetComponent<AssemblingMachineComponent>(machineEntity);
     if (assemblingComp.showUI) {
       if (assemblingComp.showRecipeSelection) {
         AssemblingMachineRecipeSelection(machineEntity);
@@ -222,10 +228,10 @@ void UISystem::AssemblingMachineUI() {
 
         if (ImGui::Begin(windowName.c_str(), &showUI,
                          ImGuiWindowFlags_NoCollapse)) {
-          const auto& recipeData =
+          const auto &recipeData =
               RecipeDatabase::instance().get(assemblingComp.currentRecipe);
 
-          ImGui::Text("Recipe: %s", (const char*)recipeData.name.c_str());
+          ImGui::Text("Recipe: %s", (const char *)recipeData.name.c_str());
           ImGui::Text("Crafting Time: %.1fs", recipeData.craftingTime);
 
           if (ImGui::Button("Change Recipe")) {
@@ -236,17 +242,18 @@ void UISystem::AssemblingMachineUI() {
 
           // Input slots
           ImGui::Text("Input:");
-          const auto& itemDB = ItemDatabase::instance();
+          const auto &itemDB = ItemDatabase::instance();
 
           for (size_t i = 0; i < recipeData.ingredients.size(); ++i) {
-            const auto& ingredient = recipeData.ingredients[i];
+            const auto &ingredient = recipeData.ingredients[i];
             auto it = assemblingComp.inputInventory.find(ingredient.itemId);
             int currentAmount =
                 (it != assemblingComp.inputInventory.end()) ? it->second : 0;
 
-            const auto& itemData = itemDB.get(ingredient.itemId);
+            const auto &itemData = itemDB.get(ingredient.itemId);
 
-            if (i > 0) ImGui::SameLine();
+            if (i > 0)
+              ImGui::SameLine();
 
             ImTextureID iconTexture =
                 (intptr_t)(AssetManager::Instance().getTexture(
@@ -265,21 +272,22 @@ void UISystem::AssemblingMachineUI() {
                          ImVec2{uB1, vB1});
             // Handle drag drop
             if (ImGui::BeginDragDropTarget()) {
-              if (const ImGuiPayload* payload =
+              if (const ImGuiPayload *payload =
                       ImGui::AcceptDragDropPayload("DND_ITEM")) {
-                ItemPayload* item_payload =
-                    static_cast<ItemPayload*>(payload->Data);
+                ItemPayload *item_payload =
+                    static_cast<ItemPayload *>(payload->Data);
 
                 if (item_payload->id == ingredient.itemId) {
                   engine->GetDispatcher()->Publish(AssemblyAddInputEvent(
-                      machineEntity, item_payload->owner, item_payload->id, item_payload->amount));
+                      machineEntity, item_payload->owner, item_payload->id,
+                      item_payload->amount));
                   ImGui::SetTooltip("Drop %s here",
-                                    (const char*)itemData.name.c_str());
+                                    (const char *)itemData.name.c_str());
                 }
               }
               ImGui::EndDragDropTarget();
             }
-            
+
             ImGui::Text("%d/%d", currentAmount, ingredient.amount);
 
             ImGui::EndGroup();
@@ -289,8 +297,9 @@ void UISystem::AssemblingMachineUI() {
 
           // Output slot
           ImGui::Text("Output:");
-          const auto& outputData = itemDB.get(recipeData.outputItem);
-          auto outputIt = assemblingComp.outputInventory.find(recipeData.outputItem);
+          const auto &outputData = itemDB.get(recipeData.outputItem);
+          auto outputIt =
+              assemblingComp.outputInventory.find(recipeData.outputItem);
           int outputAmount = (outputIt != assemblingComp.outputInventory.end())
                                  ? outputIt->second
                                  : 0;
@@ -323,7 +332,8 @@ void UISystem::AssemblingMachineUI() {
           } else if (assemblingComp.state ==
                      AssemblingMachineState::WaitingForIngredients) {
             ImGui::Text("Waiting for ingredients");
-          } else if (assemblingComp.state == AssemblingMachineState::OutputFull) {
+          } else if (assemblingComp.state ==
+                     AssemblingMachineState::OutputFull) {
             ImGui::Text("Output full!");
           }
         }
@@ -336,25 +346,26 @@ void UISystem::AssemblingMachineUI() {
 }
 
 void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
-  Registry* reg = engine->GetRegistry();
-  auto& assemblingComp = reg->GetComponent<AssemblingMachineComponent>(entity);
+  Registry *reg = engine->GetRegistry();
+  auto &assemblingComp = reg->GetComponent<AssemblingMachineComponent>(entity);
 
   std::string windowName = "Select Recipe##" + std::to_string(entity);
   bool showSelection = assemblingComp.showRecipeSelection;
 
-  if (ImGui::Begin(
-          windowName.c_str(), &showSelection,
-          ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse)) {
+  if (ImGui::Begin(windowName.c_str(), &showSelection,
+                   ImGuiWindowFlags_AlwaysAutoResize |
+                       ImGuiWindowFlags_NoCollapse)) {
     ImGui::Text("Choose a recipe for the assembling machine:");
     ImGui::Separator();
 
-    const auto& recipeDB = RecipeDatabase::instance();
+    const auto &recipeDB = RecipeDatabase::instance();
     auto allRecipes = recipeDB.getAllRecipes();
 
     for (RecipeID recipeId : allRecipes) {
-      const auto& recipeData = recipeDB.get(recipeId);
+      const auto &recipeData = recipeDB.get(recipeId);
 
-      if (ImGui::Button((const char*)recipeData.name.c_str(), ImVec2(200, 0))) {
+      if (ImGui::Button((const char *)recipeData.name.c_str(),
+                        ImVec2(200, 0))) {
         // Set the recipe using AssemblingMachineSystem
         // For now, set it directly - should use system method
         assemblingComp.currentRecipe = recipeId;
@@ -364,7 +375,7 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
       }
 
       ImGui::SameLine();
-      ImGui::Text("- %s (%.1fs)", (const char*)recipeData.description.c_str(),
+      ImGui::Text("- %s (%.1fs)", (const char *)recipeData.description.c_str(),
                   recipeData.craftingTime);
     }
 
@@ -376,16 +387,17 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
 
   assemblingComp.showRecipeSelection = showSelection;
   if (!showSelection && assemblingComp.currentRecipe == RecipeID::None) {
-    assemblingComp.showUI = false;  // Close UI if no recipe selected and cancelled
+    assemblingComp.showUI =
+        false; // Close UI if no recipe selected and cancelled
   }
 }
 
 void UISystem::MiningDrillUI() {
-  Registry* reg = engine->GetRegistry();
-  const ItemDatabase& itemdb = ItemDatabase::instance();
+  Registry *reg = engine->GetRegistry();
+  const ItemDatabase &itemdb = ItemDatabase::instance();
   ImVec2 outputSlotSize(60, 60);
   for (auto drillEntity : reg->view<MiningDrillComponent>()) {
-    auto& drillComp = reg->GetComponent<MiningDrillComponent>(drillEntity);
+    auto &drillComp = reg->GetComponent<MiningDrillComponent>(drillEntity);
     if (drillComp.showUI) {
       std::string windowName = "Mining Drill##" + std::to_string(drillEntity);
       bool showUI = drillComp.showUI;
@@ -394,10 +406,10 @@ void UISystem::MiningDrillUI() {
                            ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Mining Drill");
 
-        MiningDrillComponent& drillcomp =
+        MiningDrillComponent &drillcomp =
             reg->GetComponent<MiningDrillComponent>(drillEntity);
 
-        InventoryComponent& invcomp =
+        InventoryComponent &invcomp =
             reg->GetComponent<InventoryComponent>(drillEntity);
 
         if (invcomp.items.size() == 0) {
@@ -409,7 +421,7 @@ void UISystem::MiningDrillUI() {
         } else {
           ImVec2 start_pos = ImGui::GetCursorScreenPos();
 
-          const ItemData& invdata = itemdb.get(invcomp.items[0].first);
+          const ItemData &invdata = itemdb.get(invcomp.items[0].first);
           ImTextureID outputTexture =
               (intptr_t)(AssetManager::Instance().getTexture(
                   invdata.icon.c_str(), engine->GetRenderer()));

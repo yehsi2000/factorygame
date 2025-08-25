@@ -11,6 +11,7 @@
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Util/TimerUtil.h"
+#include "Util/AnimUtil.h"
 
 MiningDrillSystem::MiningDrillSystem(Registry* registry, World* world,
                                      TimerManager* timerManager)
@@ -112,16 +113,10 @@ void MiningDrillSystem::UpdateAnimationState(MiningDrillComponent& drill,
 
   auto& animation = registry->GetComponent<AnimationComponent>(entity);
 
-  if (drill.isAnimating && animation.currentAnimationName != "working") {
-    animation.currentAnimationName = "working";
-    animation.currentFrameIndex = 0;
-    animation.frameTimer = 0.0f;
-    animation.isPlaying = true;
-  } else if (!drill.isAnimating && animation.currentAnimationName != "idle") {
-    animation.currentAnimationName = "idle";
-    animation.currentFrameIndex = 0;
-    animation.frameTimer = 0.0f;
-    animation.isPlaying = false;
+  if (drill.isAnimating && animation.currentAnimation != AnimationName::DRILL_WORKING) {
+    util::SetAnimation(AnimationName::DRILL_WORKING, animation, true);
+  } else if (!drill.isAnimating && animation.currentAnimation != AnimationName::DRILL_IDLE) {
+    util::SetAnimation(AnimationName::DRILL_IDLE, animation, true);
   } else {
     animation.isPlaying = drill.isAnimating;
   }

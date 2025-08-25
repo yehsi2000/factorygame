@@ -26,6 +26,10 @@ double dist(Vec2f a, Vec2f b);
 
 double dist(Vec2 a, Vec2 b);
 
+double dist(Vec2f d);
+
+double dist(Vec2 d);
+
 Vec2f WorldToScreen(Vec2f worldPos, Vec2f cameraPos, int screenWidth,
                     int screenHeight);
 

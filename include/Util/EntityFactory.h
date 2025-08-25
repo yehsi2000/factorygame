@@ -19,6 +19,9 @@ EntityID CreateMiningDrill(Registry* registry, World* world,
 
 EntityID CreateMiningDrill(Registry* registry, World* world,
                                  SDL_Renderer* renderer, Vec2 tileIndex);
+                                 
+EntityID CreatePlayer(Registry *registry, SDL_Renderer *renderer,
+                      Vec2f worldPos);
 }  // namespace factory
 
 #endif /* UTIL_ENTITYFACTORY_ */

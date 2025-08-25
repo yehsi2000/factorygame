@@ -45,8 +45,10 @@ class World {
   void PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
                      int height);
   void RemoveBuilding(EntityID entity, const std::vector<Vec2>& occupiedTiles);
+  bool IsTileMovable(Vec2f worldPos);
+  bool IsTileMovable(Vec2 tileIdx);
 
-  const std::map<ChunkCoord, Chunk>& GetActiveChunks() const;
+  const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {return activeChunks;}
   inline rsrc_amt_t GetMinironOreAmount() const { return minironOreAmount; }
   inline rsrc_amt_t GetMaxironOreAmount() const { return maxironOreAmount; }
 

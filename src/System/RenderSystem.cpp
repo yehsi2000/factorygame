@@ -1,7 +1,5 @@
 ﻿#include "System/RenderSystem.h"
 
-#include <Components/PlayerStateComponent.h>
-
 #include <algorithm>
 #include <vector>
 
@@ -9,20 +7,24 @@
 #include "Components/ChunkComponent.h"
 #include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
+#include "Components/PlayerStateComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
+
 #include "Core/Chunk.h"
 #include "Core/Entity.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
-#include "SDL.h"
-#include "SDL_ttf.h"
+
 #include "Util/CameraUtil.h"
 
-RenderSystem::RenderSystem(Registry* r, SDL_Renderer* render, World* world,
-                           TTF_Font* f)
+#include "SDL.h"
+#include "SDL_ttf.h"
+
+RenderSystem::RenderSystem(Registry *r, SDL_Renderer *render, World *world,
+                           TTF_Font *f)
     : registry(r), renderer(render), world(world), font(f) {}
 
 void RenderSystem::Update() {
@@ -56,8 +58,8 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;
     }
-    const auto& chunk = registry->GetComponent<ChunkComponent>(entity);
-    const auto& transform = registry->GetComponent<TransformComponent>(entity);
+    const auto &chunk = registry->GetComponent<ChunkComponent>(entity);
+    const auto &transform = registry->GetComponent<TransformComponent>(entity);
 
     // Convert world position to screen position
     Vec2f screenPos =
@@ -93,22 +95,22 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize) {
       continue;
     }
 
-    const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
+    const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
     entitiesWithOrder.push_back({entity, sprite.renderOrder});
   }
 
   // Sort entities by render order (lower values rendered first)
   std::sort(
       entitiesWithOrder.begin(), entitiesWithOrder.end(),
-      [](const std::pair<EntityID, int>& a, const std::pair<EntityID, int>& b) {
+      [](const std::pair<EntityID, int> &a, const std::pair<EntityID, int> &b) {
         return a.second < b.second;
       });
 
   // Render sorted entities
-  for (const auto& pair : entitiesWithOrder) {
+  for (const auto &pair : entitiesWithOrder) {
     EntityID entity = pair.first;
-    const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
-    const auto& transform = registry->GetComponent<TransformComponent>(entity);
+    const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
+    const auto &transform = registry->GetComponent<TransformComponent>(entity);
 
     // Convert world position to screen position
     Vec2f screenPos =
@@ -123,16 +125,11 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize) {
     }
 
     SDL_Rect destRect = {static_cast<int>(screenPos.x + sprite.renderRect.x),
-          static_cast<int>(screenPos.y + sprite.renderRect.y),
-          static_cast<int>(entitySize.x), static_cast<int>(entitySize.y)};
+                         static_cast<int>(screenPos.y + sprite.renderRect.y),
+                         static_cast<int>(entitySize.x),
+                         static_cast<int>(entitySize.y)};
     SDL_RenderCopyEx(renderer, sprite.texture, &sprite.srcRect, &destRect,
                      transform.rotation, nullptr, sprite.flip);
-    if (registry->HasComponent<PlayerStateComponent>(entity)) {
-      SDL_SetRenderDrawColor(renderer, 255, 0, 0,
-                             255);  // Red with transparency
-      SDL_Rect r = {(int)screenPos.x, (int)screenPos.y, 10, 10};
-      SDL_RenderDrawRect(renderer, &r);
-    }
   }
 }
 
@@ -144,15 +141,16 @@ bool RenderSystem::OffScreen(Vec2f screenPos, Vec2 screenSize,
 
 void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
   for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
-    if(registry->HasComponent<DebugRectComponent>(entity)) continue;
+    if (registry->HasComponent<DebugRectComponent>(entity))
+      continue;
     if (registry->HasComponent<InactiveComponent>(entity)) {
-      const auto& transform =
+      const auto &transform =
           registry->GetComponent<TransformComponent>(entity);
       Vec2f screenPos =
           util::WorldToScreen(transform.position, cameraPos, screenSize);
-      SDL_Surface* textSurface =
+      SDL_Surface *textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
-      SDL_Texture* textTexture =
+      SDL_Texture *textTexture =
           SDL_CreateTextureFromSurface(renderer, textSurface);
       SDL_FreeSurface(textSurface);
 
@@ -167,8 +165,8 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
       SDL_DestroyTexture(textTexture);
       continue;
     }
-    const auto& text = registry->GetComponent<TextComponent>(entity);
-    const auto& transform = registry->GetComponent<TransformComponent>(entity);
+    const auto &text = registry->GetComponent<TextComponent>(entity);
+    const auto &transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize);
 
@@ -176,9 +174,9 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
       continue;
     }
 
-    SDL_Surface* textSurface =
+    SDL_Surface *textSurface =
         TTF_RenderUTF8_Blended(font, text.text, text.color);
-    SDL_Texture* textTexture =
+    SDL_Texture *textTexture =
         SDL_CreateTextureFromSurface(renderer, textSurface);
 
     SDL_Rect textRect;
@@ -202,9 +200,9 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
       continue;
     }
 
-    const auto& preview =
+    const auto &preview =
         registry->GetComponent<BuildingPreviewComponent>(entity);
-    const auto& transform = registry->GetComponent<TransformComponent>(entity);
+    const auto &transform = registry->GetComponent<TransformComponent>(entity);
 
     Vec2 tileindex = world->GetTileIndexFromWorldPosition(transform.position);
     // Render colored tile backgrounds
@@ -223,10 +221,10 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
         // Set color based on validity - use more visible alpha values
         if (world->CanPlaceBuilding(tileindex + Vec2{dx, dy}, 1, 1)) {
           SDL_SetRenderDrawColor(renderer, 0, 255, 0,
-                                 80);  // Green with transparency
+                                 80); // Green with transparency
         } else {
           SDL_SetRenderDrawColor(renderer, 255, 0, 0,
-                                 80);  // Red with transparency
+                                 80); // Red with transparency
         }
 
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -236,7 +234,7 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
 
     // Render the building sprite if available and placement is valid
     if (registry->HasComponent<SpriteComponent>(entity)) {
-      const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
+      const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
 
       Vec2f screenPos =
           util::WorldToScreen(transform.position, cameraPos, screenSize);
@@ -246,10 +244,10 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
                            sprite.renderRect.w, sprite.renderRect.h};
 
       // Render with transparency
-      SDL_SetTextureAlphaMod(sprite.texture, 128);  // 50% transparency
+      SDL_SetTextureAlphaMod(sprite.texture, 128); // 50% transparency
       SDL_RenderCopyEx(renderer, sprite.texture, &sprite.srcRect, &destRect,
                        transform.rotation, nullptr, sprite.flip);
-      SDL_SetTextureAlphaMod(sprite.texture, 255);  // Reset to full opacity
+      SDL_SetTextureAlphaMod(sprite.texture, 255); // Reset to full opacity
     }
   }
 
@@ -266,8 +264,8 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize) {
       continue;
     }
 
-    const auto& debug = registry->GetComponent<DebugRectComponent>(entity);
-    const auto& transform = registry->GetComponent<TransformComponent>(entity);
+    const auto &debug = registry->GetComponent<DebugRectComponent>(entity);
+    const auto &transform = registry->GetComponent<TransformComponent>(entity);
 
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize);

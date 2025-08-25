@@ -3,28 +3,34 @@
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/BuildingComponent.h"
+#include "Components/InventoryComponent.h"
 #include "Components/MiningDrillComponent.h"
+#include "Components/MovableComponent.h"
+#include "Components/MovementComponent.h"
+#include "Components/PlayerStateComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/AssetManager.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
+
 #include "SDL.h"
-#include <Components/InventoryComponent.h>
+#include "Util/AnimUtil.h"
+
 
 namespace factory {
 
-EntityID CreateAssemblingMachine(Registry* registry, World* world,
-                                 SDL_Renderer* renderer, Vec2f worldPos) {
+EntityID CreateAssemblingMachine(Registry *registry, World *world,
+                                 SDL_Renderer *renderer, Vec2f worldPos) {
   if (registry == nullptr || world == nullptr || renderer == nullptr)
     return INVALID_ENTITY;
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
   return CreateAssemblingMachine(registry, world, renderer, tileIndex);
 }
 
-EntityID CreateAssemblingMachine(Registry* registry, World* world,
-                                 SDL_Renderer* renderer, Vec2 tileIndex) {
+EntityID CreateAssemblingMachine(Registry *registry, World *world,
+                                 SDL_Renderer *renderer, Vec2 tileIndex) {
   if (registry == nullptr || world == nullptr || renderer == nullptr)
     return INVALID_ENTITY;
 
@@ -46,7 +52,7 @@ EntityID CreateAssemblingMachine(Registry* registry, World* world,
 
   world->PlaceBuilding(entity, tileIndex, 2, 2);
 
-  SDL_Texture* spritesheet = AssetManager::Instance().getTexture(
+  SDL_Texture *spritesheet = AssetManager::Instance().getTexture(
       "assets/img/entity/assembling-machine.png", renderer);
 
   SpriteComponent sprite;
@@ -58,11 +64,14 @@ EntityID CreateAssemblingMachine(Registry* registry, World* world,
 
   // Add animation component
   AnimationComponent anim;
+
   // 32 sprites in 4 rows, 8 columns, starts idle (not playing)
-  anim.animations["idle"] = {0, 1, 0.0f, 214, 226, false};  // Single idle frame
-  anim.animations["working"] = {0,   32,  8.0f,
-                                214, 226, true};  // All 32 frames looping
-  anim.currentAnimationName = "idle";
+  util::AddAnimation(anim, AnimationName::ASSEMBLING_MACHINE_IDLE, spritesheet,
+                     {0, 1, 0.0f, 214, 226, false});
+  util::AddAnimation(anim, AnimationName::ASSEMBLING_MACHINE_WORKING,
+                     spritesheet, {0, 32, 8.0f, 214, 226, true});
+
+  anim.currentAnimation = AnimationName::ASSEMBLING_MACHINE_IDLE;
   anim.isPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
@@ -73,16 +82,16 @@ EntityID CreateAssemblingMachine(Registry* registry, World* world,
   return entity;
 }
 
-EntityID CreateMiningDrill(Registry* registry, World* world,
-                           SDL_Renderer* renderer, Vec2f worldPos) {
+EntityID CreateMiningDrill(Registry *registry, World *world,
+                           SDL_Renderer *renderer, Vec2f worldPos) {
   if (registry == nullptr || world == nullptr || renderer == nullptr)
     return INVALID_ENTITY;
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
   return CreateMiningDrill(registry, world, renderer, tileIndex);
 }
 
-EntityID CreateMiningDrill(Registry* registry, World* world,
-                           SDL_Renderer* renderer, Vec2 tileIndex) {
+EntityID CreateMiningDrill(Registry *registry, World *world,
+                           SDL_Renderer *renderer, Vec2 tileIndex) {
   if (registry == nullptr || world == nullptr || renderer == nullptr)
     return INVALID_ENTITY;
 
@@ -93,7 +102,7 @@ EntityID CreateMiningDrill(Registry* registry, World* world,
   EntityID entity = registry->CreateEntity();
 
   Vec2f centerPos = {
-      static_cast<float>(tileIndex.x * TILE_PIXEL_SIZE),  // Center of 2x2 area
+      static_cast<float>(tileIndex.x * TILE_PIXEL_SIZE), // Center of 2x2 area
       static_cast<float>(tileIndex.y * TILE_PIXEL_SIZE)};
 
   Vec2f worldPos = tileIndex * TILE_PIXEL_SIZE;
@@ -112,7 +121,7 @@ EntityID CreateMiningDrill(Registry* registry, World* world,
   world->PlaceBuilding(entity, tileIndex, 1, 1);
 
   // Add sprite component
-  SDL_Texture* spritesheet = AssetManager::Instance().getTexture(
+  SDL_Texture *spritesheet = AssetManager::Instance().getTexture(
       "assets/img/entity/mining-drill.png", renderer);
 
   SpriteComponent sprite;
@@ -124,17 +133,20 @@ EntityID CreateMiningDrill(Registry* registry, World* world,
 
   // Add animation component
   AnimationComponent anim;
+
   // 32 sprites in 4 rows, 8 columns, starts idle (not playing)
-  anim.animations["idle"] = {0, 1, 0.0f, 185, 168, false};  // Single idle frame
-  anim.animations["working"] = {0,   32,  8.0f,
-                                185, 168, true};  // All 32 frames looping
-  anim.currentAnimationName = "idle";
+  util::AddAnimation(anim, AnimationName::DRILL_IDLE, spritesheet,
+                     {0, 1, 0.0f, 185, 168, false});
+  util::AddAnimation(anim, AnimationName::DRILL_WORKING, spritesheet,
+                     {0, 32, 8.0f, 185, 168, true});
+
+  anim.currentAnimation = AnimationName::DRILL_IDLE;
   anim.isPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
   MiningDrillComponent drill;
-  
-  if(TileData* tile = world->GetTileAtTileIndex(tileIndex)){
+
+  if (TileData *tile = world->GetTileAtTileIndex(tileIndex)) {
     drill.oreEntity = tile->oreEntity;
   }
   registry->AddComponent<MiningDrillComponent>(entity, std::move(drill));
@@ -143,4 +155,60 @@ EntityID CreateMiningDrill(Registry* registry, World* world,
   return entity;
 }
 
-}  // namespace factory
+EntityID CreatePlayer(Registry *registry, SDL_Renderer *renderer,
+                      Vec2f worldPos) {
+  if (registry == nullptr || renderer == nullptr)
+    return INVALID_ENTITY;
+
+  EntityID player = registry->CreateEntity();
+  registry->EmplaceComponent<TransformComponent>(player, worldPos);
+
+  SDL_Texture *playerIdleSpritesheet = AssetManager::Instance().getTexture(
+      "assets/img/character/Miner_IdleAnimation.png", renderer);
+  SDL_Texture *playerWalkSpritesheet = AssetManager::Instance().getTexture(
+      "assets/img/character/Miner_WalkAnimation.png", renderer);
+  SDL_Texture *playerMiningRightSpritesheet =
+      AssetManager::Instance().getTexture(
+          "assets/img/character/Miner_MiningRightAnimation.png", renderer);
+  SDL_Texture *playerMiningDownSpritesheet =
+      AssetManager::Instance().getTexture(
+          "assets/img/character/Miner_MiningDownAnimation.png", renderer);
+
+  registry->EmplaceComponent<SpriteComponent>(
+      player, SpriteComponent{playerIdleSpritesheet,
+                              {0, 0, 16, 16},
+                              {-TILE_PIXEL_SIZE / 2, -TILE_PIXEL_SIZE / 2,
+                               TILE_PIXEL_SIZE, TILE_PIXEL_SIZE},
+                              SDL_FLIP_NONE,
+                              render_order_t(100)});
+
+  // Set Player Animation
+  AnimationComponent anim;
+  util::AddAnimation(anim, AnimationName::PLAYER_IDLE, playerIdleSpritesheet,
+                     {0, 12, 10.f, 16, 16, true});
+  util::AddAnimation(anim, AnimationName::PLAYER_WALK, playerWalkSpritesheet,
+                     {0, 6, 15.f, 16, 16, true});
+  util::AddAnimation(anim, AnimationName::PLAYER_MINE_RIGHT,
+                     playerMiningRightSpritesheet, {0, 6, 15.f, 16, 16, true});
+  util::AddAnimation(anim, AnimationName::PLAYER_MINE_DOWN,
+                     playerMiningDownSpritesheet, {0, 6, 15.f, 16, 16, true});
+  anim.currentAnimation = AnimationName::PLAYER_IDLE;
+
+  registry->AddComponent<AnimationComponent>(player, std::move(anim));
+
+  registry->EmplaceComponent<MovementComponent>(
+      player, MovementComponent{.speed = 300.f});
+
+  registry->EmplaceComponent<PlayerStateComponent>(
+      player, PlayerStateComponent{.isMining = false,
+                                   .interactingEntity = INVALID_ENTITY});
+
+  registry->EmplaceComponent<MovableComponent>(player);
+
+  registry->EmplaceComponent<InventoryComponent>(
+      player, InventoryComponent{.row = 4, .column = 4});
+
+  return player;
+}
+
+} // namespace factory

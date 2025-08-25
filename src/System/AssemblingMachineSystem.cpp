@@ -4,12 +4,14 @@
 
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
+#include "Components/SpriteComponent.h"
 #include "Components/TimerComponent.h"
 #include "Core/Item.h"
 #include "Core/Recipe.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Util/TimerUtil.h"
+#include "Util/AnimUtil.h"
 
 AssemblingMachineSystem::AssemblingMachineSystem(Registry* registry,
                                                  EventDispatcher* dispatcher,
@@ -247,19 +249,13 @@ void AssemblingMachineSystem::UpdateAnimationState(
     EntityID entity, AssemblingMachineComponent& machine) {
   if (!registry->HasComponent<AnimationComponent>(entity)) return;
 
-  auto& animation = registry->GetComponent<AnimationComponent>(entity);
+  auto& animComp = registry->GetComponent<AnimationComponent>(entity);
 
-  if (machine.isAnimating && animation.currentAnimationName != "working") {
-    animation.currentAnimationName = "working";
-    animation.currentFrameIndex = 0;
-    animation.frameTimer = 0.0f;
-    animation.isPlaying = true;
-  } else if (!machine.isAnimating && animation.currentAnimationName != "idle") {
-    animation.currentAnimationName = "idle";
-    animation.currentFrameIndex = 0;
-    animation.frameTimer = 0.0f;
-    animation.isPlaying = false;
+  if (machine.isAnimating && animComp.currentAnimation != AnimationName::ASSEMBLING_MACHINE_WORKING) {
+    util::SetAnimation(AnimationName::ASSEMBLING_MACHINE_WORKING, animComp, true);
+  } else if (!machine.isAnimating && animComp.currentAnimation != AnimationName::ASSEMBLING_MACHINE_IDLE) {
+    util::SetAnimation(AnimationName::ASSEMBLING_MACHINE_IDLE, animComp, false);
   } else {
-    animation.isPlaying = machine.isAnimating;
+    animComp.isPlaying = machine.isAnimating;
   }
 }

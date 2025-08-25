@@ -1,50 +1,80 @@
 ﻿#include "System/MovementSystem.h"
 
-#include <Util/TimerUtil.h>
-
 #include <cmath>
 
-#include "Components/InactiveComponent.h"
-#include "Components/MovableComponent.h"
-#include "Components/MovementComponent.h"
-#include "Components/PlayerStateComponent.h"
-#include "Components/TransformComponent.h"
 #include "Core/Entity.h"
 #include "Core/InputState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
+#include "Core/World.h"
 
-MovementSystem::MovementSystem(Registry* r, TimerManager* tm)
-    : registry(r), timerManager(tm) {}
+#include "Components/AnimationComponent.h"
+#include "Components/InactiveComponent.h"
+#include "Components/MovableComponent.h"
+#include "Components/MovementComponent.h"
+#include "Components/PlayerStateComponent.h"
+#include "Components/SpriteComponent.h"
+#include "Components/TransformComponent.h"
+
+#include "SDL_render.h"
+#include "Util/AnimUtil.h"
+#include "Util/TimerUtil.h"
+
+MovementSystem::MovementSystem(Registry *registry, TimerManager *timerManager, World* world)
+    : registry(registry), timerManager(timerManager), world(world) {}
 
 void MovementSystem::Update(float deltaTime) {
-  float ix = registry->GetInputState().xAxis;
-  float iy = registry->GetInputState().yAxis;
-  if (ix == 0.f && iy == 0.f) return;
-
   for (EntityID entity :
        registry
            ->view<MovableComponent, MovementComponent, TransformComponent>()) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;
     }
-    const MovementComponent& move =
+    const MovementComponent &move =
         registry->GetComponent<MovementComponent>(entity);
-    TransformComponent& trans =
+    TransformComponent &trans =
         registry->GetComponent<TransformComponent>(entity);
 
-    // Normalize direction for uniform movement speed
-    float length = std::sqrt(ix * ix + iy * iy);
-
-    trans.position.x += (ix / length) * move.speed * deltaTime;
-    trans.position.y += (iy / length) * move.speed * deltaTime;
-    
-    // Stop player interaction
+    // Handle Player Movement
     if (registry->HasComponent<PlayerStateComponent>(entity)) {
-      auto& playerState = registry->GetComponent<PlayerStateComponent>(entity);
-      playerState.isMining = false;
-      playerState.interactingEntity = INVALID_ENTITY;
-      util::DetachTimer(registry, timerManager, entity, TimerId::Mine);
+      auto &playerStateComp =
+          registry->GetComponent<PlayerStateComponent>(entity);
+      auto &playerAnimComp = registry->GetComponent<AnimationComponent>(entity);
+      auto &playerSpriteComp = registry->GetComponent<SpriteComponent>(entity);
+
+      float ix = registry->GetInputState().xAxis;
+      float iy = registry->GetInputState().yAxis;
+
+      if (ix == 0.f && iy == 0.f) {
+        if(!playerStateComp.isMining) util::SetAnimation(AnimationName::PLAYER_IDLE, playerAnimComp, true);
+        return;
+      }
+
+      // Normalize direction for uniform movement speed
+      float length = std::sqrt(ix * ix + iy * iy);
+
+      Vec2f nextPos = trans.position + Vec2f{ix/length, iy/length} * move.speed * deltaTime;
+
+      // Block movement
+      if(world->IsTileMovable(nextPos)){
+        trans.position = nextPos;
+      }
+
+      util::SetAnimation(AnimationName::PLAYER_WALK, playerAnimComp, true);
+
+      // Play running animation
+      if (ix > 0) {
+        playerSpriteComp.flip = SDL_FLIP_NONE;
+      } else if(ix < 0) {
+        playerSpriteComp.flip = SDL_FLIP_HORIZONTAL;
+      }
+
+      // Stop player interaction
+      if (playerStateComp.isMining) {
+        playerStateComp.isMining = false;
+        playerStateComp.interactingEntity = INVALID_ENTITY;
+        util::DetachTimer(registry, timerManager, entity, TimerId::Mine);
+      }
     }
   }
 }

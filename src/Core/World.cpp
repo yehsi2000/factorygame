@@ -1,30 +1,32 @@
 ﻿#include "Core/World.h"
 
-#include <Components/DebugRectComponent.h>
-
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <random>
 
 #include "Common.h"
+
 #include "Components/BuildingComponent.h"
 #include "Components/ChunkComponent.h"
+#include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
+
 #include "Core/AssetManager.h"
 #include "Core/Chunk.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
 #include "Core/World.h"
+
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
 
-World::World(SDL_Renderer* renderer, Registry* registry, TTF_Font* font)
+World::World(SDL_Renderer *renderer, Registry *registry, TTF_Font *font)
     : font(font), renderer(renderer), registry(registry) {
   std::random_device rd;
   randomGenerator.seed(rd());
@@ -32,7 +34,8 @@ World::World(SDL_Renderer* renderer, Registry* registry, TTF_Font* font)
 }
 
 void World::Update(EntityID player) {
-  if (!registry->HasComponent<TransformComponent>(player)) return;
+  if (!registry->HasComponent<TransformComponent>(player))
+    return;
 
   const Vec2f playerPosition =
       registry->GetComponent<TransformComponent>(player).position;
@@ -69,11 +72,11 @@ void World::Update(EntityID player) {
   }
 }
 
-TileData* World::GetTileAtWorldPosition(Vec2f position) {
+TileData *World::GetTileAtWorldPosition(Vec2f position) {
   return GetTileAtWorldPosition(position.x, position.y);
 }
 
-TileData* World::GetTileAtWorldPosition(float worldX, float worldY) {
+TileData *World::GetTileAtWorldPosition(float worldX, float worldY) {
   return GetTileAtTileIndex(GetTileIndexFromWorldPosition(worldX, worldY));
 }
 
@@ -88,11 +91,11 @@ Vec2 World::GetTileIndexFromWorldPosition(float worldX, float worldY) {
   return Vec2(tileX, tileY);
 }
 
-TileData* World::GetTileAtTileIndex(Vec2 tileIndex) {
+TileData *World::GetTileAtTileIndex(Vec2 tileIndex) {
   return GetTileAtTileIndex(tileIndex.x, tileIndex.y);
 }
 
-TileData* World::GetTileAtTileIndex(int tileX, int tileY) {
+TileData *World::GetTileAtTileIndex(int tileX, int tileY) {
   int chunkX = std::floor(static_cast<float>(tileX) / CHUNK_WIDTH);
   int chunkY = std::floor(static_cast<float>(tileY) / CHUNK_HEIGHT);
 
@@ -105,8 +108,18 @@ TileData* World::GetTileAtTileIndex(int tileX, int tileY) {
   return nullptr;
 }
 
-const std::map<ChunkCoord, Chunk>& World::GetActiveChunks() const {
-  return activeChunks;
+bool World::IsTileMovable(Vec2f worldPos) {
+  return IsTileMovable(GetTileIndexFromWorldPosition(worldPos));
+}
+bool World::IsTileMovable(Vec2 tileIdx) {
+  TileData *tile = GetTileAtTileIndex(tileIdx);
+  if (tile->type == TileType::Water || tile->type == TileType::Invalid)
+    return false;
+  if (tile->occupyingEntity != INVALID_ENTITY &&
+      registry->HasComponent<BuildingComponent>(tile->occupyingEntity))
+    return false;
+    
+  return true;
 }
 
 bool World::CanPlaceBuilding(Vec2 tileIndex, int width, int height) const {
@@ -122,18 +135,18 @@ bool World::CanPlaceBuilding(int tileX, int tileY, int width,
       int checkY = tileY + dy;
 
       // Get tile data (const cast is safe here since we're only checking)
-      TileData* tile =
-          const_cast<World*>(this)->GetTileAtTileIndex(checkX, checkY);
+      TileData *tile =
+          const_cast<World *>(this)->GetTileAtTileIndex(checkX, checkY);
       if (!tile) {
-        return false;  // Tile doesn't exist (chunk not loaded)
+        return false; // Tile doesn't exist (chunk not loaded)
       }
 
       if (tile->occupyingEntity != INVALID_ENTITY) {
-        return false;  // Tile is already occupied
+        return false; // Tile is already occupied
       }
 
       if (tile->type == TileType::Water || tile->type == TileType::Invalid) {
-        return false;  // Cannot build on water or invalid tiles
+        return false; // Cannot build on water or invalid tiles
       }
     }
   }
@@ -155,7 +168,7 @@ void World::PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
       int checkX = tileX + dx;
       int checkY = tileY + dy;
 
-      TileData* tile = GetTileAtTileIndex(checkX, checkY);
+      TileData *tile = GetTileAtTileIndex(checkX, checkY);
       if (tile) {
         std::cout << "placed building on tile : " << checkX << "," << checkY
                   << std::endl;
@@ -167,16 +180,16 @@ void World::PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
 
   // Store occupied tiles in the building component for cleanup
   if (registry->HasComponent<BuildingComponent>(entity)) {
-    auto& building = registry->GetComponent<BuildingComponent>(entity);
+    auto &building = registry->GetComponent<BuildingComponent>(entity);
     building.occupiedTiles = occupiedTiles;
   }
 }
 
 void World::RemoveBuilding(EntityID entity,
-                           const std::vector<Vec2>& occupiedTiles) {
+                           const std::vector<Vec2> &occupiedTiles) {
   // Clear all tiles that this building occupied
-  for (const Vec2& tileIndex : occupiedTiles) {
-    TileData* tile = GetTileAtTileIndex(tileIndex);
+  for (const Vec2 &tileIndex : occupiedTiles) {
+    TileData *tile = GetTileAtTileIndex(tileIndex);
     if (tile && tile->occupyingEntity == entity) {
       tile->occupyingEntity = INVALID_ENTITY;
     }
@@ -186,12 +199,12 @@ void World::RemoveBuilding(EntityID entity,
 void World::LoadChunk(int chunkX, int chunkY) {
   auto it = chunkCache.find({chunkX, chunkY});
   if (it != chunkCache.end()) {
-    Chunk& chunk = it->second;
+    Chunk &chunk = it->second;
     // Reactivate entities
     registry->RemoveComponent<InactiveComponent>(chunk.chunkEntity);
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
       for (int x = 0; x < CHUNK_WIDTH; ++x) {
-        TileData* tile = chunk.GetTile(x, y);
+        TileData *tile = chunk.GetTile(x, y);
         if (tile && tile->occupyingEntity != INVALID_ENTITY) {
           registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
         }
@@ -208,12 +221,12 @@ void World::LoadChunk(int chunkX, int chunkY) {
   }
 }
 
-void World::UnloadChunk(Chunk& chunk) {
+void World::UnloadChunk(Chunk &chunk) {
   // Deactivate entities
   registry->EmplaceComponent<InactiveComponent>(chunk.chunkEntity);
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
-      TileData* tile = chunk.GetTile(x, y);
+      TileData *tile = chunk.GetTile(x, y);
       if (tile && tile->occupyingEntity != INVALID_ENTITY) {
         registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
       }
@@ -223,9 +236,9 @@ void World::UnloadChunk(Chunk& chunk) {
   // << ")\n";
 }
 
-SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
+SDL_Texture *World::CreateChunkTexture(Chunk &chunk) {
   // Create a texture for the entire chunk
-  SDL_Texture* chunkTexture = SDL_CreateTexture(
+  SDL_Texture *chunkTexture = SDL_CreateTexture(
       renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
       CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE);
 
@@ -237,38 +250,38 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
   SDL_RenderClear(renderer);
 
   // Get the tileset texture for drawing individual tiles
-  SDL_Texture* tilesetTexture;
+  SDL_Texture *tilesetTexture;
 
   // Draw all tiles in the chunk to the texture
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
-      TileData* tile = chunk.GetTile(x, y);
+      TileData *tile = chunk.GetTile(x, y);
 
       // Determine source rectangle based on tile type
       SDL_Rect srcRect;
       switch (tile->type) {
-        case TileType::Dirt:
-          tilesetTexture = AssetManager::Instance().getTexture(
-              "assets/img/tile/dirt.png", renderer);
-          srcRect = {0, 0, 64, 64};
-          break;
-        case TileType::Grass:
-          tilesetTexture = AssetManager::Instance().getTexture(
-              "assets/img/tile/grass.png", renderer);
-          srcRect = {0, 0, 64, 64};
-          break;
-        case TileType::Water:
-          tilesetTexture = AssetManager::Instance().getTexture(
-              "assets/img/tile/water.png", renderer);
-          srcRect = {0, 0, 64, 64};
-          break;
-        case TileType::Stone:
-          tilesetTexture = AssetManager::Instance().getTexture(
-              "assets/img/tile/stone.png", renderer);
-          srcRect = {0, 0, 64, 64};
-          break;
-        default:
-          break;
+      case TileType::Dirt:
+        tilesetTexture = AssetManager::Instance().getTexture(
+            "assets/img/tile/dirt.png", renderer);
+        srcRect = {0, 0, 64, 64};
+        break;
+      case TileType::Grass:
+        tilesetTexture = AssetManager::Instance().getTexture(
+            "assets/img/tile/grass.png", renderer);
+        srcRect = {0, 0, 64, 64};
+        break;
+      case TileType::Water:
+        tilesetTexture = AssetManager::Instance().getTexture(
+            "assets/img/tile/water.png", renderer);
+        srcRect = {0, 0, 64, 64};
+        break;
+      case TileType::Stone:
+        tilesetTexture = AssetManager::Instance().getTexture(
+            "assets/img/tile/stone.png", renderer);
+        srcRect = {0, 0, 64, 64};
+        break;
+      default:
+        break;
       }
 
       // Destination rectangle for this tile in the chunk texture
@@ -286,14 +299,14 @@ SDL_Texture* World::CreateChunkTexture(Chunk& chunk) {
   return chunkTexture;
 }
 
-void World::GenerateChunk(Chunk& chunk) {
+void World::GenerateChunk(Chunk &chunk) {
   FastNoiseLite noise;
   noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
   noise.SetFrequency(0.05f);
   int cx = chunk.chunkX;
   int cy = chunk.chunkY;
   EntityID chunkDebugRect = registry->CreateEntity();
-  #ifdef DRAW_DEBUG_RECTS
+#ifdef DRAW_DEBUG_RECTS
   registry->EmplaceComponent<DebugRectComponent>(
       chunkDebugRect,
       DebugRectComponent{0, 0, TILE_PIXEL_SIZE * CHUNK_WIDTH,
@@ -309,13 +322,13 @@ void World::GenerateChunk(Chunk& chunk) {
            chunk.chunkY);
   textComp.color = SDL_Color{255, 255, 255, 255};
   registry->EmplaceComponent<TextComponent>(chunkDebugRect, textComp);
- #endif
+#endif
   // terrain generation
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       int worldTileX = chunk.chunkX * CHUNK_WIDTH + x;
       int worldTileY = chunk.chunkY * CHUNK_HEIGHT + y;
-      #ifdef DRAW_DEBUG_RECTS
+#ifdef DRAW_DEBUG_RECTS
       EntityID tileDebugRect = registry->CreateEntity();
       registry->EmplaceComponent<DebugRectComponent>(
           tileDebugRect, DebugRectComponent{0, 0, TILE_PIXEL_SIZE,
@@ -330,9 +343,9 @@ void World::GenerateChunk(Chunk& chunk) {
                worldTileY);
       textComp.color = SDL_Color{255, 255, 255, 255};
       registry->EmplaceComponent<TextComponent>(tileDebugRect, textComp);
-       #endif
+#endif
       float terrainValue = noise.GetNoise((float)worldTileX, (float)worldTileY);
-      TileData* tile = chunk.GetTile(x, y);
+      TileData *tile = chunk.GetTile(x, y);
 
       if (terrainValue < -0.2f) {
         tile->type = TileType::Water;
@@ -359,7 +372,7 @@ void World::GenerateChunk(Chunk& chunk) {
 
       if (oreValue > oreThreshold &&
           chunk.GetTile(x, y)->type != TileType::Water) {
-        TileData* tile = chunk.GetTile(x, y);
+        TileData *tile = chunk.GetTile(x, y);
 
         if (tile->occupyingEntity == INVALID_ENTITY) {
           EntityID oreNode = registry->CreateEntity();
@@ -381,7 +394,7 @@ void World::GenerateChunk(Chunk& chunk) {
           textComp.color = SDL_Color{255, 255, 255, 255};
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
-          SDL_Texture* spritesheet = AssetManager::Instance().getTexture(
+          SDL_Texture *spritesheet = AssetManager::Instance().getTexture(
               "assets/img/entity/iron-ore.png", renderer);
           SpriteComponent spriteComp;
           spriteComp.texture = spritesheet;
@@ -389,12 +402,11 @@ void World::GenerateChunk(Chunk& chunk) {
 
           int richnessIndex =
               (IRON_SPRITESHEET_HEIGHT - 1) -
-              std::min(
-                  7.0f,
-                  std::floor(
-                      static_cast<float>(oreAmount - minironOreAmount) /
-                      static_cast<float>(maxironOreAmount - minironOreAmount) *
-                      8.f));
+              std::min(7.0f, std::floor(static_cast<float>(oreAmount -
+                                                           minironOreAmount) /
+                                        static_cast<float>(maxironOreAmount -
+                                                           minironOreAmount) *
+                                        8.f));
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
           spriteComp.renderRect = {0, 0, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);

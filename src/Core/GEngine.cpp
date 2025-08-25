@@ -21,7 +21,6 @@
 #include "Components/TextComponent.h"
 #include "Components/TimerComponent.h"
 #include "Components/TransformComponent.h"
-#include "Core/AssetManager.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
@@ -43,16 +42,18 @@
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
+#include "Util/EntityFactory.h"
 
 void GEngine::InitCoreSystem() {
-  animationSystem = std::make_unique<AnimationSystem>(registry.get());
+  animationSystem =
+      std::make_unique<AnimationSystem>(registry.get(), gRenderer);
   assemblingMachineSystem = std::make_unique<AssemblingMachineSystem>(
       registry.get(), dispatcher.get(), timerManager.get());
   refinerySystem = std::make_unique<RefinerySystem>(registry.get());
   resourceNodeSystem =
       std::make_unique<ResourceNodeSystem>(registry.get(), world.get());
   movementSystem =
-      std::make_unique<MovementSystem>(registry.get(), timerManager.get());
+      std::make_unique<MovementSystem>(registry.get(), timerManager.get(), world.get());
   timerSystem =
       std::make_unique<TimerSystem>(registry.get(), timerManager.get());
 
@@ -95,49 +96,22 @@ void GEngine::RegisterComponent() {
 }
 
 void GEngine::GeneratePlayer() {
-  player = registry->CreateEntity();
-  registry->EmplaceComponent<TransformComponent>(player);
+  player = factory::CreatePlayer(registry.get(), gRenderer, {0.f,0.f});
 
-  SDL_Texture* playerIdleSpritesheet = AssetManager::Instance().getTexture(
-      "assets/img/character/Miner_IdleAnimation.png", gRenderer);
-  registry->EmplaceComponent<SpriteComponent>(
-      player, SpriteComponent{playerIdleSpritesheet,
-                              {0, 0, 16, 16},
-                              {-TILE_PIXEL_SIZE / 2, -TILE_PIXEL_SIZE / 2,
-                               TILE_PIXEL_SIZE, TILE_PIXEL_SIZE},
-                              SDL_FLIP_NONE,
-                              render_order_t(100)});
-
-  AnimationComponent anim;
-  anim.animations["PlayerIdle"] = {0, 12, 8.f, 16, 16, true};
-  anim.currentAnimationName = "PlayerIdle";
-  registry->AddComponent<AnimationComponent>(player, std::move(anim));
-  registry->EmplaceComponent<MovementComponent>(
-      player, MovementComponent{.speed = 300.f});
-  registry->EmplaceComponent<PlayerStateComponent>(
-      player, PlayerStateComponent{.isMining = false,
-                                   .interactingEntity = INVALID_ENTITY});
-  registry->EmplaceComponent<MovableComponent>(player);
-  registry->EmplaceComponent<InventoryComponent>(
-      player, InventoryComponent{.row = 4, .column = 4});
-
-  // testing assembly machine
-
+  // Default item
   dispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 1));
   dispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 1));
 }
 
-GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
-    : gWindow(window),
-      gRenderer(renderer),
-      gFont(font),
+GEngine::GEngine(SDL_Window *window, SDL_Renderer *renderer, TTF_Font *font)
+    : gWindow(window), gRenderer(renderer), gFont(font),
       registry(std::make_unique<Registry>()),
       timerManager(std::make_unique<TimerManager>()),
       dispatcher(std::make_unique<EventDispatcher>()),
       commandQueue(std::make_unique<CommandQueue>()),
       world(std::make_unique<World>(renderer, registry.get(), font)),
       GameEndHandle(GetDispatcher()->Subscribe<QuitEvent>(
-          [this](const QuitEvent&) { bIsRunning = false; })) {
+          [this](const QuitEvent &) { bIsRunning = false; })) {
   assert(registry && "Fail to initialize GEngine : Invalid registry");
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
   assert(dispatcher && "Fail to initialize GEngine : Invalid dispatcher");
@@ -152,9 +126,11 @@ GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
 GEngine::~GEngine() = default;
 
 void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
-  if (currentState) currentState->Exit();
+  if (currentState)
+    currentState->Exit();
   currentState = std::move(newState);
-  if (currentState) currentState->Enter();
+  if (currentState)
+    currentState->Enter();
 }
 
 void GEngine::Update(float deltaTime) {
@@ -182,7 +158,7 @@ void GEngine::Update(float deltaTime) {
 
   // Rendering
   renderSystem->Update();
-  uiSystem->Update();  // Display UI on very top
+  uiSystem->Update(); // Display UI on very top
   SDL_RenderPresent(gRenderer);
 }
 
