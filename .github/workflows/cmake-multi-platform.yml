@@ -46,6 +46,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y libfreetype-dev
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+          choco install nasm
+        fi
+      shell: bash
+
     - name: Install boost
       uses: MarkusJx/install-boost@v2
       id: install-boost
