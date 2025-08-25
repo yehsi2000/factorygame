@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <queue>
+#include <memory>
 
 #include "Core/ComponentArray.h"
 #include "Core/InputState.h"
