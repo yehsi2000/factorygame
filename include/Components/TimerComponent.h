@@ -18,8 +18,8 @@ enum class TimerId : int {
   MaxTimers // Represents the maximum number of timer types.
 };
 
-constexpr size_t MAX_TIMERS_PER_ENTITY =
-    static_cast<size_t>(TimerId::MaxTimers);
+constexpr std::size_t MAX_TIMERS_PER_ENTITY =
+    static_cast<std::size_t>(TimerId::MaxTimers);
 
 struct TimerInstance {
   TimerId id;
