@@ -113,6 +113,11 @@ void UISystem::Inventory() {
                 engine->GetDispatcher()->Publish(
                     ItemMoveEvent(payload_ptr->owner, engine->GetPlayer(),
                                   payload_ptr->id, payload_ptr->amount));
+              } else if (reg->HasComponent<AssemblingMachineComponent>(
+                             payload_ptr->owner)) {
+                engine->GetDispatcher()->Publish(AssemblyTakeOutputEvent(
+                    payload_ptr->owner, engine->GetPlayer(), payload_ptr->id,
+                    payload_ptr->amount));
               } else {
                 engine->GetDispatcher()->Publish(ItemAddEvent(
                     engine->GetPlayer(), payload_ptr->id, payload_ptr->amount));

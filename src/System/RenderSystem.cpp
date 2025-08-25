@@ -7,7 +7,6 @@
 #include "Components/ChunkComponent.h"
 #include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
-#include "Components/PlayerStateComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
@@ -32,25 +31,26 @@ void RenderSystem::Update() {
   SDL_RenderClear(renderer);
 
   Vec2f cameraPos = util::GetCameraPosition(registry);
+  float zoom = util::GetCameraZoom(registry);
   int screenWidth, screenHeight;
   SDL_GetRendererOutputSize(renderer, &screenWidth, &screenHeight);
   Vec2 screenSize{screenWidth, screenHeight};
 
   // Render chunks first (background)
-  RenderChunks(cameraPos, screenSize);
+  RenderChunks(cameraPos, screenSize, zoom);
 
   // Render other entities on top
-  RenderEntities(cameraPos, screenSize);
+  RenderEntities(cameraPos, screenSize, zoom);
 
   // Render building previews on top of entities
-  RenderBuildingPreviews(cameraPos, screenSize);
+  RenderBuildingPreviews(cameraPos, screenSize, zoom);
 
-  RenderTexts(cameraPos, screenSize);
+  RenderTexts(cameraPos, screenSize, zoom);
 
-  RenderDebugRect(cameraPos, screenSize);
+  RenderDebugRect(cameraPos, screenSize, zoom);
 }
 
-void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize) {
+void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   // Render all chunks that have a ChunkComponent
   auto chunkView = registry->view<ChunkComponent, TransformComponent>();
 
@@ -63,25 +63,26 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize) {
 
     // Convert world position to screen position
     Vec2f screenPos =
-        util::WorldToScreen(transform.position, cameraPos, screenSize);
+        util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
+    Vec2 chunkTextureSize = Vec2{CHUNK_WIDTH * TILE_PIXEL_SIZE * zoom,
+                                 CHUNK_HEIGHT * TILE_PIXEL_SIZE * zoom};
     // Cull chunks that are off-screen
-    if (OffScreen(
-            screenPos, screenSize,
-            {CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE})) {
+    if (isOffScreen(screenPos, screenSize, chunkTextureSize)) {
       continue;
     }
 
     if (chunk.chunkTexture) {
-      SDL_Rect destRect = {
-          static_cast<int>(screenPos.x), static_cast<int>(screenPos.y),
-          CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE};
+      SDL_Rect destRect = {static_cast<int>(screenPos.x),
+                           static_cast<int>(screenPos.y), chunkTextureSize.x,
+                           chunkTextureSize.y};
       SDL_RenderCopy(renderer, chunk.chunkTexture, nullptr, &destRect);
     }
   }
 }
 
-void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize) {
+void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
+                                  float zoom) {
   // Render all regular entities with SpriteComponent
   auto view = registry->view<SpriteComponent, TransformComponent>();
 
@@ -114,32 +115,32 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize) {
 
     // Convert world position to screen position
     Vec2f screenPos =
-        util::WorldToScreen(transform.position, cameraPos, screenSize);
+        util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    Vec2f entitySize = {sprite.renderRect.w * transform.scale.x,
-                        sprite.renderRect.h * transform.scale.y};
+    Vec2f entitySize = {sprite.renderRect.w * transform.scale.x * zoom,
+                        sprite.renderRect.h * transform.scale.y * zoom};
 
     // Simple culling - skip entities that are clearly off-screen
-    if (OffScreen(screenPos, screenSize, entitySize)) {
+    if (isOffScreen(screenPos, screenSize, entitySize)) {
       continue;
     }
 
-    SDL_Rect destRect = {static_cast<int>(screenPos.x + sprite.renderRect.x),
-                         static_cast<int>(screenPos.y + sprite.renderRect.y),
-                         static_cast<int>(entitySize.x),
-                         static_cast<int>(entitySize.y)};
+    SDL_Rect destRect = {
+        static_cast<int>(screenPos.x + sprite.renderRect.x * zoom),
+        static_cast<int>(screenPos.y + sprite.renderRect.y * zoom),
+        static_cast<int>(entitySize.x), static_cast<int>(entitySize.y)};
     SDL_RenderCopyEx(renderer, sprite.texture, &sprite.srcRect, &destRect,
                      transform.rotation, nullptr, sprite.flip);
   }
 }
 
-bool RenderSystem::OffScreen(Vec2f screenPos, Vec2 screenSize,
-                             Vec2f entitySize) {
+bool RenderSystem::isOffScreen(Vec2f screenPos, Vec2 screenSize,
+                               Vec2f entitySize) {
   return (screenPos.x + entitySize.x < 0 || screenPos.x > screenSize.x ||
           screenPos.y + entitySize.y < 0 || screenPos.y > screenSize.y);
 }
 
-void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
+void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<DebugRectComponent>(entity))
       continue;
@@ -147,7 +148,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
       const auto &transform =
           registry->GetComponent<TransformComponent>(entity);
       Vec2f screenPos =
-          util::WorldToScreen(transform.position, cameraPos, screenSize);
+          util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
       SDL_Surface *textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
       SDL_Texture *textTexture =
@@ -157,8 +158,8 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
       SDL_Rect textRect;
       textRect.x = static_cast<int>(screenPos.x);
       textRect.y = static_cast<int>(screenPos.y);
-      textRect.w = textSurface->w;
-      textRect.h = textSurface->h;
+      textRect.w = static_cast<int>(textSurface->w * zoom);
+      textRect.h = static_cast<int>(textSurface->h * zoom);
 
       SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
 
@@ -168,9 +169,9 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
     const auto &text = registry->GetComponent<TextComponent>(entity);
     const auto &transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =
-        util::WorldToScreen(transform.position, cameraPos, screenSize);
+        util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    if (OffScreen(screenPos, screenSize, {0.f, 0.f})) {
+    if (isOffScreen(screenPos, screenSize, {0.f, 0.f})) {
       continue;
     }
 
@@ -180,17 +181,18 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize) {
         SDL_CreateTextureFromSurface(renderer, textSurface);
 
     SDL_Rect textRect;
-    textRect.x = static_cast<int>(screenPos.x) + text.x;
-    textRect.y = static_cast<int>(screenPos.y) + text.y;
-    textRect.w = textSurface->w;
-    textRect.h = textSurface->h;
+    textRect.x = static_cast<int>(screenPos.x + text.x * zoom);
+    textRect.y = static_cast<int>(screenPos.y + text.y * zoom);
+    textRect.w = static_cast<int>(textSurface->w * zoom);
+    textRect.h = static_cast<int>(textSurface->h * zoom);
     SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
   }
 }
 
-void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
+void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
+                                          float zoom) {
   // Render all building previews
   auto previewView =
       registry->view<BuildingPreviewComponent, TransformComponent>();
@@ -212,11 +214,12 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
                               transform.position.y + dy * TILE_PIXEL_SIZE};
 
         Vec2f screenPos =
-            util::WorldToScreen(tileWorldPos, cameraPos, screenSize);
+            util::WorldToScreen(tileWorldPos, cameraPos, screenSize, zoom);
 
-        SDL_Rect tileRect = {static_cast<int>(screenPos.x),
-                             static_cast<int>(screenPos.y), TILE_PIXEL_SIZE,
-                             TILE_PIXEL_SIZE};
+        SDL_Rect tileRect = {static_cast<int>(screenPos.x * zoom),
+                             static_cast<int>(screenPos.y * zoom),
+                             static_cast<int>(TILE_PIXEL_SIZE * zoom),
+                             static_cast<int>(TILE_PIXEL_SIZE * zoom)};
 
         // Set color based on validity - use more visible alpha values
         if (world->CanPlaceBuilding(tileindex + Vec2{dx, dy}, 1, 1)) {
@@ -237,11 +240,13 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
       const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
 
       Vec2f screenPos =
-          util::WorldToScreen(transform.position, cameraPos, screenSize);
+          util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-      SDL_Rect destRect = {sprite.renderRect.x + static_cast<int>(screenPos.x),
-                           sprite.renderRect.y + static_cast<int>(screenPos.y),
-                           sprite.renderRect.w, sprite.renderRect.h};
+      SDL_Rect destRect = {
+          static_cast<int>(sprite.renderRect.x * zoom + screenPos.x),
+          static_cast<int>(sprite.renderRect.y * zoom + screenPos.y),
+          static_cast<int>(sprite.renderRect.w * zoom),
+          static_cast<int>(sprite.renderRect.h * zoom)};
 
       // Render with transparency
       SDL_SetTextureAlphaMod(sprite.texture, 128); // 50% transparency
@@ -255,7 +260,8 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize) {
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
-void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize) {
+void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
+                                   float zoom) {
   // Render all building previews
   auto debugView = registry->view<DebugRectComponent, TransformComponent>();
 
@@ -268,11 +274,12 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize) {
     const auto &transform = registry->GetComponent<TransformComponent>(entity);
 
     Vec2f screenPos =
-        util::WorldToScreen(transform.position, cameraPos, screenSize);
+        util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    SDL_Rect tileRect = {static_cast<int>(screenPos.x) + debug.offsetX,
-                         static_cast<int>(screenPos.y) + debug.offsetY,
-                         debug.width, debug.height};
+    SDL_Rect tileRect = {static_cast<int>(screenPos.x + debug.offsetX * zoom),
+                         static_cast<int>(screenPos.y + debug.offsetY * zoom),
+                         static_cast<int>(debug.width * zoom),
+                         static_cast<int>(debug.height * zoom)};
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, debug.r, debug.g, debug.b, debug.a);
     SDL_RenderDrawRect(renderer, &tileRect);

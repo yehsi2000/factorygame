@@ -14,6 +14,7 @@ struct InputState {
   bool rightMouseReleased = false;  // True only on the frame when released
   Vec2 mousepos = {0,0};
   Vec2 mousedelta = {0,0};
+  Vec2 mousewheel = {0,0};
   int mouseX = 0;
   int mouseY = 0;
   int mouseDeltaX = 0;

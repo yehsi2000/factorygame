@@ -23,6 +23,7 @@
 #include "Core/World.h"
 
 
+#include "SDL_events.h"
 #include "Util/AnimUtil.h"
 #include "Util/CameraUtil.h"
 #include "Util/EntityFactory.h"
@@ -89,7 +90,6 @@ void InputSystem::Update() {
       if (window == nullptr && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
         if (!isDraggingOutside) {
           isDraggingOutside = true;
-          std::cout << "start dragging outside!" << std::endl;
 
           // Handle item dragging
           if (ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
@@ -153,6 +153,10 @@ void InputSystem::Update() {
     if (event.type == SDL_MOUSEMOTION) {
       inputState.mousedelta = {event.motion.xrel, event.motion.yrel};
       inputState.mousepos = {event.motion.x, event.motion.y};
+    }
+
+    if(event.type == SDL_MOUSEWHEEL){
+      inputState.mousewheel = {event.wheel.x, event.wheel.y};
     }
 
     // Handle Keyboard Event
@@ -236,12 +240,6 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
           if (newBuilding != INVALID_ENTITY) {
             engine->GetDispatcher()->Publish(
                 ItemConsumeEvent{player, payload_ptr->id, 1});
-
-            std::cout << "Successfully placed building at " << tileIndex.x
-                      << "," << tileIndex.y << std::endl;
-          } else {
-            std::cout << "Cannot place building at " << tileIndex.x << ","
-                      << tileIndex.y << std::endl;
           }
 
           isPreviewingBuilding = false;
@@ -312,9 +310,6 @@ void InputSystem::HandleInputAction(InputAction action, InputType type,
 
       Vec2 tileindex =
           engine->GetWorld()->GetTileIndexFromWorldPosition(targetPos.value());
-      std::cout << engine->GetWorld()->GetTileIndexFromWorldPosition(
-                       targetPos.value())
-                << std::endl;
 
       engine->GetDispatcher()->Publish(PlayerInteractEvent(tileindex));
     }

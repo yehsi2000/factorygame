@@ -5,7 +5,7 @@
 #include "Core/GEngine.h"
 #include "Core/Registry.h"
 
-CameraSystem::CameraSystem(GEngine* e) : engine(e) {
+CameraSystem::CameraSystem(GEngine *e) : engine(e) {
   registry = engine->GetRegistry();
   assert(registry && "Fail to initialize CameraSystem : Invalid registry");
 }
@@ -27,11 +27,11 @@ void CameraSystem::UpdateCameraFollow(float deltaTime) {
       !registry->HasComponent<CameraComponent>(cameraEntity))
     return;
 
-  auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
+  auto &camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
   // Update target position to player position
   if (registry->HasComponent<TransformComponent>(playerEntity)) {
-    const auto& playerTransform =
+    const auto &playerTransform =
         registry->GetComponent<TransformComponent>(playerEntity);
     camera.target = playerTransform.position;
   }
@@ -64,27 +64,31 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
       !registry->HasComponent<CameraComponent>(cameraEntity))
     return;
 
-  auto& camera = registry->GetComponent<CameraComponent>(cameraEntity);
-  const auto& input = registry->GetInputState();
+  auto &camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
   // Check if player is moving (disable drag if moving)
   bool playerIsMoving = false;
-  const auto& inputState = registry->GetInputState();
+  auto &inputState = registry->GetInputState();
   playerIsMoving =
       (abs(inputState.xAxis) > 0.1f || abs(inputState.yAxis) > 0.1f);
 
   // Start dragging
-  if (input.rightMousePressed && !playerIsMoving) {
+  if (inputState.rightMousePressed && !playerIsMoving) {
     camera.isDragging = true;
     camera.isFollowing = false;
-    camera.dragStartPos = Vec2f(input.mousepos);
+    camera.dragStartPos = Vec2f(inputState.mousepos);
     camera.cameraStartPos = camera.position;
   }
 
+  if (inputState.mousewheel.y != 0) {
+    camera.zoom = camera.zoom * (1 + (inputState.mousewheel.y) * 0.1);
+    inputState.mousewheel = {0, 0};
+  }
+
   // Continue dragging
-  if (camera.isDragging && input.rightMouseDown) {
-    Vec2f currentMousePos = input.mousepos;
-    Vec2f mouseDelta = Vec2f(input.mousepos) - camera.dragStartPos;
+  if (camera.isDragging && inputState.rightMouseDown) {
+    Vec2f currentMousePos = inputState.mousepos;
+    Vec2f mouseDelta = Vec2f(inputState.mousepos) - camera.dragStartPos;
 
     // Update camera position (invert delta for natural dragging feel)
     camera.position = {camera.cameraStartPos.x - mouseDelta.x,
@@ -92,11 +96,11 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   // End dragging
-  if (input.rightMouseReleased || playerIsMoving) {
+  if (inputState.rightMouseReleased || playerIsMoving) {
     if (camera.isDragging) {
       // Store the offset for smooth transition back to following
       if (registry->HasComponent<TransformComponent>(playerEntity)) {
-        const auto& playerTransform =
+        const auto &playerTransform =
             registry->GetComponent<TransformComponent>(playerEntity);
         camera.offset = {camera.position.x - playerTransform.position.x,
                          camera.position.y - playerTransform.position.y};
@@ -120,7 +124,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   static float inactiveTime = 0.0f;
   if (!camera.isDragging && !camera.isFollowing) {
     inactiveTime += deltaTime;
-    if (inactiveTime > 3.0f) {  // 3 seconds of inactivity
+    if (inactiveTime > 3.0f) { // 3 seconds of inactivity
       camera.isFollowing = true;
       camera.offset = {0.0f, 0.0f};
       inactiveTime = 0.0f;
