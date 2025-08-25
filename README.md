@@ -1,3 +1,5 @@
+[![CMake on multiple platforms](https://github.com/yehsi2000/factorygame/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/yehsi2000/factorygame/actions/workflows/cmake-multi-platform.yml)
+
 # Factory Game
 
 ![preview](assets/docs/preview.gif)
@@ -285,3 +287,4 @@ ECS 구조의 효율적인 메모리 사용을 위해 엔티티 ID 재사용과 
 - **Chunk Index**: 8x8 청크 그리드를 위한 정수 위치
 
 `World` 클래스가 시스템 간의 좌표 변환을 처리
+
