@@ -30,8 +30,9 @@ class TimerSystem;
 class UISystem;
 
 /**
- * @brief Main Engine Class
- * 
+ * @brief The main engine class that drives the game.
+ * @details Manages the game loop, owns all core systems and services,
+ *          and orchestrates the overall game state.
  */
 class GEngine {  
   
@@ -76,23 +77,23 @@ class GEngine {
   void GeneratePlayer();
 
  public:
- /**
-  * @brief Construct a new GEngine object
-  * @note initializes Registry, TimeManager, Eventdispatcher, CommandQueue, World, GameEndHandle.
-  */
+  /**
+   * @brief Constructs the GEngine.
+   * @note Initializes all core services and systems.
+   */
   GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font);
   ~GEngine();
 
   /**
-   * @brief Change GameState to given state
-   * 
-   * @param newState new GameState to shift
+   * @brief Changes the current game state (e.g., from menu to in-game).
+   * @param newState The new GameState to activate.
    */
   void ChangeState(std::unique_ptr<GameState> newState);
+  
   /**
-   * @brief Process all pending command and update every system
-   * 
-   * @param deltaTime
+   * @brief Executes a single frame of the game loop.
+   * @details Processes all pending commands and then updates all active game systems.
+   * @param deltaTime The time elapsed since the last frame.
    */
   void Update(float deltaTime);
 

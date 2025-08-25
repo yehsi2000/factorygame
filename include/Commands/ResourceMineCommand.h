@@ -1,8 +1,6 @@
 #ifndef COMMANDS_RESOURCEMINECOMMAND_
 #define COMMANDS_RESOURCEMINECOMMAND_
 
-#include <iostream>
-
 #include "Common.h"
 #include "Components/InventoryComponent.h"
 #include "Components/ResourceNodeComponent.h"
@@ -48,7 +46,6 @@ class ResourceMineCommand : public Command {
         sprite.srcRect = {0, richnessIndex * 128, 128, 128};
       }
     }
-    std::cout << "Interaction Command Executed!" << std::endl;
   }
 
  private:

@@ -17,6 +17,7 @@ class MiningDrillSystem {
   Registry* registry;
   World* world;
   TimerManager* timerManager;
+  
   void UpdateAnimationState(MiningDrillComponent& drill, EntityID entity);
   bool TileEmpty(EntityID entity);
   void StartMining(MiningDrillComponent& drill, EntityID entity);

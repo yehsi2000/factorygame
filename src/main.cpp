@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<GEngine> engine =
       std::make_unique<GEngine>(window, renderer, font);
 
-  engine->ChangeState(std::make_unique<MainMenuState>());
+  engine->ChangeState(std::make_unique<PlayState>());
 
   GameLoop(engine.get());
 

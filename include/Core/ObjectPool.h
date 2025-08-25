@@ -12,11 +12,14 @@ class ObjectPool {
   std::function<std::unique_ptr<T>()> createFunction;
 
  public:
-  // Constructor that takes a function to create new objects
   ObjectPool(std::function<std::unique_ptr<T>()> createFunc)
       : createFunction(std::move(createFunc)) {}
 
-  // Get an object from the pool or create a new one if pool is empty
+  /**
+   * @brief Get an object from the pool or create a new one if pool is empty
+   * 
+   * @return std::unique_ptr<T> Object inside the pool
+   */
   std::unique_ptr<T> Acquire() {
     if (pool.empty()) {
       return createFunction();
@@ -27,24 +30,29 @@ class ObjectPool {
     return object;
   }
 
-  // Return an object to the pool
+  /**
+   * @brief Return an object to the pool
+   * @details Reset the object to a default state if needed. This depends on the specific object type.
+   * @param object Returned Object
+   */
   void Release(std::unique_ptr<T> object) {
-    // Reset the object to a default state if needed
-    // This depends on the specific object type
     pool.push(std::move(object));
   }
 
-  // Get the current size of the pool
   size_t Size() const { return pool.size(); }
 
-  // Clear all objects in the pool
   void Clear() {
     while (!pool.empty()) {
       pool.pop();
     }
   }
 
-  // Pre-allocate objects in the pool
+  
+  /**
+   * @brief Pre-warm the pool
+   * 
+   * @param count Desired object pool size
+   */
   void PreAllocate(size_t count) {
     for (size_t i = 0; i < count; ++i) {
       pool.push(createFunction());

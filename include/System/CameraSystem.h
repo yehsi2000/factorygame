@@ -2,7 +2,6 @@
 #define SYSTEM_CAMERASYSTEM_
 
 #include "Core/Entity.h"
-#include "Core/Type.h"
 
 class GEngine;
 class Registry;

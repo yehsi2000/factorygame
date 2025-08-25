@@ -13,22 +13,16 @@ enum class AssemblingMachineState {
 };
 
 struct AssemblingMachineComponent {
-  // Current recipe being processed
   RecipeID currentRecipe = RecipeID::None;
   
-  // Current state of the machine
   AssemblingMachineState state = AssemblingMachineState::Idle;
   
-  // Input inventory - maps ItemID to amount
   std::unordered_map<ItemID, int> inputInventory;
   
-  // Output inventory - maps ItemID to amount  
   std::unordered_map<ItemID, int> outputInventory;
   
-  // Animation control
   bool isAnimating = false;
   
-  // UI state
   bool showUI = false;
   bool showRecipeSelection = true; // true when no recipe selected
 };

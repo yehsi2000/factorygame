@@ -6,6 +6,13 @@
 
 #include "Core/Command.h"
 
+/**
+ * @brief A queue for deferred execution of commands.
+ * @details This class provides a thread-safe way to enqueue commands from various
+ *          systems. The main engine loop dequeues and executes these commands at a
+ *          safe point in the frame, preventing race conditions and ensuring
+ *          deterministic state changes.
+ */
 class CommandQueue {
   std::queue<std::unique_ptr<Command>> queue;
 

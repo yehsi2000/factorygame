@@ -8,18 +8,19 @@
 using TimerHandle = uint32_t;
 constexpr TimerHandle INVALID_TIMER_HANDLE = 0;
 
-// An enum to identify the purpose of a timer.
+/**
+ * @brief An enum to identify the purpose of a timer.
+ *
+ */
 enum class TimerId : int {
   Mine,
   AssemblingMachineCraft,
-  MaxTimers  // Represents the maximum number of timer types.
+  MaxTimers // Represents the maximum number of timer types.
 };
 
 constexpr size_t MAX_TIMERS_PER_ENTITY =
     static_cast<size_t>(TimerId::MaxTimers);
 
-// TimerInstance is a pure POD struct. It contains no logic,
-// no complex types, and no static members. It's just data.
 struct TimerInstance {
   TimerId id;
   TimerHandle handle = INVALID_TIMER_HANDLE;
@@ -30,15 +31,16 @@ struct TimerInstance {
   bool isActive = false;
 };
 
-// TimerComponent is also a pure POD. It simply holds an array of handles,
-// making it lightweight and easily serializable.
 struct TimerComponent {
   std::array<TimerHandle, MAX_TIMERS_PER_ENTITY> timers;
   TimerComponent() { timers.fill(INVALID_TIMER_HANDLE); }
 };
 
-// A tag component added to an entity when one of its timers expires.
-// This is used to signal the TimerExpireSystem.
+/**
+ * @brief A tag component added to an entity when one of its timers expires.
+ * A tag component added to an entity when one of its timers expires.
+ *
+ */
 struct TimerExpiredTag {
   TimerId expiredId;
 };

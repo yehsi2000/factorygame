@@ -4,13 +4,13 @@
 class GEngine;
 class Registry;
 
-// Abstract base class for all commands.
-// Commands are self-contained units of work that modify the game state.
+/**
+ * @brief Abstract base class for all commands. Commands are self-contained units of work that modify the game state.
+ * @details The context (engine, registry, etc.) is passed to Execute to give the command the power to change the world state.
+ */
 class Command {
  public:
   virtual ~Command() = default;
-  // The context (engine, registry, etc.) is passed to Execute
-  // to give the command the power to change the world state.
   virtual void Execute(GEngine& engine, Registry& registry) = 0;
 };
 

@@ -4,10 +4,10 @@
 #include "SDL.h"
 
 struct ChunkComponent {
-  SDL_Texture* chunkTexture =
-      nullptr;  // Pre-rendered texture for the entire chunk
+  SDL_Texture *chunkTexture =
+      nullptr; // Pre-rendered texture for the entire chunk
   bool needsRedraw =
-      true;  // Flag to indicate if the chunk texture needs updating
+      true; // Flag to indicate if the chunk texture needs updating
 };
 
 #endif /* COMPONENTS_CHUNKCOMPONENT_ */

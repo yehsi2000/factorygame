@@ -4,7 +4,6 @@
 
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
-#include "Components/SpriteComponent.h"
 #include "Components/TimerComponent.h"
 #include "Core/Item.h"
 #include "Core/Recipe.h"
@@ -72,29 +71,6 @@ void AssemblingMachineSystem::Update() {
 
     UpdateAnimationState(entity, machine);
   }
-}
-
-void AssemblingMachineSystem::SetRecipe(EntityID entity, RecipeID recipeId) {
-  if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return;
-
-  auto& machine = registry->GetComponent<AssemblingMachineComponent>(entity);
-  machine.currentRecipe = recipeId;
-  machine.showRecipeSelection = false;
-  machine.state = AssemblingMachineState::Idle;
-}
-
-void AssemblingMachineSystem::ClearRecipe(EntityID entity) {
-  if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return;
-
-  auto& machine = registry->GetComponent<AssemblingMachineComponent>(entity);
-  machine.currentRecipe = RecipeID::None;
-  machine.showRecipeSelection = true;
-  machine.state = AssemblingMachineState::Idle;
-  machine.isAnimating = false;
-
-  // Stop any crafting timer
-  util::DetachTimer(registry, timerManager, entity,
-                    TimerId::AssemblingMachineCraft);
 }
 
 int AssemblingMachineSystem::AddInputItem(EntityID entity, ItemID itemId,
@@ -169,30 +145,6 @@ bool AssemblingMachineSystem::CanStoreOutput(EntityID entity) const {
   int currentAmount = (it != machine.outputInventory.end()) ? it->second : 0;
 
   return currentAmount + recipeData.outputAmount <= itemData.maxStackSize;
-}
-
-AssemblingMachineState AssemblingMachineSystem::GetState(
-    EntityID entity) const {
-  if (!registry->HasComponent<AssemblingMachineComponent>(entity))
-    return AssemblingMachineState::Idle;
-
-  const auto& machine =
-      registry->GetComponent<AssemblingMachineComponent>(entity);
-  return machine.state;
-}
-
-void AssemblingMachineSystem::ShowUI(EntityID entity, bool show) {
-  if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return;
-
-  auto& machine = registry->GetComponent<AssemblingMachineComponent>(entity);
-  machine.showUI = show;
-}
-
-void AssemblingMachineSystem::ShowRecipeSelection(EntityID entity, bool show) {
-  if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return;
-
-  auto& machine = registry->GetComponent<AssemblingMachineComponent>(entity);
-  machine.showRecipeSelection = show;
 }
 
 void AssemblingMachineSystem::ConsumeIngredients(

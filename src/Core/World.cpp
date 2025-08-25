@@ -118,7 +118,7 @@ bool World::IsTileMovable(Vec2 tileIdx) {
   if (tile->occupyingEntity != INVALID_ENTITY &&
       registry->HasComponent<BuildingComponent>(tile->occupyingEntity))
     return false;
-    
+
   return true;
 }
 
@@ -170,8 +170,6 @@ void World::PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
 
       TileData *tile = GetTileAtTileIndex(checkX, checkY);
       if (tile) {
-        std::cout << "placed building on tile : " << checkX << "," << checkY
-                  << std::endl;
         tile->occupyingEntity = entity;
         occupiedTiles.push_back({checkX, checkY});
       }
@@ -205,8 +203,11 @@ void World::LoadChunk(int chunkX, int chunkY) {
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
       for (int x = 0; x < CHUNK_WIDTH; ++x) {
         TileData *tile = chunk.GetTile(x, y);
-        if (tile && tile->occupyingEntity != INVALID_ENTITY) {
-          registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
+        if (tile) {
+          if (tile->occupyingEntity != INVALID_ENTITY)
+            registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
+          if (tile->oreEntity != INVALID_ENTITY)
+            registry->RemoveComponent<InactiveComponent>(tile->oreEntity);
         }
       }
     }
@@ -227,8 +228,11 @@ void World::UnloadChunk(Chunk &chunk) {
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       TileData *tile = chunk.GetTile(x, y);
-      if (tile && tile->occupyingEntity != INVALID_ENTITY) {
-        registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
+      if (tile) {
+        if (tile->occupyingEntity != INVALID_ENTITY)
+          registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
+        if (tile->oreEntity != INVALID_ENTITY)
+          registry->EmplaceComponent<InactiveComponent>(tile->oreEntity);
       }
     }
   }

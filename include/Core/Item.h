@@ -40,7 +40,6 @@ struct ItemData {
   std::string icon;
 
   int maxStackSize = 50;
-  // std::string iconPath;
 };
 
 class OreToItemMapper {

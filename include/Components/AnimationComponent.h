@@ -17,12 +17,6 @@ enum class AnimationName : int {
   DRILL_WORKING,
 };
 
-// constexpr const char *AnimSpriteSheet[] = {
-//     "assets/img/character/Miner_IdleAnimation.png",
-//     "assets/img/character/Miner_WalkAnimation.png",
-//     "assets/img/character/Miner_MineRightAnimation.png",
-//     "assets/img/character/Miner_MineDownAnimation.png"};
-
 // single anim sequence info
 struct AnimationSequence {
   int startIndex; // start frame index of this animation in the sprite sheet

@@ -1,6 +1,11 @@
 ﻿#ifndef COMMON_
 #define COMMON_
 
+/**
+ * @brief Collection of common constants across the project.
+ * 
+ */
+
 constexpr int IRON_SPRITESHEET_HEIGHT = 8;
 
 constexpr int ICONSIZE_BIG = 64;

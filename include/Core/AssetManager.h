@@ -15,6 +15,13 @@ struct TextureDeleter {
   }
 };
 
+/**
+ * @brief A singleton for managing and caching game assets.
+ * @details Provides a centralized way to load assets like textures. It ensures that
+ *          each asset is loaded only once by caching it on the first request.
+ *          Subsequent requests for the same asset return the cached version,
+ *          improving performance and reducing memory usage.
+ */
 class AssetManager {
  public:
   static AssetManager& Instance() {

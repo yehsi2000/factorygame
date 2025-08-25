@@ -7,35 +7,59 @@
 #include "Components/TimerComponent.h"  // For TimerInstance, TimerId, TimerHandle
 #include "Core/ObjectPool.h"
 
-// Manages the lifecycle of all TimerInstance objects in the game.
-// This centralizes the logic and memory management.
+/**
+ * @brief Manages the lifecycle of all TimerInstance objects in the game, centralizing the logic and memory management. 
+ */
 class TimerManager {
  public:
   TimerManager();
 
-  // Creates a new timer and returns a handle to it.
+  /**
+   * @brief Creates a new timer and returns a handle to it.
+   * 
+   * @param id TimerId to represent purpose of is timer.
+   * @param duration How long does this timer take to expire.
+   * @param isRepeating If true, repeat timer after it's expiration.
+   * @return TimerHandle 
+   */
   TimerHandle CreateTimer(TimerId id, float duration, bool isRepeating);
 
-  // Retrieves a pointer to a timer instance from its handle.
-  // Returns nullptr if the handle is invalid.
+  /**
+   * @brief Retrieves a pointer to a timer instance from its handle.
+   * 
+   * @param handle Timer identifier
+   * @return TimerInstance* nullptr if the handle is invalid.
+   */
   TimerInstance* GetTimer(TimerHandle handle);
 
-  // Destroys a timer instance, returning it to the pool.
+  /**
+   * @brief Destroys a timer instance, returning it to the pool.
+   * 
+   * @param handle Handle of timer to destroy
+   */
   void DestroyTimer(TimerHandle handle);
 
  private:
   // The pool that owns all the TimerInstance objects.
   ObjectPool<TimerInstance> timerPool;
 
-  // A map from the public handle to the actual timer instance.
-  // The manager owns the timer instance via the unique_ptr.
+  /**
+   * @brief A map from the public handle to the actual timer instance.
+   * The manager owns the timer instance via the unique_ptr.
+   */
   std::vector<std::unique_ptr<TimerInstance>> handleToInstanceMap;
 
-  // A queue of free handles to reuse for new timers, preventing handle reuse
-  // issues.
+  /**
+   * @brief A queue of free handles to reuse for new timers, preventing handle reuse issues.
+   * 
+   */
   std::vector<TimerHandle> freeHandles;
 
-  // The next handle to assign if the free list is empty.
+  // 
+  /**
+   * @brief The next handle to assign if the free list is empty.
+   * 
+   */
   TimerHandle nextHandle;
 };
 

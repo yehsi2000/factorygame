@@ -1,7 +1,6 @@
 .*
 build
 vendored
-assets
 CMake*
 out
 !CMakeLists.txt
