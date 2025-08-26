@@ -108,7 +108,7 @@ Component를 저장하고 처리하는 부분은 Map이 아닌 ComponentArray �
 
 특정 Component들을 공통으로 가지는 ComponentArray를 가져오기 위해 가장 size가 작은 ComponentArray에서 주어진 컴포넌트를 가지고 있지 않은 Entity를 제외함으로써 Query 성능 향상
 
-> [!INFO]
+> [!NOTE]
 > 로직과 데이터를 분리함으로써 로직에 필요한 데이터를 한꺼번에 불러와 Cache Hit Rate를 높임
 > 다수의 엔티티를 동시에 처리하기에 적합한 구조
 
@@ -287,4 +287,5 @@ ECS 구조의 효율적인 메모리 사용을 위해 엔티티 ID 재사용과 
 - **Chunk Index**: 8x8 청크 그리드를 위한 정수 위치
 
 `World` 클래스가 시스템 간의 좌표 변환을 처리
+
 
