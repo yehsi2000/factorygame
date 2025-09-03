@@ -1,15 +1,14 @@
 ﻿#ifndef SYSTEM_ANIMATIONSYSTEM_
 #define SYSTEM_ANIMATIONSYSTEM_
 
-class Registry;
-struct SDL_Renderer;
+#include "Core/SystemContext.h"
 
 class AnimationSystem {
   Registry* registry;
-  SDL_Renderer* renderer;
 
  public:
-  AnimationSystem(Registry* r, SDL_Renderer* renderer);
+  AnimationSystem(const SystemContext& context);
+  ~AnimationSystem();
   void Update(float deltaTime);
 };
 

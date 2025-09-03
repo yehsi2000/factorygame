@@ -7,8 +7,8 @@
 #include "Core/Registry.h"
 #include "SDL_render.h"
 
-AnimationSystem::AnimationSystem(Registry *registry, SDL_Renderer *renderer)
-    : registry(registry), renderer(renderer) {}
+AnimationSystem::AnimationSystem(const SystemContext& context)
+    : registry(context.registry) {}
 
 void AnimationSystem::Update(float deltaTime) {
   for (EntityID entity :
@@ -53,3 +53,5 @@ void AnimationSystem::Update(float deltaTime) {
     sprite.srcRect.h = sequence.frameHeight;
   }
 }
+
+AnimationSystem::~AnimationSystem() = default;

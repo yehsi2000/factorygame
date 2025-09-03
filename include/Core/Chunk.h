@@ -15,6 +15,7 @@ public:
   Chunk(int _chunkX, int _chunkY);
   Vec2 GetLocalTileIndex(int worldTileX, int worldTileY) const;
   TileData *GetTile(int localX, int localY);
+  const TileData *GetTile(int localX, int localY) const;
   const int chunkX;
   const int chunkY;
   EntityID chunkEntity = 0;

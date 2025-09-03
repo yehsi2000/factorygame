@@ -6,17 +6,21 @@
 
 #include "Components/ResourceNodeComponent.h"
 #include "Core/Chunk.h"
-#include "Core/Registry.h"
+#include "Core/Entity.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
 #include "SDL_ttf.h"
 
 class Registry;
-class GEngine;
+class WorldAssetManager;
+class EventDispatcher;
+class EntityFactory;
+
+// TODO : asyncronized chunk generation : threads, iocp whatever
 
 /**
  * @brief ChunkCoordinate operator for RB-tree comparison
- * 
+ *
  */
 struct ChunkCoord {
   int x, y;
@@ -29,21 +33,30 @@ struct ChunkCoord {
 
 /**
  * @brief Manages the game world, including chunk loading and tile data.
- * @details Handles the procedural generation of the world, loading and unloading
- *          of chunks based on player proximity, and provides an interface for
+ * @details Handles the procedural generation of the world, loading and
+ * unloading of chunks based on player proximity, and provides an interface for
  *          querying tile data and managing building placement.
  */
 class World {
-  friend class TestWorld;
+  TTF_Font* font;
+  Registry* registry;
+  WorldAssetManager* worldAssetManager;
+  EventDispatcher* eventDispatcher;
+  EntityFactory* factory;
+  EntityID player;
 
  public:
-  World(SDL_Renderer* renderer, Registry* registry, TTF_Font* font);
+  World(Registry* registry, WorldAssetManager* worldAssetManager,
+        EntityFactory* factory, EventDispatcher* eventDispatcher,
+        TTF_Font* font);
+  ~World();
 
   /**
    * @brief Updates the world state, loading/unloading chunks around the player.
-   * @param player The player entity, used to determine which chunks should be active.
+   * @param player The player entity, used to determine which chunks should be
+   * active.
    */
-  void Update(EntityID player);
+  void Update();
 
   /**
    * @brief Gets the tile data at a specific world position.
@@ -58,8 +71,8 @@ class World {
    * @param position The world coordinates (in pixels).
    * @return The corresponding tile index (e.g., [10, 25]).
    */
-  Vec2 GetTileIndexFromWorldPosition(Vec2f position);
-  Vec2 GetTileIndexFromWorldPosition(float worldX, float worldY);
+  Vec2 GetTileIndexFromWorldPosition(Vec2f position) const;
+  Vec2 GetTileIndexFromWorldPosition(float worldX, float worldY) const;
 
   /**
    * @brief Gets the tile data at a specific tile grid index.
@@ -76,8 +89,8 @@ class World {
    * @param height The height of the building in tiles.
    * @return True if the area is clear and buildable, false otherwise.
    */
-  bool CanPlaceBuilding(Vec2 tileIndex, int width, int height) const;
-  bool CanPlaceBuilding(int tileX, int tileY, int width, int height) const;
+  bool CanPlaceBuilding(Vec2 tileIndex, int width, int height);
+  bool CanPlaceBuilding(int tileX, int tileY, int width, int height);
 
   /**
    * @brief Marks tiles as occupied by a building.
@@ -89,7 +102,7 @@ class World {
   void PlaceBuilding(EntityID entity, Vec2 tileIndex, int width, int height);
   void PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
                      int height);
-  
+
   /**
    * @brief Frees tiles previously occupied by a building.
    * @param entity The building entity being removed.
@@ -105,26 +118,28 @@ class World {
   bool IsTileMovable(Vec2f worldPos);
   bool IsTileMovable(Vec2 tileIdx);
 
-  const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {return activeChunks;}
+  const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {
+    return activeChunks;
+  }
   inline rsrc_amt_t GetMinironOreAmount() const { return minironOreAmount; }
   inline rsrc_amt_t GetMaxironOreAmount() const { return maxironOreAmount; }
+  inline EntityID GetPlayer() const { return player; }
+  inline int GetViewDistance() const { return viewDistance; }
 
  private:
   void LoadChunk(int chunkX, int chunkY);
   void GenerateChunk(Chunk& chunk);
   void UnloadChunk(Chunk& chunk);
-  SDL_Texture* CreateChunkTexture(Chunk& chunk);
-
-  TTF_Font* font;
-  SDL_Renderer* renderer;
-  Registry* registry;
+  void GeneratePlayer();
 
   std::mt19937 randomGenerator;
   std::normal_distribution<float> distribution;
   std::map<ChunkCoord, Chunk> activeChunks;
   std::map<ChunkCoord, Chunk> chunkCache;
   rsrc_amt_t minironOreAmount;
+  // TODO should be configurable
   rsrc_amt_t maxironOreAmount = 10000;
+  // HACK should be changed with screen size
   int viewDistance = 2;  // Chunk load distance from player
 };
 

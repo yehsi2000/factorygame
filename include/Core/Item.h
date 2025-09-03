@@ -111,11 +111,11 @@ class ItemDatabase {
 
     db[ItemID::MiningDrill] = {ItemCategory::Buildable, u8"채굴기",
                                u8"현재 타일 아래의 광물을 채굴합니다.",
-                               "assets/img/icon/mining-drill.png", 10};
+                               "assets/img/icon/mining-drill.png", 100};
 
     db[ItemID::AssemblingMachine] = {ItemCategory::Buildable, u8"조립기",
                                      u8"다양한 아이템을 조립하여 새로운 제품을 만듭니다.",
-                                     "assets/img/icon/assembling-machine.png", 5};
+                                     "assets/img/icon/assembling-machine.png", 100};
   }
 };
 

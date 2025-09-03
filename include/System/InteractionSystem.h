@@ -1,21 +1,31 @@
 #ifndef SYSTEM_INTERACTIONSYSTEM_
 #define SYSTEM_INTERACTIONSYSTEM_
 
-#include "Core/Event.h"
-#include "Core/EventDispatcher.h"
+#include <memory>
 
-class GEngine;
+#include "Core/Event.h"
+#include "Core/SystemContext.h"
+
+class EventHandle;
 
 class InteractionSystem {
  public:
-  InteractionSystem(GEngine* engine);
+  InteractionSystem(const SystemContext& context);
+  ~InteractionSystem();
   void Update();  // In case the system needs a per-frame update in the future.
 
  private:
   void OnPlayerInteractEvent(const PlayerInteractEvent& event);
+  void ResourceNodeInteractionHandler(EntityID player, EntityID targetEntity);
+  void AssemblyMachineInteractionHandler(EntityID player,
+                                         EntityID targetEntity);
+  void MiningDrillInteractionHandler(EntityID player, EntityID targetEntity);
 
-  GEngine* engine;
-  EventHandle handle;
+  Registry* registry;
+  World* world;
+  EventDispatcher* eventDispatcher;
+  TimerManager* timerManager;
+  std::unique_ptr<EventHandle> handle;
 };
 
-#endif /* SYSTEM_INTERACTIONSYSTEM_ */
+#endif/* SYSTEM_INTERACTIONSYSTEM_ */

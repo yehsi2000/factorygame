@@ -1,4 +1,4 @@
-#include "Util/EntityFactory.h"
+#include "Core/EntityFactory.h"
 
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
@@ -14,25 +14,21 @@
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
-
 #include "SDL.h"
 #include "Util/AnimUtil.h"
 
+EntityFactory::EntityFactory(Registry *registry, AssetManager *assetManager)
+    : registry(registry), assetManager(assetManager) {}
 
-namespace factory {
+EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2f worldPos) {
+  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
-EntityID CreateAssemblingMachine(Registry *registry, World *world,
-                                 SDL_Renderer *renderer, Vec2f worldPos) {
-  if (registry == nullptr || world == nullptr || renderer == nullptr)
-    return INVALID_ENTITY;
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
-  return CreateAssemblingMachine(registry, world, renderer, tileIndex);
+  return CreateAssemblingMachine(world, tileIndex);
 }
 
-EntityID CreateAssemblingMachine(Registry *registry, World *world,
-                                 SDL_Renderer *renderer, Vec2 tileIndex) {
-  if (registry == nullptr || world == nullptr || renderer == nullptr)
-    return INVALID_ENTITY;
+EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
+  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
   if (!world->CanPlaceBuilding(tileIndex, 2, 2)) {
     return INVALID_ENTITY;
@@ -52,8 +48,8 @@ EntityID CreateAssemblingMachine(Registry *registry, World *world,
 
   world->PlaceBuilding(entity, tileIndex, 2, 2);
 
-  SDL_Texture *spritesheet = AssetManager::Instance().getTexture(
-      "assets/img/entity/assembling-machine.png", renderer);
+  SDL_Texture *spritesheet =
+      assetManager->getTexture("assets/img/entity/assembling-machine.png");
 
   SpriteComponent sprite;
   sprite.texture = spritesheet;
@@ -82,18 +78,15 @@ EntityID CreateAssemblingMachine(Registry *registry, World *world,
   return entity;
 }
 
-EntityID CreateMiningDrill(Registry *registry, World *world,
-                           SDL_Renderer *renderer, Vec2f worldPos) {
-  if (registry == nullptr || world == nullptr || renderer == nullptr)
-    return INVALID_ENTITY;
+EntityID EntityFactory::CreateMiningDrill(World *world, Vec2f worldPos) {
+  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
+
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
-  return CreateMiningDrill(registry, world, renderer, tileIndex);
+  return CreateMiningDrill(world, tileIndex);
 }
 
-EntityID CreateMiningDrill(Registry *registry, World *world,
-                           SDL_Renderer *renderer, Vec2 tileIndex) {
-  if (registry == nullptr || world == nullptr || renderer == nullptr)
-    return INVALID_ENTITY;
+EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
+  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
   if (!world->CanPlaceBuilding(tileIndex, 1, 1)) {
     return INVALID_ENTITY;
@@ -102,7 +95,7 @@ EntityID CreateMiningDrill(Registry *registry, World *world,
   EntityID entity = registry->CreateEntity();
 
   Vec2f centerPos = {
-      static_cast<float>(tileIndex.x * TILE_PIXEL_SIZE), // Center of 2x2 area
+      static_cast<float>(tileIndex.x * TILE_PIXEL_SIZE),  // Center of 2x2 area
       static_cast<float>(tileIndex.y * TILE_PIXEL_SIZE)};
 
   Vec2f worldPos = tileIndex * TILE_PIXEL_SIZE;
@@ -121,8 +114,8 @@ EntityID CreateMiningDrill(Registry *registry, World *world,
   world->PlaceBuilding(entity, tileIndex, 1, 1);
 
   // Add sprite component
-  SDL_Texture *spritesheet = AssetManager::Instance().getTexture(
-      "assets/img/entity/mining-drill.png", renderer);
+  SDL_Texture *spritesheet =
+      assetManager->getTexture("assets/img/entity/mining-drill.png");
 
   SpriteComponent sprite;
   sprite.texture = spritesheet;
@@ -155,24 +148,20 @@ EntityID CreateMiningDrill(Registry *registry, World *world,
   return entity;
 }
 
-EntityID CreatePlayer(Registry *registry, SDL_Renderer *renderer,
-                      Vec2f worldPos) {
-  if (registry == nullptr || renderer == nullptr)
-    return INVALID_ENTITY;
+EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos) {
+  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
   EntityID player = registry->CreateEntity();
   registry->EmplaceComponent<TransformComponent>(player, worldPos);
 
-  SDL_Texture *playerIdleSpritesheet = AssetManager::Instance().getTexture(
-      "assets/img/character/Miner_IdleAnimation.png", renderer);
-  SDL_Texture *playerWalkSpritesheet = AssetManager::Instance().getTexture(
-      "assets/img/character/Miner_WalkAnimation.png", renderer);
-  SDL_Texture *playerMiningRightSpritesheet =
-      AssetManager::Instance().getTexture(
-          "assets/img/character/Miner_MiningRightAnimation.png", renderer);
-  SDL_Texture *playerMiningDownSpritesheet =
-      AssetManager::Instance().getTexture(
-          "assets/img/character/Miner_MiningDownAnimation.png", renderer);
+  SDL_Texture *playerIdleSpritesheet =
+      assetManager->getTexture("assets/img/character/Miner_IdleAnimation.png");
+  SDL_Texture *playerWalkSpritesheet =
+      assetManager->getTexture("assets/img/character/Miner_WalkAnimation.png");
+  SDL_Texture *playerMiningRightSpritesheet = assetManager->getTexture(
+      "assets/img/character/Miner_MiningRightAnimation.png");
+  SDL_Texture *playerMiningDownSpritesheet = assetManager->getTexture(
+      "assets/img/character/Miner_MiningDownAnimation.png");
 
   registry->EmplaceComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet,
@@ -211,4 +200,4 @@ EntityID CreatePlayer(Registry *registry, SDL_Renderer *renderer,
   return player;
 }
 
-} // namespace factory
+EntityFactory::~EntityFactory() = default;

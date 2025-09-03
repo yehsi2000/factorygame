@@ -1,7 +1,9 @@
-#include "Util/MathUtil.h"
-#include <SDL.h>
 #include <cmath>
 #include <iostream>
+
+#include "SDL.h"
+#include "Util/MathUtil.h"
+
 
 bool test_map_range() {
   // Test map_range function

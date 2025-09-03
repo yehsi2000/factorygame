@@ -1,8 +1,9 @@
 #ifndef CORE_COMMAND_
 #define CORE_COMMAND_
 
-class GEngine;
 class Registry;
+class EventDispatcher;
+class World;
 
 /**
  * @brief Abstract base class for all commands. Commands are self-contained units of work that modify the game state.
@@ -11,7 +12,7 @@ class Registry;
 class Command {
  public:
   virtual ~Command() = default;
-  virtual void Execute(GEngine& engine, Registry& registry) = 0;
+  virtual void Execute(Registry *registry, EventDispatcher* eventDispatcher, World* world) = 0;
 };
 
 #endif /* CORE_COMMAND_ */

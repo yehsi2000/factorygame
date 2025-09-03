@@ -1,13 +1,13 @@
 ﻿#include "System/ResourceNodeSystem.h"
 
-#include "Components/TextComponent.h"
-
 #include "Components/ResourceNodeComponent.h"
+#include "Components/TextComponent.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
 
-ResourceNodeSystem::ResourceNodeSystem(Registry *r, World *world)
-    : registry(r), world(world) {}
+
+ResourceNodeSystem::ResourceNodeSystem(const SystemContext &context)
+    : registry(context.registry), world(context.world) {}
 
 void ResourceNodeSystem::Update() {
   // Show Resource Amount
@@ -21,3 +21,5 @@ void ResourceNodeSystem::Update() {
     }
   }
 }
+
+ResourceNodeSystem::~ResourceNodeSystem() = default;

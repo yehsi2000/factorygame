@@ -4,8 +4,8 @@
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 
-TimerSystem::TimerSystem(Registry* registry, TimerManager* timerManager)
-    : registry(registry), timerManager(timerManager) {}
+TimerSystem::TimerSystem(const SystemContext& context)
+    : registry(context.registry), timerManager(context.timerManager) {}
 
 void TimerSystem::Update(float deltaTime) {
   // Iterate over all entities that have a TimerComponent.
@@ -35,3 +35,5 @@ void TimerSystem::Update(float deltaTime) {
     }
   }
 }
+
+TimerSystem::~TimerSystem() = default;

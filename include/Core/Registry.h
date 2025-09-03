@@ -9,7 +9,7 @@
 #include "Core/ComponentArray.h"
 #include "Core/InputState.h"
 
-constexpr int MAX_ENTITIES = 100000;
+constexpr int MAX_ENTITIES = 1000000;
 
 /**
  * @brief The core of the Entity-Component-System (ECS) architecture.
@@ -23,31 +23,32 @@ class Registry {
   InputState inputState;
 
   uint32_t livingEntityCount = 0;
+  std::size_t COMPONENT_ID = 0;
 
-  std::unordered_map<const char *, std::unique_ptr<IComponentArray>>
-      componentArrays{};
+  std::vector<std::unique_ptr<IComponentArray>> componentArrays{};
 
   template <typename T>
-  const char *GetComponentTypeName() {
-    return typeid(T).name();
+  std::size_t GetComponentTypeID() {
+    const static std::size_t typeID = COMPONENT_ID++;
+    return typeID;
   }
 
   template <typename T>
   ComponentArray<T> *GetComponentArray() {
-    const char *typeName = GetComponentTypeName<T>();
-    if (componentArrays.count(typeName) == 0) {
-      std::cerr << "Assertion failed: Component type '" << typeName
+    std::size_t compTypeId = GetComponentTypeID<T>();
+    if (componentArrays.size() <= compTypeId) {
+      std::cerr << "Assertion failed: Component type '" << typeid(T).name()
                 << "' not registered before use." << std::endl;
       std::abort();
     }
-    return static_cast<ComponentArray<T> *>(componentArrays[typeName].get());
+    return static_cast<ComponentArray<T> *>(componentArrays[compTypeId].get());
   }
 
   template <typename T>
   std::size_t GetComponentArraySize() {
-    const char *typeName = GetComponentTypeName<T>();
-    if (componentArrays.count(typeName) == 0) return 0;
-    return componentArrays.at(typeName)->getSize();
+    std::size_t compTypeId = GetComponentTypeID<T>();
+    if (componentArrays.size() <= compTypeId) return 0;
+    return componentArrays[compTypeId]->getSize();
   }
 
  public:
@@ -80,8 +81,8 @@ class Registry {
   void DestroyEntity(EntityID entity) {
     assert(livingEntityCount > 0 && "Destroying non-existent entity.");
 
-    for (auto const &pair : componentArrays) {
-      pair.second->entityDestroyed(entity);
+    for (auto& compArray : componentArrays) {
+      compArray->entityDestroyed(entity);
     }
 
     availableEntities.push(entity);
@@ -96,9 +97,9 @@ class Registry {
    */
   template <typename T>
   void RegisterComponent() {
-    const char *typeName = GetComponentTypeName<T>();
-    if (componentArrays.find(typeName) == componentArrays.end()) {
-      componentArrays[typeName] = std::make_unique<ComponentArray<T>>();
+    std::size_t compTypeId = GetComponentTypeID<T>();
+    if (componentArrays.size() <= compTypeId) {
+      componentArrays.push_back(std::make_unique<ComponentArray<T>>());
     }
   }
 
@@ -154,12 +155,12 @@ class Registry {
    */
   template <typename T>
   bool HasComponent(EntityID entity) {
-    const char *typeName = GetComponentTypeName<T>();
-    auto it = componentArrays.find(typeName);
-    if (it == componentArrays.end()) {
+    std::size_t compTypeId = GetComponentTypeID<T>();
+    if (componentArrays.size() <= compTypeId)
       return false;
-    }
-    return it->second->hasEntity(entity);
+    else 
+      return componentArrays[compTypeId]->hasEntity(entity);
+    
   }
 
   /**
@@ -214,4 +215,4 @@ class Registry {
   inline InputState &GetInputState() { return inputState; }
 };
 
-#endif /* CORE_REGISTRY_ */
+#endif/* CORE_REGISTRY_ */

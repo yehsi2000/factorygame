@@ -6,7 +6,6 @@
 #include <random>
 
 #include "Common.h"
-
 #include "Components/BuildingComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/DebugRectComponent.h"
@@ -15,27 +14,35 @@
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
-
-#include "Core/AssetManager.h"
 #include "Core/Chunk.h"
+#include "Core/EntityFactory.h"
+#include "Core/Event.h"
+#include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
 #include "Core/World.h"
-
+#include "Core/WorldAssetManager.h"
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
 
-World::World(SDL_Renderer *renderer, Registry *registry, TTF_Font *font)
-    : font(font), renderer(renderer), registry(registry) {
+
+World::World(Registry *registry, WorldAssetManager *worldAssetManager,
+             EntityFactory *factory, EventDispatcher *eventDispatcher,
+             TTF_Font *font)
+    : registry(registry),
+      factory(factory),
+      worldAssetManager(worldAssetManager),
+      eventDispatcher(eventDispatcher),
+      font(font) {
   std::random_device rd;
   randomGenerator.seed(rd());
   distribution = std::normal_distribution<float>(0.0, 1.0);
+  GeneratePlayer();
 }
 
-void World::Update(EntityID player) {
-  if (!registry->HasComponent<TransformComponent>(player))
-    return;
+void World::Update() {
+  if (!registry->HasComponent<TransformComponent>(player)) return;
 
   const Vec2f playerPosition =
       registry->GetComponent<TransformComponent>(player).position;
@@ -72,6 +79,11 @@ void World::Update(EntityID player) {
   }
 }
 
+void World::GeneratePlayer() {
+  // HACK currently always spawns in 0,0
+  player = factory->CreatePlayer(this, Vec2f{0.f, 0.f});
+}
+
 TileData *World::GetTileAtWorldPosition(Vec2f position) {
   return GetTileAtWorldPosition(position.x, position.y);
 }
@@ -80,11 +92,11 @@ TileData *World::GetTileAtWorldPosition(float worldX, float worldY) {
   return GetTileAtTileIndex(GetTileIndexFromWorldPosition(worldX, worldY));
 }
 
-Vec2 World::GetTileIndexFromWorldPosition(Vec2f position) {
+Vec2 World::GetTileIndexFromWorldPosition(Vec2f position) const {
   return GetTileIndexFromWorldPosition(position.x, position.y);
 }
 
-Vec2 World::GetTileIndexFromWorldPosition(float worldX, float worldY) {
+Vec2 World::GetTileIndexFromWorldPosition(float worldX, float worldY) const {
   int tileX = std::floor(worldX / TILE_PIXEL_SIZE);
   int tileY = std::floor(worldY / TILE_PIXEL_SIZE);
 
@@ -122,12 +134,12 @@ bool World::IsTileMovable(Vec2 tileIdx) {
   return true;
 }
 
-bool World::CanPlaceBuilding(Vec2 tileIndex, int width, int height) const {
+bool World::CanPlaceBuilding(Vec2 tileIndex, int width, int height) {
   return CanPlaceBuilding(tileIndex.x, tileIndex.y, width, height);
 }
 
 bool World::CanPlaceBuilding(int tileX, int tileY, int width,
-                             int height) const {
+                             int height) {
   // Check if all tiles for this building are available
   for (int dy = 0; dy < height; ++dy) {
     for (int dx = 0; dx < width; ++dx) {
@@ -138,16 +150,19 @@ bool World::CanPlaceBuilding(int tileX, int tileY, int width,
       TileData *tile =
           const_cast<World *>(this)->GetTileAtTileIndex(checkX, checkY);
       if (!tile) {
-        return false; // Tile doesn't exist (chunk not loaded)
+        return false;  // Tile doesn't exist (chunk not loaded)
       }
 
       if (tile->occupyingEntity != INVALID_ENTITY) {
-        return false; // Tile is already occupied
+        return false;  // Tile is already occupied
       }
 
       if (tile->type == TileType::Water || tile->type == TileType::Invalid) {
-        return false; // Cannot build on water or invalid tiles
+        return false;  // Cannot build on water or invalid tiles
       }
+
+      auto& playertrans = registry->GetComponent<TransformComponent>(player);
+      if(tile == GetTileAtWorldPosition(playertrans.position)) return false;
     }
   }
   return true;
@@ -238,69 +253,6 @@ void World::UnloadChunk(Chunk &chunk) {
   }
   // std::cout << "Unloaded Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
   // << ")\n";
-}
-
-SDL_Texture *World::CreateChunkTexture(Chunk &chunk) {
-  // Create a texture for the entire chunk
-  SDL_Texture *chunkTexture = SDL_CreateTexture(
-      renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-      CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE);
-
-  // Set the texture as the render target
-  SDL_SetRenderTarget(renderer, chunkTexture);
-
-  // Clear the texture with transparent color
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-  SDL_RenderClear(renderer);
-
-  // Get the tileset texture for drawing individual tiles
-  SDL_Texture *tilesetTexture;
-
-  // Draw all tiles in the chunk to the texture
-  for (int y = 0; y < CHUNK_HEIGHT; ++y) {
-    for (int x = 0; x < CHUNK_WIDTH; ++x) {
-      TileData *tile = chunk.GetTile(x, y);
-
-      // Determine source rectangle based on tile type
-      SDL_Rect srcRect;
-      switch (tile->type) {
-      case TileType::Dirt:
-        tilesetTexture = AssetManager::Instance().getTexture(
-            "assets/img/tile/dirt.png", renderer);
-        srcRect = {0, 0, 64, 64};
-        break;
-      case TileType::Grass:
-        tilesetTexture = AssetManager::Instance().getTexture(
-            "assets/img/tile/grass.png", renderer);
-        srcRect = {0, 0, 64, 64};
-        break;
-      case TileType::Water:
-        tilesetTexture = AssetManager::Instance().getTexture(
-            "assets/img/tile/water.png", renderer);
-        srcRect = {0, 0, 64, 64};
-        break;
-      case TileType::Stone:
-        tilesetTexture = AssetManager::Instance().getTexture(
-            "assets/img/tile/stone.png", renderer);
-        srcRect = {0, 0, 64, 64};
-        break;
-      default:
-        break;
-      }
-
-      // Destination rectangle for this tile in the chunk texture
-      SDL_Rect destRect = {x * TILE_PIXEL_SIZE, y * TILE_PIXEL_SIZE,
-                           TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
-      assert(tilesetTexture != nullptr && "Tileset texture is null");
-      // Render the tile to the chunk texture
-      SDL_RenderCopy(renderer, tilesetTexture, &srcRect, &destRect);
-    }
-  }
-
-  // Reset render target to default
-  SDL_SetRenderTarget(renderer, nullptr);
-
-  return chunkTexture;
 }
 
 void World::GenerateChunk(Chunk &chunk) {
@@ -398,19 +350,20 @@ void World::GenerateChunk(Chunk &chunk) {
           textComp.color = SDL_Color{255, 255, 255, 255};
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
-          SDL_Texture *spritesheet = AssetManager::Instance().getTexture(
-              "assets/img/entity/iron-ore.png", renderer);
+          SDL_Texture *spritesheet =
+              worldAssetManager->getTexture("assets/img/entity/iron-ore.png");
           SpriteComponent spriteComp;
           spriteComp.texture = spritesheet;
           // tile->debugValue = oreAmount;
 
           int richnessIndex =
               (IRON_SPRITESHEET_HEIGHT - 1) -
-              std::min(7.0f, std::floor(static_cast<float>(oreAmount -
-                                                           minironOreAmount) /
-                                        static_cast<float>(maxironOreAmount -
-                                                           minironOreAmount) *
-                                        8.f));
+              std::min(
+                  7.0f,
+                  std::floor(
+                      static_cast<float>(oreAmount - minironOreAmount) /
+                      static_cast<float>(maxironOreAmount - minironOreAmount) *
+                      8.f));
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
           spriteComp.renderRect = {0, 0, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);
@@ -437,10 +390,12 @@ void World::GenerateChunk(Chunk &chunk) {
 
   // Create and add the chunk component with the pre-rendered texture
   ChunkComponent chunkComp;
-  chunkComp.chunkTexture = CreateChunkTexture(chunk);
+  chunkComp.chunkTexture = worldAssetManager->CreateChunkTexture(chunk);
   chunkComp.needsRedraw = false;
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
 
   // std::cout << "Generated Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
   // << " id=" << chunkEntity << ")\n";
 }
+
+World::~World() = default;

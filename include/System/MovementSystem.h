@@ -1,9 +1,7 @@
 ﻿#ifndef SYSTEM_MOVEMENTSYSTEM_
 #define SYSTEM_MOVEMENTSYSTEM_
 
-class Registry;
-class TimerManager;
-class World;
+#include "Core/SystemContext.h"
 
 class MovementSystem {
   Registry* registry;
@@ -11,7 +9,8 @@ class MovementSystem {
   World* world;
 
  public:
-  MovementSystem(Registry* r, TimerManager* tm, World* world);
+  MovementSystem(const SystemContext& context);
+  ~MovementSystem();
   void Update(float deltaTime);
 };
 

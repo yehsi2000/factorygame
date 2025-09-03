@@ -4,7 +4,7 @@
 #include <memory>
 #include <queue>
 
-#include "Core/Command.h"
+#include "Commands/Command.h"
 
 /**
  * @brief A queue for deferred execution of commands.

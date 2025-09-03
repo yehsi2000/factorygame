@@ -1,16 +1,15 @@
 ﻿#ifndef SYSTEM_MININGDRILLSYSTEM_
 #define SYSTEM_MININGDRILLSYSTEM_
 
-#include "Components/MiningDrillComponent.h"
+#include "Core/SystemContext.h"
 #include "Core/Entity.h"
-#include "Core/Registry.h"
-#include "Core/TimerManager.h"
-#include "Core/World.h"
+
+class MiningDrillComponent;
 
 class MiningDrillSystem {
  public:
-  MiningDrillSystem(Registry* registry, World* world,
-                    TimerManager* timerManager);
+  MiningDrillSystem(const SystemContext& context);
+  ~MiningDrillSystem();
   void Update();
 
  private:
@@ -23,4 +22,4 @@ class MiningDrillSystem {
   void StartMining(MiningDrillComponent& drill, EntityID entity);
 };
 
-#endif /* SYSTEM_MININGDRILLSYSTEM_ */
+#endif/* SYSTEM_MININGDRILLSYSTEM_ */

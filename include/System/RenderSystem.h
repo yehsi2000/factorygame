@@ -2,12 +2,15 @@
 #define SYSTEM_RENDERSYSTEM_
 
 #include "Core/Type.h"
+#include "Core/SystemContext.h"
 #include "SDL_ttf.h"
 
-class Registry;
-class World;
-class SDL_Renderer;
+struct SDL_Renderer;
 
+/**
+ * @brief Responsible for rendering every entity, chunk and text
+ * 
+ */
 class RenderSystem {
   Registry *registry;
   SDL_Renderer *renderer;
@@ -15,7 +18,9 @@ class RenderSystem {
   TTF_Font *font;
 
 public:
-  RenderSystem(Registry *r, SDL_Renderer *render, World *world, TTF_Font *f);
+  RenderSystem(const SystemContext& context, SDL_Renderer* renderer, TTF_Font *f);
+  ~RenderSystem();
+
   void Update();
 
 private:
@@ -28,4 +33,4 @@ private:
   bool isOffScreen(Vec2f screenPos, Vec2 screenSize, Vec2f entitySize);
 };
 
-#endif /* SYSTEM_RENDERSYSTEM_ */
+#endif/* SYSTEM_RENDERSYSTEM_ */

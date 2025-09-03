@@ -10,17 +10,17 @@
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
-#include "Util/TimerUtil.h"
 #include "Util/AnimUtil.h"
+#include "Util/TimerUtil.h"
 
-MiningDrillSystem::MiningDrillSystem(Registry* registry, World* world,
-                                     TimerManager* timerManager)
-    : registry(registry), world(world), timerManager(timerManager) {}
+MiningDrillSystem::MiningDrillSystem(const SystemContext& context)
+    : registry(context.registry),
+      world(context.world),
+      timerManager(context.timerManager) {}
 
-    
 void MiningDrillSystem::Update() {
-  for (auto& entity :
-       registry->view<MiningDrillComponent, InventoryComponent, TransformComponent>()) {
+  for (auto& entity : registry->view<MiningDrillComponent, InventoryComponent,
+                                     TransformComponent>()) {
     auto& drill = registry->GetComponent<MiningDrillComponent>(entity);
     auto& inv = registry->GetComponent<InventoryComponent>(entity);
 
@@ -38,9 +38,10 @@ void MiningDrillSystem::Update() {
       case MiningDrillState::Mining: {
         if (TileEmpty(entity)) {
           drill.state = MiningDrillState::TileEmpty;
-        } else if (inv.items.size()>0 && ItemDatabase::instance()
-                       .get(inv.items[0].first)
-                       .maxStackSize <= inv.items[0].second) {
+        } else if (inv.items.size() > 0 &&
+                   ItemDatabase::instance()
+                           .get(inv.items[0].first)
+                           .maxStackSize <= inv.items[0].second) {
           drill.state = MiningDrillState::OutputFull;
         } else
           continue;  // continue mining
@@ -55,6 +56,11 @@ void MiningDrillSystem::Update() {
       }
 
       case MiningDrillState::OutputFull: {
+        if (inv.items.size() == 0) {
+          StartMining(drill, entity);
+          break;
+        }
+
         int maxStackSize =
             ItemDatabase::instance().get(inv.items[0].first).maxStackSize;
 
@@ -62,6 +68,8 @@ void MiningDrillSystem::Update() {
           drill.state = MiningDrillState::Mining;
           StartMining(drill, entity);
         }
+
+        break;
       }
     }
 
@@ -113,11 +121,15 @@ void MiningDrillSystem::UpdateAnimationState(MiningDrillComponent& drill,
 
   auto& animation = registry->GetComponent<AnimationComponent>(entity);
 
-  if (drill.isAnimating && animation.currentAnimation != AnimationName::DRILL_WORKING) {
+  if (drill.isAnimating &&
+      animation.currentAnimation != AnimationName::DRILL_WORKING) {
     util::SetAnimation(AnimationName::DRILL_WORKING, animation, true);
-  } else if (!drill.isAnimating && animation.currentAnimation != AnimationName::DRILL_IDLE) {
+  } else if (!drill.isAnimating &&
+             animation.currentAnimation != AnimationName::DRILL_IDLE) {
     util::SetAnimation(AnimationName::DRILL_IDLE, animation, true);
   } else {
     animation.isPlaying = drill.isAnimating;
   }
 }
+
+MiningDrillSystem::~MiningDrillSystem() = default;

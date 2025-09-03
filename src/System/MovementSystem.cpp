@@ -20,8 +20,8 @@
 #include "Util/AnimUtil.h"
 #include "Util/TimerUtil.h"
 
-MovementSystem::MovementSystem(Registry *registry, TimerManager *timerManager, World* world)
-    : registry(registry), timerManager(timerManager), world(world) {}
+MovementSystem::MovementSystem(const SystemContext& context)
+    : registry(context.registry), timerManager(context.timerManager), world(context.world) {}
 
 void MovementSystem::Update(float deltaTime) {
   for (EntityID entity :
@@ -78,3 +78,5 @@ void MovementSystem::Update(float deltaTime) {
     }
   }
 }
+
+MovementSystem::~MovementSystem() = default;

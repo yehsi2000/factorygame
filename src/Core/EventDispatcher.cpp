@@ -1,33 +1,13 @@
 #include "Core/EventDispatcher.h"
 
-EventHandle::EventHandle(EventDispatcher* dispatcher, std::type_index typeIndex,
+EventHandle::EventHandle(EventDispatcher* eventDispatcher, std::type_index typeIndex,
                          size_t id)
-    : dispatcher(dispatcher), typeIndex(typeIndex), callbackID(id) {}
+    : eventDispatcher(eventDispatcher), typeIndex(typeIndex), callbackID(id) {}
 
 EventHandle::~EventHandle() {
-  if (dispatcher) {
-    dispatcher->Unsubscribe(typeIndex, callbackID);
+  if (eventDispatcher) {
+    eventDispatcher->Unsubscribe(typeIndex, callbackID);
   }
-}
-
-EventHandle::EventHandle(EventHandle&& other) noexcept
-    : dispatcher(other.dispatcher),
-      typeIndex(other.typeIndex),
-      callbackID(other.callbackID) {
-  other.dispatcher = nullptr;  // Invalidate the other handle
-}
-
-EventHandle& EventHandle::operator=(EventHandle&& other) noexcept {
-  if (this != &other) {
-    if (dispatcher) {
-      dispatcher->Unsubscribe(typeIndex, callbackID);
-    }
-    dispatcher = other.dispatcher;
-    typeIndex = other.typeIndex;
-    callbackID = other.callbackID;
-    other.dispatcher = nullptr;  // Invalidate the other handle
-  }
-  return *this;
 }
 
 // --- EventDispatcher Implementation ---

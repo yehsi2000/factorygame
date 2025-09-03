@@ -24,3 +24,11 @@ TileData* Chunk::GetTile(int localX, int localY) {
   }
   return nullptr;
 }
+
+const TileData* Chunk::GetTile(int localX, int localY) const {
+  if (localX >= 0 && localX < CHUNK_WIDTH && localY >= 0 &&
+      localY < CHUNK_HEIGHT) {
+    return &tiles[localY * CHUNK_WIDTH + localX];
+  }
+  return nullptr;
+}

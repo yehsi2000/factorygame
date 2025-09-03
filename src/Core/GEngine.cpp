@@ -1,6 +1,9 @@
 ﻿#include "Core/GEngine.h"
 
 #include <cassert>
+#include <chrono>
+#include <tuple>
+#include <utility>
 
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
@@ -21,13 +24,18 @@
 #include "Components/TextComponent.h"
 #include "Components/TimerComponent.h"
 #include "Components/TransformComponent.h"
+#include "Core/AssetManager.h"
+#include "Core/CommandQueue.h"
+#include "Core/EntityFactory.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
-#include "Core/GEngine.h"
-#include "Core/GameState.h"
+#include "Core/IGameState.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
+#include "Core/WorldAssetManager.h"
+#include "GameState/MainMenuState.h"
+#include "GameState/PlayState.h"
 #include "System/AnimationSystem.h"
 #include "System/AssemblingMachineSystem.h"
 #include "System/CameraSystem.h"
@@ -42,95 +50,124 @@
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
-#include "Util/EntityFactory.h"
+#include "imgui_impl_sdlrenderer2.h"
 
 void GEngine::InitCoreSystem() {
-  animationSystem =
-      std::make_unique<AnimationSystem>(registry.get(), gRenderer);
-  assemblingMachineSystem = std::make_unique<AssemblingMachineSystem>(
-      registry.get(), dispatcher.get(), timerManager.get());
-  refinerySystem = std::make_unique<RefinerySystem>(registry.get());
-  resourceNodeSystem =
-      std::make_unique<ResourceNodeSystem>(registry.get(), world.get());
-  movementSystem =
-      std::make_unique<MovementSystem>(registry.get(), timerManager.get(), world.get());
-  timerSystem =
-      std::make_unique<TimerSystem>(registry.get(), timerManager.get());
+  animationSystem = std::make_unique<AnimationSystem>(systemContext);
+  assemblingMachineSystem =
+      std::make_unique<AssemblingMachineSystem>(systemContext);
+  cameraSystem = std::make_unique<CameraSystem>(systemContext);
+  inputSystem = std::make_unique<InputSystem>(systemContext, gWindow);
+  interactionSystem = std::make_unique<InteractionSystem>(systemContext);
+  inventorySystem = std::make_unique<InventorySystem>(systemContext);
+  miningDrillSystem = std::make_unique<MiningDrillSystem>(systemContext);
+  movementSystem = std::make_unique<MovementSystem>(systemContext);
+  refinerySystem = std::make_unique<RefinerySystem>(systemContext);
+  resourceNodeSystem = std::make_unique<ResourceNodeSystem>(systemContext);
+  timerExpireSystem = std::make_unique<TimerExpireSystem>(systemContext);
+  timerSystem = std::make_unique<TimerSystem>(systemContext);
+  uiSystem = std::make_unique<UISystem>(systemContext);
 
-  renderSystem = std::make_unique<RenderSystem>(registry.get(), gRenderer,
-                                                world.get(), gFont);
-  miningDrillSystem = std::make_unique<MiningDrillSystem>(
-      registry.get(), world.get(), timerManager.get());
-  interactionSystem = std::make_unique<InteractionSystem>(this);
-  inputSystem = std::make_unique<InputSystem>(this);
-  timerExpireSystem = std::make_unique<TimerExpireSystem>(this);
-  uiSystem = std::make_unique<UISystem>(this);
-  inventorySystem = std::make_unique<InventorySystem>(this);
-  cameraSystem = std::make_unique<CameraSystem>(this);
-
-  cameraSystem->InitCameraSystem();
-  inputSystem->InitInputSystem();
+  renderSystem =
+      std::make_unique<RenderSystem>(systemContext, gRenderer, gFont);
 }
 
 void GEngine::RegisterComponent() {
-  registry->RegisterComponent<AnimationComponent>();
-  registry->RegisterComponent<AssemblingMachineComponent>();
-  registry->RegisterComponent<BuildingComponent>();
-  registry->RegisterComponent<BuildingPreviewComponent>();
-  registry->RegisterComponent<CameraComponent>();
-  registry->RegisterComponent<ChunkComponent>();
-  registry->RegisterComponent<DebugRectComponent>();
-  registry->RegisterComponent<InactiveComponent>();
-  registry->RegisterComponent<InventoryComponent>();
-  registry->RegisterComponent<MiningDrillComponent>();
-  registry->RegisterComponent<MovableComponent>();
-  registry->RegisterComponent<MovementComponent>();
-  registry->RegisterComponent<PlayerStateComponent>();
-  registry->RegisterComponent<RefineryComponent>();
-  registry->RegisterComponent<ResourceNodeComponent>();
-  registry->RegisterComponent<SpriteComponent>();
-  registry->RegisterComponent<TimerComponent>();
-  registry->RegisterComponent<TimerExpiredTag>();
-  registry->RegisterComponent<TransformComponent>();
-  registry->RegisterComponent<TextComponent>();
-}
+  // Register all component type inside typeArray to regsitry
+  // powered by Lambda TMP Magic™
+  using ComponentTypes =
+      typeArray<AnimationComponent, AssemblingMachineComponent,
+                BuildingComponent, BuildingPreviewComponent, CameraComponent,
+                ChunkComponent, DebugRectComponent, InactiveComponent,
+                InventoryComponent, MiningDrillComponent, MovableComponent,
+                MovementComponent, PlayerStateComponent, RefineryComponent,
+                ResourceNodeComponent, SpriteComponent, TimerComponent,
+                TimerExpiredTag, TransformComponent, TextComponent>;
 
-void GEngine::GeneratePlayer() {
-  player = factory::CreatePlayer(registry.get(), gRenderer, {0.f,0.f});
-
-  // Default item
-  dispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 1));
-  dispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 1));
+  [reg = registry.get()]<std::size_t... Is>(std::index_sequence<Is...>) {
+    ((reg->RegisterComponent<
+         std::tuple_element_t<Is, typename ComponentTypes::typesTuple>>()),
+     ...);
+  }(std::make_index_sequence<ComponentTypes::size>{});
 }
 
 GEngine::GEngine(SDL_Window *window, SDL_Renderer *renderer, TTF_Font *font)
-    : gWindow(window), gRenderer(renderer), gFont(font),
+    : gWindow(window),
+      gRenderer(renderer),
+      gFont(font),
+      assetManager(std::make_unique<AssetManager>(renderer)),
+      worldAssetManager(std::make_unique<WorldAssetManager>(renderer)),
       registry(std::make_unique<Registry>()),
       timerManager(std::make_unique<TimerManager>()),
-      dispatcher(std::make_unique<EventDispatcher>()),
+      eventDispatcher(std::make_unique<EventDispatcher>()),
       commandQueue(std::make_unique<CommandQueue>()),
-      world(std::make_unique<World>(renderer, registry.get(), font)),
-      GameEndHandle(GetDispatcher()->Subscribe<QuitEvent>(
-          [this](const QuitEvent &) { bIsRunning = false; })) {
+      GameEndEventHandle(nullptr),
+      entityFactory(
+          std::make_unique<EntityFactory>(registry.get(), assetManager.get())) {
+  // core class initialization should not fail
   assert(registry && "Fail to initialize GEngine : Invalid registry");
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
-  assert(dispatcher && "Fail to initialize GEngine : Invalid dispatcher");
+  assert(eventDispatcher &&
+         "Fail to initialize GEngine : Invalid eventDispatcher");
   assert(commandQueue && "Fail to initialize GEngine : Invalid command queue");
-  assert(world && "Fail to initialize GEngine : Invalid world");
+
+  GameEndEventHandle = eventDispatcher->Subscribe<QuitEvent>(
+      [this](const QuitEvent &) { bIsRunning = false; });
+
+  // TODO : TODO: Transit to State Design Pattern
+  currentState = std::make_unique<PlayState>();
 
   RegisterComponent();
+
+  // TODO : Move world generation logic into another class and world should be data
+  world =
+      std::make_unique<World>(registry.get(), worldAssetManager.get(),
+                              entityFactory.get(), eventDispatcher.get(), font);
+
+  systemContext.assetManager = assetManager.get();
+  systemContext.worldAssetManager = worldAssetManager.get();
+  systemContext.commandQueue = commandQueue.get();
+  systemContext.registry = registry.get();
+  systemContext.eventDispatcher = eventDispatcher.get();
+  systemContext.world = world.get();
+  systemContext.entityFactory = entityFactory.get();
+  systemContext.timerManager = timerManager.get();
   InitCoreSystem();
-  GeneratePlayer();
+
+  EntityID player = world->GetPlayer();
+  // Default item
+  eventDispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 100));
+  eventDispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 100));
 }
 
 GEngine::~GEngine() = default;
 
-void GEngine::ChangeState(std::unique_ptr<GameState> newState) {
-  if (currentState)
-    currentState->Exit();
+void GEngine::ChangeState(std::unique_ptr<IGameState> newState) {
+  if (currentState) currentState->Cleanup();
   currentState = std::move(newState);
-  if (currentState)
-    currentState->Enter();
+  if (currentState) currentState->Init(this);
+}
+
+void GEngine::Run() {
+  using namespace std::chrono;
+
+  steady_clock::time_point startTime;
+  steady_clock::time_point curTime;
+  steady_clock::time_point prevTime;
+  float deltaTime;
+
+  startTime = steady_clock::now();
+  curTime = prevTime = startTime;
+
+  while (bIsRunning) {
+    curTime = steady_clock::now();
+    deltaTime =
+        duration<float, milliseconds::period>(curTime - prevTime).count();
+    deltaTime /= 1000.f;
+    prevTime = curTime;
+
+    Update(deltaTime);
+  }
 }
 
 void GEngine::Update(float deltaTime) {
@@ -138,7 +175,7 @@ void GEngine::Update(float deltaTime) {
   while (!commandQueue->IsEmpty()) {
     std::unique_ptr<Command> command = commandQueue->Dequeue();
     if (command) {
-      command->Execute(*this, *registry);
+      command->Execute(registry.get(), eventDispatcher.get(), world.get());
     }
   }
   inputSystem->Update();
@@ -146,7 +183,7 @@ void GEngine::Update(float deltaTime) {
   timerExpireSystem->Update();
   interactionSystem->Update();
 
-  world->Update(player);
+  world->Update();
   movementSystem->Update(deltaTime);
   animationSystem->Update(deltaTime);
   assemblingMachineSystem->Update();
@@ -158,12 +195,7 @@ void GEngine::Update(float deltaTime) {
 
   // Rendering
   renderSystem->Update();
-  uiSystem->Update(); // Display UI on very top
+  uiSystem->Update();  // Display UI on very top
+  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), gRenderer);
   SDL_RenderPresent(gRenderer);
-}
-
-Vec2 GEngine::GetScreenSize() {
-  int w, h;
-  SDL_GetWindowSize(gWindow, &w, &h);
-  return Vec2(w, h);
 }

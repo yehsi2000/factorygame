@@ -4,8 +4,10 @@
 #include <algorithm>
 
 #include "Components/InventoryComponent.h"
-#include "Core/Command.h"
-#include "Core/GEngine.h"
+#include "Commands/Command.h"
+#include "Core/Registry.h"
+#include "Core/EventDispatcher.h"
+#include "Core/World.h"
 #include "Core/Item.h"
 
 class InventoryCommand : public Command {
@@ -14,17 +16,18 @@ class InventoryCommand : public Command {
                    EntityID instigator = INVALID_ENTITY)
       : target(target), item(item), amount(amount), instigator(instigator) {}
 
-  void Execute(GEngine &engine, Registry &registry) override {
-    if (!registry.HasComponent<InventoryComponent>(target)) return;
+  void Execute(Registry *registry, EventDispatcher* eventDispatcher, World* world) override {
+    if (!registry || !eventDispatcher || !world) return;
+    if (!registry->HasComponent<InventoryComponent>(target)) return;
 
     InventoryComponent &targetInventory =
-        registry.GetComponent<InventoryComponent>(target);
+        registry->GetComponent<InventoryComponent>(target);
 
     if (instigator != INVALID_ENTITY) {
       // Item Transfer
-      if (!registry.HasComponent<InventoryComponent>(instigator)) return;
+      if (!registry->HasComponent<InventoryComponent>(instigator)) return;
       InventoryComponent &instigatorInventory =
-          registry.GetComponent<InventoryComponent>(instigator);
+          registry->GetComponent<InventoryComponent>(instigator);
       if (amount > 0) {
         int actualCnt = TryConsumeItem(instigatorInventory, amount);
         TryAddItem(targetInventory, actualCnt);
@@ -105,4 +108,4 @@ class InventoryCommand : public Command {
   }
 };
 
-#endif /* COMMANDS_INVENTORYCOMMAND_ */
+#endif/* COMMANDS_INVENTORYCOMMAND_ */

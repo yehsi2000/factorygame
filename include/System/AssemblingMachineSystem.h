@@ -1,32 +1,38 @@
 #ifndef SYSTEM_ASSEMBLINGMACHINESYSTEM_
 #define SYSTEM_ASSEMBLINGMACHINESYSTEM_
 
-#include "Components/AssemblingMachineComponent.h"
-#include "Core/Entity.h"
-#include "Core/EventDispatcher.h"
-#include "Core/Item.h"
+#include <memory>
 
-class Registry;
-class TimerManager;
+#include "Core/Entity.h"
+#include "Core/Event.h"
+#include "Core/Item.h"
+#include "Core/SystemContext.h"
+
+class AssemblingMachineComponent;
+class EventHandle;
 
 class AssemblingMachineSystem {
   Registry *registry;
-  EventDispatcher *dispatcher;
+  EventDispatcher *eventDispatcher;
   TimerManager *timerManager;
-  EventHandle AddInputHandle;
-  EventHandle TakeOutputHandle;
-  EventHandle CraftOutputHandle;
 
-public:
-  AssemblingMachineSystem(Registry *registry, EventDispatcher *dispatcher,
-                          TimerManager *timerManager);
+  std::unique_ptr<EventHandle> AddInputEventHandle;
+  std::unique_ptr<EventHandle> TakeOutputEventHandle;
+  std::unique_ptr<EventHandle> CraftOutputEventHandle;
+
+ public:
+  AssemblingMachineSystem(const SystemContext &context);
+  ~AssemblingMachineSystem();
   void Update();
 
   // Inventory management
   int AddInputItem(EntityID entity, ItemID itemId, int amount);
   int TakeOutputItem(EntityID entity, ItemID itemId, int requestedAmount);
 
-private:
+ private:
+  void AddInputHandler(const AssemblyAddInputEvent &event);
+  void TakeOutputHandler(const AssemblyTakeOutputEvent &event);
+
   bool HasEnoughIngredients(EntityID entity) const;
   bool CanStoreOutput(EntityID entity) const;
 

@@ -5,8 +5,9 @@
 
 #include "SDL_image.h"
 
-SDL_Texture *AssetManager::getTexture(const std::string &path,
-                                      SDL_Renderer *renderer) {
+AssetManager::AssetManager(SDL_Renderer* renderer): renderer(renderer) {}
+
+SDL_Texture *AssetManager::getTexture(const std::string &path) {
   auto it = textureCache.find(path);
   if (it != textureCache.end()) {
     return it->second.get();
@@ -31,3 +32,5 @@ SDL_Texture *AssetManager::getTexture(const std::string &path,
   textureCache[path] = std::unique_ptr<SDL_Texture, TextureDeleter>(texture);
   return texture;
 }
+
+AssetManager::~AssetManager() = default;

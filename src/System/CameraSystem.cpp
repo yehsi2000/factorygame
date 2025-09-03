@@ -2,31 +2,30 @@
 
 #include "Components/CameraComponent.h"
 #include "Components/TransformComponent.h"
-#include "Core/GEngine.h"
 #include "Core/Registry.h"
+#include "Core/World.h"
 
-CameraSystem::CameraSystem(GEngine *e) : engine(e) {
-  registry = engine->GetRegistry();
+CameraSystem::CameraSystem(const SystemContext &context)
+    : registry(context.registry), world(context.world) {
   assert(registry && "Fail to initialize CameraSystem : Invalid registry");
+  InitCameraSystem();
 }
 
 void CameraSystem::InitCameraSystem() {
-  EntityID camera = registry->CreateEntity();
-  registry->EmplaceComponent<CameraComponent>(camera);
-  cameraEntity = camera;
+  cameraEntity = registry->CreateEntity();
+  registry->EmplaceComponent<CameraComponent>(cameraEntity);
 }
 
 void CameraSystem::Update(float deltaTime) {
-  playerEntity = engine->GetPlayer();
+  playerEntity = world->GetPlayer();
+
+  if (playerEntity == INVALID_ENTITY) return;
+
   UpdateCameraFollow(deltaTime);
   UpdateCameraDrag(deltaTime);
 }
 
 void CameraSystem::UpdateCameraFollow(float deltaTime) {
-  if (playerEntity != INVALID_ENTITY &&
-      !registry->HasComponent<CameraComponent>(cameraEntity))
-    return;
-
   auto &camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
   // Update target position to player position
@@ -60,10 +59,6 @@ void CameraSystem::UpdateCameraFollow(float deltaTime) {
 }
 
 void CameraSystem::UpdateCameraDrag(float deltaTime) {
-  if (playerEntity != INVALID_ENTITY &&
-      !registry->HasComponent<CameraComponent>(cameraEntity))
-    return;
-
   auto &camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
   // Check if player is moving (disable drag if moving)
@@ -124,7 +119,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   static float inactiveTime = 0.0f;
   if (!camera.isDragging && !camera.isFollowing) {
     inactiveTime += deltaTime;
-    if (inactiveTime > 3.0f) { // 3 seconds of inactivity
+    if (inactiveTime > 3.0f) {  // 3 seconds of inactivity
       camera.isFollowing = true;
       camera.offset = {0.0f, 0.0f};
       inactiveTime = 0.0f;
@@ -133,3 +128,6 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
     inactiveTime = 0.0f;
   }
 }
+
+
+CameraSystem::~CameraSystem() = default;

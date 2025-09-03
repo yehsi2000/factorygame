@@ -2,6 +2,7 @@
 #define CORE_EVENTDISPATCHER_
 
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -14,17 +15,12 @@
  */
 class EventHandle {
 public:
-  EventHandle(class EventDispatcher *dispatcher, std::type_index typeIndex,
+  EventHandle(class EventDispatcher *eventDispatcher, std::type_index typeIndex,
               size_t id);
   ~EventHandle();
 
-  EventHandle(const EventHandle &) = delete;
-  EventHandle &operator=(const EventHandle &) = delete;
-  EventHandle(EventHandle &&other) noexcept;
-  EventHandle &operator=(EventHandle &&other) noexcept;
-
 private:
-  class EventDispatcher *dispatcher;
+  class EventDispatcher *eventDispatcher;
   std::type_index typeIndex;
   size_t callbackID;
 };
@@ -32,7 +28,7 @@ private:
 /**
  * @brief Manages event subscriptions and publications for immediate, synchronous communication.
  * @details Systems can subscribe to specific event types. When an event is published,
- *          the dispatcher immediately invokes all registered callback functions for that event type.
+ *          the eventDispatcher immediately invokes all registered callback functions for that event type.
  *          Subscriptions are managed by EventHandle objects, which automatically unsubscribe
  *          upon destruction.
  */
@@ -61,7 +57,7 @@ public:
    * @return EventHandle handle that automatically unsubscribes when it goes out of scope.
    */
   template <typename EventType>
-  EventHandle Subscribe(std::function<void(const EventType &)> callback) {
+  std::unique_ptr<EventHandle> Subscribe(std::function<void(const EventType &)> callback) {
     CallbackID id = nextCallbackID++;
     listeners[typeid(EventType)].emplace_back(
         id, [cb = std::move(callback)](const Event &evt) {
@@ -69,7 +65,7 @@ public:
             cb(*e);
           }
         });
-    return EventHandle(this, typeid(EventType), id);
+    return std::make_unique<EventHandle>(this, typeid(EventType), id);
   }
 
   /**

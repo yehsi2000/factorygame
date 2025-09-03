@@ -1,19 +1,18 @@
 #ifndef SYSTEM_CAMERASYSTEM_
 #define SYSTEM_CAMERASYSTEM_
 
+#include "Core/SystemContext.h"
 #include "Core/Entity.h"
 
-class GEngine;
-class Registry;
-
 class CameraSystem {
-  GEngine* engine;
   Registry* registry;
+  World* world;
   EntityID cameraEntity;
   EntityID playerEntity = INVALID_ENTITY;
 
  public:
-  CameraSystem(GEngine* e);
+  CameraSystem(const SystemContext& context);
+  ~CameraSystem();
   void InitCameraSystem();
 
   void Update(float deltaTime);

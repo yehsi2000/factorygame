@@ -1,15 +1,18 @@
 #ifndef COMMANDS_RESOURCEMINECOMMAND_
 #define COMMANDS_RESOURCEMINECOMMAND_
 
+#include <cmath>
+
+#include "Commands/Command.h"
 #include "Common.h"
 #include "Components/InventoryComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
-#include "Core/Command.h"
 #include "Core/Entity.h"
 #include "Core/Event.h"
-#include "Core/GEngine.h"
+#include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
+#include "Core/World.h"
 
 // A command to execute mining interaction with resource node
 class ResourceMineCommand : public Command {
@@ -17,23 +20,29 @@ class ResourceMineCommand : public Command {
   ResourceMineCommand(EntityID instigator, EntityID target)
       : instigator(instigator), target(target) {}
 
-  void Execute(GEngine &engine, Registry &registry) override {
-    if (registry.HasComponent<ResourceNodeComponent>(target)) {
+  void Execute(Registry *registry, EventDispatcher *eventDispatcher,
+               World *world) override {
+    if (!registry || !eventDispatcher || !world) return;
+
+    if (registry->HasComponent<ResourceNodeComponent>(target)) {
       ResourceNodeComponent &resource =
-          registry.GetComponent<ResourceNodeComponent>(target);
+          registry->GetComponent<ResourceNodeComponent>(target);
+          
       if (resource.LeftResource == 0) return;
-      if (registry.HasComponent<InventoryComponent>(instigator)) {
+
+      if (registry->HasComponent<InventoryComponent>(instigator)) {
         InventoryComponent &inventory =
-            registry.GetComponent<InventoryComponent>(instigator);
+            registry->GetComponent<InventoryComponent>(instigator);
+
         if (inventory.items.size() <= inventory.column * inventory.row)
           resource.LeftResource--;
-        engine.GetDispatcher()->Publish(ItemAddEvent(
+
+        eventDispatcher->Publish(ItemAddEvent(
             instigator, OreToItemMapper::instance().get(resource.Ore), 1));
       }
-      if (registry.HasComponent<SpriteComponent>(target)) {
-        auto &sprite = registry.GetComponent<SpriteComponent>(target);
-        auto &resource = registry.GetComponent<ResourceNodeComponent>(target);
-        World *world = engine.GetWorld();
+      if (registry->HasComponent<SpriteComponent>(target)) {
+        auto &sprite = registry->GetComponent<SpriteComponent>(target);
+        auto &resource = registry->GetComponent<ResourceNodeComponent>(target);
         rsrc_amt_t minIron = world->GetMinironOreAmount();
         rsrc_amt_t maxIron = world->GetMaxironOreAmount();
 
@@ -53,4 +62,4 @@ class ResourceMineCommand : public Command {
   EntityID target;
 };
 
-#endif/* COMMANDS_RESOURCEMINECOMMAND_ */
+#endif /* COMMANDS_RESOURCEMINECOMMAND_ */

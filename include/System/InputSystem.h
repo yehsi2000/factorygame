@@ -4,15 +4,22 @@
 #include <cstddef>
 #include <unordered_map>
 
+#include "Core/Item.h"
+#include "Core/SystemContext.h"
+#include "Core/Type.h"
 #include "SDL.h"
 #include "imgui.h"
-#include "Core/Item.h"
-#include "Core/Entity.h"
 
-enum class InputAction { StartInteraction, StopInteraction, Inventory, MouseDrop, Debug, Quit };
+
+enum class InputAction {
+  StartInteraction,
+  StopInteraction,
+  Inventory,
+  MouseDrop,
+  Debug,
+  Quit
+};
 enum class InputType { KEYBOARD, MOUSE };
-
-class GEngine;
 
 struct KeyEvent {
   SDL_Scancode Scancode;
@@ -28,22 +35,38 @@ struct KeyEventHasher {
 
 class InputSystem {
   std::unordered_map<KeyEvent, InputAction, KeyEventHasher> keyBindings;
-  GEngine* engine;
+
+  Registry* registry;
+  EventDispatcher* eventDispatcher;
+  World* world;
+  EntityFactory* factory;
+  TimerManager* timerManager;
+  AssetManager* assetManager;
+  SDL_Window* window;
+
   ImGuiIO& io;
-  double maxInteractionRadius = 200.0;
-  bool isDraggingOutside;
+
+  Vec2 screenSize;
+
+  SDL_Event event;
+
   
+  bool isDraggingOutside;
+
   // Building preview state
   bool isPreviewingBuilding;
   ItemID previewingItemID;
   EntityID previewEntity;
 
- public:
-  InputSystem(GEngine* e);
-  void Update();
-  void InitInputSystem();
+  double maxInteractionRadius = 200.0;
 
-  void HandleInputAction(InputAction action, InputType type, void* params = nullptr);
+ public:
+  InputSystem(const SystemContext& context, SDL_Window* window);
+  ~InputSystem();
+  void Update();
+
+  void HandleInputAction(InputAction action, InputType type,
+                         void* params = nullptr);
   void HandleInputAxis(const Uint8* keyState);
 
  private:

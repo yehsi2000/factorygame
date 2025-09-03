@@ -10,21 +10,18 @@
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TransformComponent.h"
-
 #include "Core/Chunk.h"
 #include "Core/Entity.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
-
-#include "Util/CameraUtil.h"
-
 #include "SDL.h"
 #include "SDL_ttf.h"
+#include "Util/CameraUtil.h"
 
-RenderSystem::RenderSystem(Registry *r, SDL_Renderer *render, World *world,
-                           TTF_Font *f)
-    : registry(r), renderer(render), world(world), font(f) {}
+
+RenderSystem::RenderSystem(const SystemContext &context, SDL_Renderer* renderer, TTF_Font *font)
+    : registry(context.registry), renderer(renderer), world(context.world), font(font) {}
 
 void RenderSystem::Update() {
   SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
@@ -142,8 +139,7 @@ bool RenderSystem::isOffScreen(Vec2f screenPos, Vec2 screenSize,
 
 void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
-    if (registry->HasComponent<DebugRectComponent>(entity))
-      continue;
+    if (registry->HasComponent<DebugRectComponent>(entity)) continue;
     if (registry->HasComponent<InactiveComponent>(entity)) {
       const auto &transform =
           registry->GetComponent<TransformComponent>(entity);
@@ -224,10 +220,10 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
         // Set color based on validity - use more visible alpha values
         if (world->CanPlaceBuilding(tileindex + Vec2{dx, dy}, 1, 1)) {
           SDL_SetRenderDrawColor(renderer, 0, 255, 0,
-                                 80); // Green with transparency
+                                 80);  // Green with transparency
         } else {
           SDL_SetRenderDrawColor(renderer, 255, 0, 0,
-                                 80); // Red with transparency
+                                 80);  // Red with transparency
         }
 
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -249,10 +245,10 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
           static_cast<int>(sprite.renderRect.h * zoom)};
 
       // Render with transparency
-      SDL_SetTextureAlphaMod(sprite.texture, 128); // 50% transparency
+      SDL_SetTextureAlphaMod(sprite.texture, 128);  // 50% transparency
       SDL_RenderCopyEx(renderer, sprite.texture, &sprite.srcRect, &destRect,
                        transform.rotation, nullptr, sprite.flip);
-      SDL_SetTextureAlphaMod(sprite.texture, 255); // Reset to full opacity
+      SDL_SetTextureAlphaMod(sprite.texture, 255);  // Reset to full opacity
     }
   }
 
@@ -286,3 +282,5 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
   }
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
+
+RenderSystem::~RenderSystem() = default;

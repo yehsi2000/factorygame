@@ -5,49 +5,55 @@
 #include "Components/MiningDrillComponent.h"
 #include "Components/PlayerStateComponent.h"
 #include "Components/TimerComponent.h"
+#include "Core/CommandQueue.h"
 #include "Core/Event.h"
-#include "Core/GEngine.h"
+#include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 
+TimerExpireSystem::TimerExpireSystem(const SystemContext& context)
+    : eventDispatcher(context.eventDispatcher),
+      commandQueue(context.commandQueue),
+      registry(context.registry),
+      timerManager(context.timerManager) {}
+
 void TimerExpireSystem::Update() {
-  Registry* reg = engine->GetRegistry();
-  auto view = reg->view<TimerExpiredTag>();
+  auto view = registry->view<TimerExpiredTag>();
   for (auto entity : view) {
-    TimerId expiredId = reg->GetComponent<TimerExpiredTag>(entity).expiredId;
+    TimerId expiredId =
+        registry->GetComponent<TimerExpiredTag>(entity).expiredId;
     // Remove the tag first
-    engine->GetRegistry()->RemoveComponent<TimerExpiredTag>(entity);
+    registry->RemoveComponent<TimerExpiredTag>(entity);
 
     // Find the handle for the expired timer
     TimerHandle handle = INVALID_TIMER_HANDLE;
-    auto& timerComp = reg->GetComponent<TimerComponent>(entity);
+    auto& timerComp = registry->GetComponent<TimerComponent>(entity);
     handle = timerComp.timers[static_cast<int>(expiredId)];
-    
+
     if (handle != INVALID_TIMER_HANDLE) {
-      TimerInstance* timer = engine->GetTimerManager()->GetTimer(handle);
+      TimerInstance* timer = timerManager->GetTimer(handle);
       if (timer) {
         // Cleanup timer first
         if (timer->isRepeating) {
           timer->elapsed = 0.0f;
         } else {
-          timerComp.timers[static_cast<int>(expiredId)] =
-              INVALID_TIMER_HANDLE;
-          engine->GetTimerManager()->DestroyTimer(handle);
+          timerComp.timers[static_cast<int>(expiredId)] = INVALID_TIMER_HANDLE;
+          timerManager->DestroyTimer(handle);
         }
 
         switch (expiredId) {
           // Mining from player or drill
           case TimerId::Mine:
-            if (reg->HasComponent<PlayerStateComponent>(entity)) {
+            if (registry->HasComponent<PlayerStateComponent>(entity)) {
               const auto& stat =
-                  reg->GetComponent<PlayerStateComponent>(entity);
-              engine->GetCommandQueue()->Enqueue(
+                  registry->GetComponent<PlayerStateComponent>(entity);
+              commandQueue->Enqueue(
                   std::make_unique<ResourceMineCommand>(
                       entity, stat.interactingEntity));
-            } else if (reg->HasComponent<MiningDrillComponent>(entity)) {
+            } else if (registry->HasComponent<MiningDrillComponent>(entity)) {
               const auto& drill =
-                  reg->GetComponent<MiningDrillComponent>(entity);
-              engine->GetCommandQueue()->Enqueue(
+                  registry->GetComponent<MiningDrillComponent>(entity);
+              commandQueue->Enqueue(
                   std::make_unique<ResourceMineCommand>(entity,
                                                         drill.oreEntity));
             }
@@ -55,8 +61,8 @@ void TimerExpireSystem::Update() {
 
           // Assembling machine done crafting
           case TimerId::AssemblingMachineCraft:
-            if (reg->HasComponent<AssemblingMachineComponent>(entity)) {
-              engine->GetDispatcher()->Publish(
+            if (registry->HasComponent<AssemblingMachineComponent>(entity)) {
+              eventDispatcher->Publish(
                   AssemblyCraftOutputEvent{entity});
             }
             break;
@@ -68,3 +74,5 @@ void TimerExpireSystem::Update() {
     }
   }
 }
+
+TimerExpireSystem::~TimerExpireSystem() = default;
