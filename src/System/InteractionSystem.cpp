@@ -1,5 +1,7 @@
 #include "System/InteractionSystem.h"
 
+#include <optional>
+
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/MiningDrillComponent.h"
@@ -8,11 +10,13 @@
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Event.h"
+#include "Core/InputPoller.h"
 #include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Util/AnimUtil.h"
+#include "Util/CameraUtil.h"
 #include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 
@@ -20,11 +24,35 @@ InteractionSystem::InteractionSystem(const SystemContext &context)
     : registry(context.registry),
       world(context.world),
       eventDispatcher(context.eventDispatcher),
+      inputPoller(context.inputPoller),
       timerManager(context.timerManager) {
-  handle = eventDispatcher->Subscribe<PlayerInteractEvent>(
+  startInteractHandle = eventDispatcher->Subscribe<PlayerInteractEvent>(
       [this](const PlayerInteractEvent &event) {
         this->OnPlayerInteractEvent(event);
       });
+  endInteractHandle = eventDispatcher->Subscribe<PlayerEndInteractEvent>(
+      [this](const PlayerEndInteractEvent &event) {
+        this->OnPlayerEndInteractEvent(event);
+      });
+}
+
+void InteractionSystem::OnPlayerEndInteractEvent(
+    const PlayerEndInteractEvent &event) {
+  EntityID player = world->GetPlayer();
+
+  if (registry->HasComponent<PlayerStateComponent>(player)) {
+    auto &playerStateComp =
+        registry->GetComponent<PlayerStateComponent>(player);
+
+    if (playerStateComp.isMining) {
+      playerStateComp.isMining = false;
+
+      auto &animComp = registry->GetComponent<AnimationComponent>(player);
+
+      util::SetAnimation(AnimationName::PLAYER_IDLE, animComp, true);
+      util::DetachTimer(registry, timerManager, player, TimerId::Mine);
+    }
+  }
 }
 
 void InteractionSystem::OnPlayerInteractEvent(
@@ -32,8 +60,12 @@ void InteractionSystem::OnPlayerInteractEvent(
   if (!registry || !world) return;
 
   EntityID player = world->GetPlayer();
+  auto& ptrans = registry->GetComponent<TransformComponent>(player);
+  if(maxInteractionDistance < util::dist(ptrans.position, event.target)){
+    return;
+  }
 
-  TileData *tile = world->GetTileAtTileIndex(event.target);
+  TileData *tile = world->GetTileAtWorldPosition(event.target);
   if (!tile) return;
 
   // Target occupying entity first

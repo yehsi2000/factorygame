@@ -218,7 +218,7 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
                              static_cast<int>(TILE_PIXEL_SIZE * zoom)};
 
         // Set color based on validity - use more visible alpha values
-        if (world->CanPlaceBuilding(tileindex + Vec2{dx, dy}, 1, 1)) {
+        if (world->HasNoOcuupyingEntity(tileindex + Vec2{dx, dy}, 1, 1)) {
           SDL_SetRenderDrawColor(renderer, 0, 255, 0,
                                  80);  // Green with transparency
         } else {

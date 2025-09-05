@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   try {
     GEngine engine(window, renderer, font);
     engine.Run();
-  } catch(...) {
+  } catch (...) {
     std::cerr << "Engine initialization failed!" << std::endl;
   }
 

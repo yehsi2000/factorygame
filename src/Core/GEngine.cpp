@@ -30,6 +30,7 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/IGameState.h"
+#include "Core/InputPoller.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
@@ -42,6 +43,7 @@
 #include "System/InputSystem.h"
 #include "System/InteractionSystem.h"
 #include "System/InventorySystem.h"
+#include "System/ItemDragSystem.h"
 #include "System/MiningDrillSystem.h"
 #include "System/MovementSystem.h"
 #include "System/RefinerySystem.h"
@@ -57,9 +59,10 @@ void GEngine::InitCoreSystem() {
   assemblingMachineSystem =
       std::make_unique<AssemblingMachineSystem>(systemContext);
   cameraSystem = std::make_unique<CameraSystem>(systemContext);
-  inputSystem = std::make_unique<InputSystem>(systemContext, gWindow);
+  inputSystem = std::make_unique<InputSystem>(systemContext);
   interactionSystem = std::make_unique<InteractionSystem>(systemContext);
   inventorySystem = std::make_unique<InventorySystem>(systemContext);
+  itemDragSystem = std::make_unique<ItemDragSystem>(systemContext);
   miningDrillSystem = std::make_unique<MiningDrillSystem>(systemContext);
   movementSystem = std::make_unique<MovementSystem>(systemContext);
   refinerySystem = std::make_unique<RefinerySystem>(systemContext);
@@ -101,11 +104,11 @@ GEngine::GEngine(SDL_Window *window, SDL_Renderer *renderer, TTF_Font *font)
       timerManager(std::make_unique<TimerManager>()),
       eventDispatcher(std::make_unique<EventDispatcher>()),
       commandQueue(std::make_unique<CommandQueue>()),
+      inputPoller(std::make_unique<InputPoller>(gWindow)),
       GameEndEventHandle(nullptr),
       entityFactory(
           std::make_unique<EntityFactory>(registry.get(), assetManager.get())) {
   // core class initialization should not fail
-  assert(registry && "Fail to initialize GEngine : Invalid registry");
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
   assert(eventDispatcher &&
          "Fail to initialize GEngine : Invalid eventDispatcher");
@@ -114,7 +117,7 @@ GEngine::GEngine(SDL_Window *window, SDL_Renderer *renderer, TTF_Font *font)
   GameEndEventHandle = eventDispatcher->Subscribe<QuitEvent>(
       [this](const QuitEvent &) { bIsRunning = false; });
 
-  // TODO : TODO: Transit to State Design Pattern
+  // TODO : Transit to State Design Pattern
   currentState = std::make_unique<PlayState>();
 
   RegisterComponent();
@@ -130,13 +133,16 @@ GEngine::GEngine(SDL_Window *window, SDL_Renderer *renderer, TTF_Font *font)
   systemContext.registry = registry.get();
   systemContext.eventDispatcher = eventDispatcher.get();
   systemContext.world = world.get();
+  systemContext.inputPoller = inputPoller.get();
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
   InitCoreSystem();
 
   EntityID player = world->GetPlayer();
+
   // Default item
-  eventDispatcher->Publish(ItemAddEvent(player, ItemID::AssemblingMachine, 100));
+  eventDispatcher->Publish(
+      ItemAddEvent(player, ItemID::AssemblingMachine, 100));
   eventDispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 100));
 }
 
@@ -171,6 +177,7 @@ void GEngine::Run() {
 }
 
 void GEngine::Update(float deltaTime) {
+  inputPoller->PollEvents();
   // Process all pending commands.
   while (!commandQueue->IsEmpty()) {
     std::unique_ptr<Command> command = commandQueue->Dequeue();
@@ -179,6 +186,7 @@ void GEngine::Update(float deltaTime) {
     }
   }
   inputSystem->Update();
+  itemDragSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();
   interactionSystem->Update();

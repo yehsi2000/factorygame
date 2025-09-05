@@ -6,6 +6,7 @@
 class MovementSystem {
   Registry* registry;
   TimerManager* timerManager;
+  InputPoller* inputPoller;
   World* world;
 
  public:

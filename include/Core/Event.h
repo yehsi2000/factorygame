@@ -10,8 +10,12 @@ struct Event {
 };
 
 struct PlayerInteractEvent : public Event {
-  PlayerInteractEvent(Vec2 t) : target(t) {}
-  Vec2 target;
+  PlayerInteractEvent(Vec2f t) : target(t) {}
+  Vec2f target;
+};
+
+struct PlayerEndInteractEvent : public Event {
+  PlayerEndInteractEvent() {}
 };
 
 struct ItemAddEvent : public Event {
@@ -37,6 +41,10 @@ struct ItemMoveEvent : public Event {
   EntityID dest;
   ItemID item;
   int amount;
+};
+
+struct MouseDropEvent : public Event{
+  MouseDropEvent() { }
 };
 
 struct AssemblyAddInputEvent : public Event {

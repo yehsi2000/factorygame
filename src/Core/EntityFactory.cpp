@@ -30,7 +30,7 @@ EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2f worldPos) {
 EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
-  if (!world->CanPlaceBuilding(tileIndex, 2, 2)) {
+  if (!world->HasNoOcuupyingEntity(tileIndex, 2, 2)) {
     return INVALID_ENTITY;
   }
 
@@ -46,7 +46,7 @@ EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   building.height = 2;
   registry->EmplaceComponent<BuildingComponent>(entity, building);
 
-  world->PlaceBuilding(entity, tileIndex, 2, 2);
+  world->OccupyTile(entity, tileIndex, 2, 2);
 
   SDL_Texture *spritesheet =
       assetManager->getTexture("assets/img/entity/assembling-machine.png");
@@ -88,7 +88,7 @@ EntityID EntityFactory::CreateMiningDrill(World *world, Vec2f worldPos) {
 EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
-  if (!world->CanPlaceBuilding(tileIndex, 1, 1)) {
+  if (!world->HasNoOcuupyingEntity(tileIndex, 1, 1)) {
     return INVALID_ENTITY;
   }
 
@@ -111,7 +111,7 @@ EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
 
   // Place the building in the world (this will update
   // BuildingComponent.occupiedTiles)
-  world->PlaceBuilding(entity, tileIndex, 1, 1);
+  world->OccupyTile(entity, tileIndex, 1, 1);
 
   // Add sprite component
   SDL_Texture *spritesheet =
@@ -120,6 +120,7 @@ EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   SpriteComponent sprite;
   sprite.texture = spritesheet;
   // Start with first frame (idle state)
+  sprite.renderOrder = 1000;
   sprite.srcRect = {0, 0, 185, 168};
   sprite.renderRect = {0, 0, 62, 56};
   registry->EmplaceComponent<SpriteComponent>(entity, sprite);

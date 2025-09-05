@@ -44,26 +44,28 @@ void TimerExpireSystem::Update() {
         switch (expiredId) {
           // Mining from player or drill
           case TimerId::Mine:
+            // Player mining Case
             if (registry->HasComponent<PlayerStateComponent>(entity)) {
               const auto& stat =
                   registry->GetComponent<PlayerStateComponent>(entity);
-              commandQueue->Enqueue(
-                  std::make_unique<ResourceMineCommand>(
-                      entity, stat.interactingEntity));
-            } else if (registry->HasComponent<MiningDrillComponent>(entity)) {
+
+              commandQueue->Enqueue(std::make_unique<ResourceMineCommand>(
+                  entity, stat.interactingEntity));
+            }
+            // Drill mining case
+            else if (registry->HasComponent<MiningDrillComponent>(entity)) {
               const auto& drill =
                   registry->GetComponent<MiningDrillComponent>(entity);
-              commandQueue->Enqueue(
-                  std::make_unique<ResourceMineCommand>(entity,
-                                                        drill.oreEntity));
+
+              commandQueue->Enqueue(std::make_unique<ResourceMineCommand>(
+                  entity, drill.oreEntity));
             }
             break;
 
           // Assembling machine done crafting
           case TimerId::AssemblingMachineCraft:
             if (registry->HasComponent<AssemblingMachineComponent>(entity)) {
-              eventDispatcher->Publish(
-                  AssemblyCraftOutputEvent{entity});
+              eventDispatcher->Publish(AssemblyCraftOutputEvent{entity});
             }
             break;
 

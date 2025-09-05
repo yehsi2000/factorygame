@@ -2,12 +2,14 @@
 
 #include "Components/CameraComponent.h"
 #include "Components/TransformComponent.h"
+#include "Core/InputPoller.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
 
 CameraSystem::CameraSystem(const SystemContext &context)
-    : registry(context.registry), world(context.world) {
-  assert(registry && "Fail to initialize CameraSystem : Invalid registry");
+    : registry(context.registry),
+      world(context.world),
+      inputPoller(context.inputPoller) {
   InitCameraSystem();
 }
 
@@ -63,27 +65,29 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
 
   // Check if player is moving (disable drag if moving)
   bool playerIsMoving = false;
-  auto &inputState = registry->GetInputState();
-  playerIsMoving =
-      (abs(inputState.xAxis) > 0.1f || abs(inputState.yAxis) > 0.1f);
+  playerIsMoving = abs(inputPoller->GetXAxis()) > 0.1f ||
+                   abs(inputPoller->GetYAxis()) > 0.1f;
 
   // Start dragging
-  if (inputState.rightMousePressed && !playerIsMoving) {
+  if (inputPoller->WasMouseButtonPressed(InputPoller::Mouse::RIGHT) &&
+      !playerIsMoving) {
     camera.isDragging = true;
     camera.isFollowing = false;
-    camera.dragStartPos = Vec2f(inputState.mousepos);
+    camera.dragStartPos = Vec2f(inputPoller->GetMousePositon());
     camera.cameraStartPos = camera.position;
   }
 
-  if (inputState.mousewheel.y != 0) {
-    camera.zoom = camera.zoom * (1 + (inputState.mousewheel.y) * 0.1);
-    inputState.mousewheel = {0, 0};
+  if (inputPoller->GetScrollAmount() != 0) {
+    camera.zoom = camera.zoom * ((inputPoller->GetScrollAmount()) * 0.1);
+    // inputPoller->mouseWheel = {0, 0};
   }
 
   // Continue dragging
-  if (camera.isDragging && inputState.rightMouseDown) {
-    Vec2f currentMousePos = inputState.mousepos;
-    Vec2f mouseDelta = Vec2f(inputState.mousepos) - camera.dragStartPos;
+  if (camera.isDragging &&
+      inputPoller->IsMouseButtonDown(InputPoller::Mouse::RIGHT)) {
+    Vec2f currentMousePos = inputPoller->GetMousePositon();
+    Vec2f mouseDelta =
+        Vec2f(inputPoller->GetMousePositon()) - camera.dragStartPos;
 
     // Update camera position (invert delta for natural dragging feel)
     camera.position = {camera.cameraStartPos.x - mouseDelta.x,
@@ -91,7 +95,8 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   // End dragging
-  if (inputState.rightMouseReleased || playerIsMoving) {
+  if (inputPoller->WasMouseButtonReleased(InputPoller::Mouse::RIGHT) ||
+      playerIsMoving) {
     if (camera.isDragging) {
       // Store the offset for smooth transition back to following
       if (registry->HasComponent<TransformComponent>(playerEntity)) {
@@ -128,6 +133,5 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
     inactiveTime = 0.0f;
   }
 }
-
 
 CameraSystem::~CameraSystem() = default;

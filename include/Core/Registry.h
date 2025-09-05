@@ -7,7 +7,6 @@
 #include <memory>
 
 #include "Core/ComponentArray.h"
-#include "Core/InputState.h"
 
 constexpr int MAX_ENTITIES = 1000000;
 
@@ -20,7 +19,6 @@ constexpr int MAX_ENTITIES = 1000000;
 class Registry {
  private:
   std::queue<EntityID> availableEntities{};
-  InputState inputState;
 
   uint32_t livingEntityCount = 0;
   std::size_t COMPONENT_ID = 0;
@@ -211,8 +209,6 @@ class Registry {
   void forEach(Func func) {
     GetComponentArray<T>()->forEach(func);
   }
-
-  inline InputState &GetInputState() { return inputState; }
 };
 
 #endif/* CORE_REGISTRY_ */

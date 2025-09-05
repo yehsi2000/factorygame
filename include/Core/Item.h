@@ -1,9 +1,11 @@
 ﻿#ifndef CORE_ITEM_
 #define CORE_ITEM_
 
-#include "Core/Entity.h"
 #include <string>
 #include <unordered_map>
+
+#include "Core/Entity.h"
+
 
 enum class ItemID {
   None = 0,
@@ -113,9 +115,10 @@ class ItemDatabase {
                                u8"현재 타일 아래의 광물을 채굴합니다.",
                                "assets/img/icon/mining-drill.png", 100};
 
-    db[ItemID::AssemblingMachine] = {ItemCategory::Buildable, u8"조립기",
-                                     u8"다양한 아이템을 조립하여 새로운 제품을 만듭니다.",
-                                     "assets/img/icon/assembling-machine.png", 100};
+    db[ItemID::AssemblingMachine] = {
+        ItemCategory::Buildable, u8"조립기",
+        u8"다양한 아이템을 조립하여 새로운 제품을 만듭니다.",
+        "assets/img/icon/assembling-machine.png", 100};
   }
 };
 

@@ -89,8 +89,8 @@ class World {
    * @param height The height of the building in tiles.
    * @return True if the area is clear and buildable, false otherwise.
    */
-  bool CanPlaceBuilding(Vec2 tileIndex, int width, int height);
-  bool CanPlaceBuilding(int tileX, int tileY, int width, int height);
+  bool HasNoOcuupyingEntity(Vec2 tileIndex, int width, int height);
+  bool HasNoOcuupyingEntity(int tileX, int tileY, int width, int height);
 
   /**
    * @brief Marks tiles as occupied by a building.
@@ -99,8 +99,8 @@ class World {
    * @param width The width of the building in tiles.
    * @param height The height of the building in tiles.
    */
-  void PlaceBuilding(EntityID entity, Vec2 tileIndex, int width, int height);
-  void PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
+  void OccupyTile(EntityID entity, Vec2 tileIndex, int width, int height);
+  void OccupyTile(EntityID entity, int tileX, int tileY, int width,
                      int height);
 
   /**
@@ -115,8 +115,8 @@ class World {
    * @param worldPos The world coordinates of the tile.
    * @return True if the tile is movable, false otherwise.
    */
-  bool IsTileMovable(Vec2f worldPos);
-  bool IsTileMovable(Vec2 tileIdx);
+  bool DoesTileBlockMovement(Vec2f worldPos);
+  bool DoesTileBlockMovement(Vec2 tileIdx);
 
   const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {
     return activeChunks;

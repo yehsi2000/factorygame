@@ -20,12 +20,14 @@ class SystemContext;
 class TimerManager;
 class World;
 class WorldAssetManager;
+class InputPoller;
 
 class AnimationSystem;
 class AssemblingMachineSystem;
 class CameraSystem;
 class InputSystem;
 class InteractionSystem;
+class ItemDragSystem;
 class InventorySystem;
 class MiningDrillSystem;
 class MovementSystem;
@@ -53,6 +55,7 @@ class GEngine {
   std::unique_ptr<EventDispatcher> eventDispatcher;
   std::unique_ptr<CommandQueue> commandQueue;
   std::unique_ptr<EntityFactory> entityFactory;
+  std::unique_ptr<InputPoller> inputPoller;
   std::unique_ptr<World> world;
 
   SystemContext systemContext;
@@ -68,6 +71,7 @@ class GEngine {
   std::unique_ptr<CameraSystem> cameraSystem;
   std::unique_ptr<InputSystem> inputSystem;
   std::unique_ptr<InventorySystem> inventorySystem;
+  std::unique_ptr<ItemDragSystem> itemDragSystem;
   std::unique_ptr<MiningDrillSystem> miningDrillSystem;
   std::unique_ptr<MovementSystem> movementSystem;
   std::unique_ptr<RefinerySystem> refinerySystem;

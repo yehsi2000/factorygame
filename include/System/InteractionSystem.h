@@ -16,6 +16,7 @@ class InteractionSystem {
 
  private:
   void OnPlayerInteractEvent(const PlayerInteractEvent& event);
+  void OnPlayerEndInteractEvent(const PlayerEndInteractEvent& event);
   void ResourceNodeInteractionHandler(EntityID player, EntityID targetEntity);
   void AssemblyMachineInteractionHandler(EntityID player,
                                          EntityID targetEntity);
@@ -23,9 +24,13 @@ class InteractionSystem {
 
   Registry* registry;
   World* world;
+  InputPoller* inputPoller;
   EventDispatcher* eventDispatcher;
   TimerManager* timerManager;
-  std::unique_ptr<EventHandle> handle;
+  std::unique_ptr<EventHandle> startInteractHandle;
+  std::unique_ptr<EventHandle> endInteractHandle;
+  // TODO set it as player upgradable value
+  double maxInteractionDistance = 200.0;
 };
 
 #endif/* SYSTEM_INTERACTIONSYSTEM_ */

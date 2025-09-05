@@ -120,10 +120,10 @@ TileData *World::GetTileAtTileIndex(int tileX, int tileY) {
   return nullptr;
 }
 
-bool World::IsTileMovable(Vec2f worldPos) {
-  return IsTileMovable(GetTileIndexFromWorldPosition(worldPos));
+bool World::DoesTileBlockMovement(Vec2f worldPos) {
+  return DoesTileBlockMovement(GetTileIndexFromWorldPosition(worldPos));
 }
-bool World::IsTileMovable(Vec2 tileIdx) {
+bool World::DoesTileBlockMovement(Vec2 tileIdx) {
   TileData *tile = GetTileAtTileIndex(tileIdx);
   if (tile->type == TileType::Water || tile->type == TileType::Invalid)
     return false;
@@ -134,11 +134,11 @@ bool World::IsTileMovable(Vec2 tileIdx) {
   return true;
 }
 
-bool World::CanPlaceBuilding(Vec2 tileIndex, int width, int height) {
-  return CanPlaceBuilding(tileIndex.x, tileIndex.y, width, height);
+bool World::HasNoOcuupyingEntity(Vec2 tileIndex, int width, int height) {
+  return HasNoOcuupyingEntity(tileIndex.x, tileIndex.y, width, height);
 }
 
-bool World::CanPlaceBuilding(int tileX, int tileY, int width,
+bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width,
                              int height) {
   // Check if all tiles for this building are available
   for (int dy = 0; dy < height; ++dy) {
@@ -168,12 +168,12 @@ bool World::CanPlaceBuilding(int tileX, int tileY, int width,
   return true;
 }
 
-void World::PlaceBuilding(EntityID entity, Vec2 tileIndex, int width,
+void World::OccupyTile(EntityID entity, Vec2 tileIndex, int width,
                           int height) {
-  PlaceBuilding(entity, tileIndex.x, tileIndex.y, width, height);
+  OccupyTile(entity, tileIndex.x, tileIndex.y, width, height);
 }
 
-void World::PlaceBuilding(EntityID entity, int tileX, int tileY, int width,
+void World::OccupyTile(EntityID entity, int tileX, int tileY, int width,
                           int height) {
   std::vector<Vec2> occupiedTiles;
 
