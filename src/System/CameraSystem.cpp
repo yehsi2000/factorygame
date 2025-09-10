@@ -2,14 +2,14 @@
 
 #include "Components/CameraComponent.h"
 #include "Components/TransformComponent.h"
-#include "Core/InputPoller.h"
+#include "Core/InputManager.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
 
 CameraSystem::CameraSystem(const SystemContext &context)
     : registry(context.registry),
       world(context.world),
-      inputPoller(context.inputPoller) {
+      inputManager(context.inputManager) {
   InitCameraSystem();
 }
 
@@ -65,29 +65,29 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
 
   // Check if player is moving (disable drag if moving)
   bool playerIsMoving = false;
-  playerIsMoving = abs(inputPoller->GetXAxis()) > 0.1f ||
-                   abs(inputPoller->GetYAxis()) > 0.1f;
+  playerIsMoving = abs(inputManager->GetXAxis()) > 0.1f ||
+                   abs(inputManager->GetYAxis()) > 0.1f;
 
   // Start dragging
-  if (inputPoller->WasMouseButtonPressed(InputPoller::Mouse::RIGHT) &&
+  if (inputManager->WasMouseButtonPressed(MouseButton::RIGHT) &&
       !playerIsMoving) {
     camera.isDragging = true;
     camera.isFollowing = false;
-    camera.dragStartPos = Vec2f(inputPoller->GetMousePositon());
+    camera.dragStartPos = Vec2f(inputManager->GetMousePosition());
     camera.cameraStartPos = camera.position;
   }
 
-  if (inputPoller->GetScrollAmount() != 0) {
-    camera.zoom = camera.zoom * ((inputPoller->GetScrollAmount()) * 0.1);
-    // inputPoller->mouseWheel = {0, 0};
+  if (inputManager->GetMouseWheelScroll() != 0) {
+    camera.zoom = camera.zoom * ((inputManager->GetMouseWheelScroll()) * 0.1);
+    // inputManager->mouseWheel = {0, 0};
   }
 
   // Continue dragging
   if (camera.isDragging &&
-      inputPoller->IsMouseButtonDown(InputPoller::Mouse::RIGHT)) {
-    Vec2f currentMousePos = inputPoller->GetMousePositon();
+      inputManager->IsMouseButtonDown(MouseButton::RIGHT)) {
+    Vec2f currentMousePos = inputManager->GetMousePosition();
     Vec2f mouseDelta =
-        Vec2f(inputPoller->GetMousePositon()) - camera.dragStartPos;
+        Vec2f(inputManager->GetMousePosition()) - camera.dragStartPos;
 
     // Update camera position (invert delta for natural dragging feel)
     camera.position = {camera.cameraStartPos.x - mouseDelta.x,
@@ -95,7 +95,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   // End dragging
-  if (inputPoller->WasMouseButtonReleased(InputPoller::Mouse::RIGHT) ||
+  if (inputManager->WasMouseButtonReleased(MouseButton::RIGHT) ||
       playerIsMoving) {
     if (camera.isDragging) {
       // Store the offset for smooth transition back to following

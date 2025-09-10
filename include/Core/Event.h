@@ -43,8 +43,9 @@ struct ItemMoveEvent : public Event {
   int amount;
 };
 
-struct MouseDropEvent : public Event{
-  MouseDropEvent() { }
+struct ItemDropInWorldEvent : public Event {
+  ItemDropInWorldEvent(const ItemPayload& payload) : payload(payload) {}
+  ItemPayload payload;
 };
 
 struct AssemblyAddInputEvent : public Event {
@@ -57,7 +58,8 @@ struct AssemblyAddInputEvent : public Event {
 };
 
 struct AssemblyTakeOutputEvent : public Event {
-  AssemblyTakeOutputEvent(EntityID machine, EntityID target, ItemID item, int amt)
+  AssemblyTakeOutputEvent(EntityID machine, EntityID target, ItemID item,
+                          int amt)
       : machine(machine), target(target), item(item), amount(amt) {}
   EntityID machine;
   EntityID target;

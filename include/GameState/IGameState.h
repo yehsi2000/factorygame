@@ -1,5 +1,5 @@
-﻿#ifndef CORE_GAMESTATE_
-#define CORE_GAMESTATE_
+﻿#ifndef GAMESTATE_IGAMESTATE_
+#define GAMESTATE_IGAMESTATE_
 
 class GEngine;
 
@@ -10,16 +10,15 @@ class GEngine;
  * are called when the game transitions into or out of a state. This allows for
  * state-specific logic to be cleanly separated.
  */
+
+ enum class GameStateType { None, MainMenu, Play, Pause };
+ 
 class IGameState {
  public:
   virtual ~IGameState() = default;
   virtual void Init(GEngine* engine) = 0;
   virtual void Cleanup() = 0;
   virtual void Update(float deltaTime) = 0;
-
- private:
-  virtual void HandleInput() = 0;
-  virtual void Render() = 0;
 };
 
-#endif /* CORE_GAMESTATE_ */
+#endif/* GAMESTATE_IGAMESTATE_ */

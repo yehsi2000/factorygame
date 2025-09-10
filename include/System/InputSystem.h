@@ -15,7 +15,6 @@ enum class InputAction {
   StartInteraction,
   StopInteraction,
   Inventory,
-  MouseDrop,
   Quit
 };
 
@@ -35,7 +34,7 @@ class InputSystem {
   Registry* registry;
   EventDispatcher* eventDispatcher;
   World* world;
-  InputPoller* inputPoller;
+  InputManager* inputManager;
   SDL_Window* window;
 
   SDL_Event event;

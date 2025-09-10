@@ -24,7 +24,7 @@ class InteractionSystem {
 
   Registry* registry;
   World* world;
-  InputPoller* inputPoller;
+  InputManager* inputManager;
   EventDispatcher* eventDispatcher;
   TimerManager* timerManager;
   std::unique_ptr<EventHandle> startInteractHandle;

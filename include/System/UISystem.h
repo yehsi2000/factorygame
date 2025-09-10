@@ -4,8 +4,9 @@
 #include <memory>
 
 #include "Core/Entity.h"
-#include "Core/SystemContext.h"
 #include "Core/Item.h"
+#include "Core/SystemContext.h"
+
 
 class EventHandle;
 
@@ -23,6 +24,7 @@ class UISystem {
   inline void ToggleInventory() { showInventory = !showInventory; }
 
  private:
+  void ItemDropBackground();
   void Inventory();
   void AssemblingMachineUI();
   void AssemblingMachineRecipeSelection(EntityID entity);

@@ -15,7 +15,7 @@ class ItemDragSystem {
   Registry* registry;
   World* world;
   AssetManager* assetManager;
-  InputPoller* inputPoller;
+  InputManager* inputManager;
   EventDispatcher* eventDispatcher;
   EntityFactory* factory;
 
@@ -33,7 +33,7 @@ class ItemDragSystem {
  private:
   void DestroyPreviewEntity();
   void CreatePreviewEntity(ItemID itemID);
-  void ItemDropEventHandler(const MouseDropEvent& event);
+  void ItemDropEventHandler(const ItemDropInWorldEvent& event);
   void UpdatePreviewEntity();
 };
 

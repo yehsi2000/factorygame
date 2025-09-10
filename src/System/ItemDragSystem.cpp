@@ -12,7 +12,7 @@
 #include "Core/EntityFactory.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
-#include "Core/InputPoller.h"
+#include "Core/InputManager.h"
 #include "Core/Item.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
@@ -20,58 +20,61 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
-
 ItemDragSystem::ItemDragSystem(const SystemContext &context)
     : registry(context.registry),
       world(context.world),
       assetManager(context.assetManager),
-      inputPoller(context.inputPoller),
+      inputManager(context.inputManager),
       eventDispatcher(context.eventDispatcher),
       factory(context.entityFactory),
       isPreviewingBuilding(false),
       isBuildingPlaced(false),
       previewEntity(INVALID_ENTITY),
       previewingItemID(ItemID::None) {
-  itemDropHandle = eventDispatcher->Subscribe<MouseDropEvent>(
-      [this](const MouseDropEvent &event) {
+  itemDropHandle = eventDispatcher->Subscribe<ItemDropInWorldEvent>(
+      [this](const ItemDropInWorldEvent &event) {
         this->ItemDropEventHandler(event);
       });
 }
 
 void ItemDragSystem::Update() {
-  if (!inputPoller->IsDraggingOutSide()) {
-    return;
-  }
   isBuildingPlaced = false;
 
-  ImGuiContext *ctx = ImGui::GetCurrentContext();
+  if (!ImGui::GetIO().WantCaptureMouse) return;
+
+  const ImGuiPayload *payload_ptr = ImGui::GetDragDropPayload();
 
   // Handle item dragging
-  if (!isPreviewingBuilding &&
-      ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
-    ItemPayload *payload_ptr =
-        static_cast<ItemPayload *>(ctx->DragDropPayload.Data);
+  if (!isPreviewingBuilding && payload_ptr != nullptr &&
+      payload_ptr->DataSize == sizeof(ItemPayload)) {
+    ItemPayload *itemPayload = static_cast<ItemPayload *>(payload_ptr->Data);
 
     // Only handle dragging from player inventory
-    if (payload_ptr->owner == world->GetPlayer() &&
-        payload_ptr->id != ItemID::None) {
+    if (itemPayload->owner == world->GetPlayer() &&
+        itemPayload->id != ItemID::None) {
       const ItemDatabase &db = ItemDatabase::instance();
 
-      if (db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable)) {
-        previewingItemID = payload_ptr->id;
-        CreatePreviewEntity(payload_ptr->id);
+      if (db.IsOfCategory(itemPayload->id, ItemCategory::Buildable)) {
+        previewingItemID = itemPayload->id;
+        CreatePreviewEntity(itemPayload->id);
       }
     }
+  } else if (isPreviewingBuilding &&
+             (payload_ptr == nullptr ||
+              payload_ptr->DataSize != sizeof(ItemPayload))) {
+    DestroyPreviewEntity();
   }
   UpdatePreviewEntity();
 }
 
 void ItemDragSystem::UpdatePreviewEntity() {
-  if (!isPreviewingBuilding) return;
+  if (!isPreviewingBuilding) {
+    return;
+  }
 
-  Vec2f mouseWorldPos = util::ScreenToWorld(inputPoller->GetMousePositon(),
+  Vec2f mouseWorldPos = util::ScreenToWorld(inputManager->GetMousePosition(),
                                             util::GetCameraPosition(registry),
-                                            inputPoller->GetScreenSize());
+                                            inputManager->GetScreenSize());
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(mouseWorldPos);
 
@@ -86,8 +89,10 @@ void ItemDragSystem::UpdatePreviewEntity() {
 
 void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
   // Destroy existing preview entity if it exists
-  if (previewEntity != INVALID_ENTITY || isBuildingPlaced)
-    return;  // DestroyPreviewEntity();
+  if (previewEntity != INVALID_ENTITY || isBuildingPlaced) {
+    DestroyPreviewEntity();
+    return;
+  }
 
   isPreviewingBuilding = true;
   previewEntity = registry->CreateEntity();
@@ -125,78 +130,65 @@ void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
   }
 }
 
-void ItemDragSystem::ItemDropEventHandler(const MouseDropEvent &event) {
-  ImGuiContext *ctx = ImGui::GetCurrentContext();
+void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
   EntityID player = world->GetPlayer();
 
-  if (ctx->DragDropPayload.DataSize == sizeof(ItemPayload)) {
-    ItemPayload *payload_ptr =
-        static_cast<ItemPayload *>(ctx->DragDropPayload.Data);
+  const ItemDatabase &db = ItemDatabase::instance();
 
-    if (payload_ptr->id != ItemID::None && payload_ptr->amount > 0) {
-      const ItemDatabase &db = ItemDatabase::instance();
+  Vec2f mouseWorldPos = util::ScreenToWorld(inputManager->GetMousePosition(),
+                                            util::GetCameraPosition(registry),
+                                            inputManager->GetScreenSize());
 
-      Vec2f mouseWorldPos = util::ScreenToWorld(
-          inputPoller->GetMousePositon(), util::GetCameraPosition(registry),
-          inputPoller->GetScreenSize());
+  // only handle item inside player's inventory
+  if (event.payload.owner != player) return;
 
-      // only handle item inside player's inventory
-      if (payload_ptr->owner != player) return;
+  // Check if we're dragging to place building
+  if (db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
+    Vec2 tileIndex = world->GetTileIndexFromWorldPosition(mouseWorldPos);
 
-      // Check if we're dragging to place building
-      if (db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable)) {
-        Vec2 tileIndex = world->GetTileIndexFromWorldPosition(mouseWorldPos);
+    Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
 
-        Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
-
-        EntityID newBuilding = INVALID_ENTITY;
-        if (payload_ptr->id == ItemID::AssemblingMachine) {
-          if (world->HasNoOcuupyingEntity(tileIndex, 2, 2)) {
-            newBuilding = factory->CreateAssemblingMachine(world, snapWorldPos);
-          }
-        } else if (payload_ptr->id == ItemID::MiningDrill) {
-          if (world->HasNoOcuupyingEntity(tileIndex, 1, 1)) {
-            newBuilding = factory->CreateMiningDrill(world, snapWorldPos);
-          }
-        }
-
-        if (newBuilding != INVALID_ENTITY) {
-          eventDispatcher->Publish(
-              ItemConsumeEvent{player, payload_ptr->id, 1});
-        }
-
-        DestroyPreviewEntity();
-        ctx->DragDropPayload.Clear();
-        isBuildingPlaced = true;
+    EntityID newBuilding = INVALID_ENTITY;
+    if (event.payload.id == ItemID::AssemblingMachine) {
+      if (world->HasNoOcuupyingEntity(tileIndex, 2, 2)) {
+        newBuilding = factory->CreateAssemblingMachine(world, snapWorldPos);
       }
-
-      // Handle non-buildable item drop (create item entity on ground)
-      else if (!db.IsOfCategory(payload_ptr->id, ItemCategory::Buildable)) {
-        EntityID itemEntity = registry->CreateEntity();
-
-        registry->EmplaceComponent<TransformComponent>(
-            itemEntity, TransformComponent{mouseWorldPos});
-
-        const ItemData &itemData = db.get(payload_ptr->id);
-        SDL_Texture *texture = assetManager->getTexture(itemData.icon);
-
-        SpriteComponent sprite;
-        sprite.texture = texture;
-        sprite.srcRect = {ICONSIZE_SMALL_XSTART, 0, ICONSIZE_SMALL,
-                          ICONSIZE_SMALL};
-        sprite.renderRect = {0, 0, ICONSIZE_SMALL, ICONSIZE_SMALL};
-        sprite.renderOrder = 0;
-        registry->EmplaceComponent<SpriteComponent>(itemEntity, sprite);
-
-        eventDispatcher->Publish(ItemConsumeEvent{player, payload_ptr->id, 1});
-
-        std::cout << "Dropped " << (const char *)itemData.name.c_str()
-                  << " at world position " << mouseWorldPos.x << ","
-                  << mouseWorldPos.y << std::endl;
-
-        ctx->DragDropPayload.Clear();
+    } else if (event.payload.id == ItemID::MiningDrill) {
+      if (world->HasNoOcuupyingEntity(tileIndex, 1, 1)) {
+        newBuilding = factory->CreateMiningDrill(world, snapWorldPos);
       }
     }
+
+    if (newBuilding != INVALID_ENTITY) {
+      eventDispatcher->Publish(ItemConsumeEvent{player, event.payload.id, 1});
+    }
+
+    DestroyPreviewEntity();
+    isBuildingPlaced = true;
+  }
+
+  // Handle non-buildable item drop (create item entity on ground)
+  else if (!db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
+    EntityID itemEntity = registry->CreateEntity();
+
+    registry->EmplaceComponent<TransformComponent>(
+        itemEntity, TransformComponent{mouseWorldPos});
+
+    const ItemData &itemData = db.get(event.payload.id);
+    SDL_Texture *texture = assetManager->getTexture(itemData.icon);
+
+    SpriteComponent sprite;
+    sprite.texture = texture;
+    sprite.srcRect = {ICONSIZE_SMALL_XSTART, 0, ICONSIZE_SMALL, ICONSIZE_SMALL};
+    sprite.renderRect = {0, 0, ICONSIZE_SMALL, ICONSIZE_SMALL};
+    sprite.renderOrder = 0;
+    registry->EmplaceComponent<SpriteComponent>(itemEntity, sprite);
+
+    eventDispatcher->Publish(ItemConsumeEvent{player, event.payload.id, 1});
+
+    std::cout << "Dropped " << (const char *)itemData.name.c_str()
+              << " at world position " << mouseWorldPos.x << ","
+              << mouseWorldPos.y << std::endl;
   }
 }
 

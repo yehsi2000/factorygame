@@ -10,7 +10,7 @@
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Event.h"
-#include "Core/InputPoller.h"
+#include "Core/InputManager.h"
 #include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
@@ -24,7 +24,7 @@ InteractionSystem::InteractionSystem(const SystemContext &context)
     : registry(context.registry),
       world(context.world),
       eventDispatcher(context.eventDispatcher),
-      inputPoller(context.inputPoller),
+      inputManager(context.inputManager),
       timerManager(context.timerManager) {
   startInteractHandle = eventDispatcher->Subscribe<PlayerInteractEvent>(
       [this](const PlayerInteractEvent &event) {

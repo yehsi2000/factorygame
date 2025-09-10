@@ -1,9 +1,13 @@
 ﻿#ifndef GAMESTATE_MAINMENUSTATE_
 #define GAMESTATE_MAINMENUSTATE_
 
-#include "Core/IGameState.h"
+#include "GameState/IGameState.h"
 
 class GEngine;
+struct SDL_Window;
+struct SDL_Renderer;
+struct TTF_Font;
+
 
 /**
  * @brief Represents the main menu state of the game.
@@ -15,8 +19,10 @@ class MainMenuState : public IGameState {
   virtual void Update(float deltaTime) override;
 
  private:
-  virtual void HandleInput() override;
-  virtual void Render() override;
+  GEngine* gEngine;
+  SDL_Window* gWindow;
+  SDL_Renderer* gRenderer;
+  TTF_Font* gFont;
 };
 
 #endif /* GAMESTATE_MAINMENUSTATE_ */

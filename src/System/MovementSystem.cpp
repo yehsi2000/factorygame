@@ -5,7 +5,7 @@
 #include "Core/Entity.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
-#include "Core/InputPoller.h"
+#include "Core/InputManager.h"
 #include "Core/World.h"
 
 #include "Components/AnimationComponent.h"
@@ -21,7 +21,7 @@
 #include "Util/TimerUtil.h"
 
 MovementSystem::MovementSystem(const SystemContext& context)
-    : registry(context.registry), inputPoller(context.inputPoller), timerManager(context.timerManager), world(context.world) {}
+    : registry(context.registry), inputManager(context.inputManager), timerManager(context.timerManager), world(context.world) {}
 
 void MovementSystem::Update(float deltaTime) {
   for (EntityID entity :
@@ -42,8 +42,8 @@ void MovementSystem::Update(float deltaTime) {
       auto &playerAnimComp = registry->GetComponent<AnimationComponent>(entity);
       auto &playerSpriteComp = registry->GetComponent<SpriteComponent>(entity);
 
-      float ix = inputPoller->GetXAxis();
-      float iy = inputPoller->GetYAxis();
+      float ix = inputManager->GetXAxis();
+      float iy = inputManager->GetYAxis();
 
       if (ix == 0.f && iy == 0.f) {
         if(!playerStateComp.isMining) util::SetAnimation(AnimationName::PLAYER_IDLE, playerAnimComp, true);

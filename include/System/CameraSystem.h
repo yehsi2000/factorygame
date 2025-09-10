@@ -7,7 +7,7 @@
 class CameraSystem {
   Registry* registry;
   World* world;
-  InputPoller* inputPoller;
+  InputManager* inputManager;
   EntityID cameraEntity;
   EntityID playerEntity = INVALID_ENTITY;
 

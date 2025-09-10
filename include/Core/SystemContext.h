@@ -1,26 +1,24 @@
-﻿#ifndef CORE_SYSTEMCONTEXT_
-#define CORE_SYSTEMCONTEXT_
+#pragma once
 
+// Forward declarations
 class AssetManager;
 class WorldAssetManager;
 class CommandQueue;
-class EntityFactory;
-class EventDispatcher;
 class Registry;
-class TimerManager;
-class InputPoller;
+class EventDispatcher;
 class World;
+class InputManager;
+class EntityFactory;
+class TimerManager;
 
 struct SystemContext {
-  AssetManager *assetManager = nullptr;
-  WorldAssetManager *worldAssetManager = nullptr;
-  CommandQueue *commandQueue = nullptr;
-  EntityFactory *entityFactory = nullptr;
-  EventDispatcher *eventDispatcher = nullptr;
-  Registry *registry = nullptr;
-  TimerManager *timerManager = nullptr;
-  InputPoller* inputPoller = nullptr;
-  World *world = nullptr;
+    AssetManager* assetManager = nullptr;
+    WorldAssetManager* worldAssetManager = nullptr;
+    CommandQueue* commandQueue = nullptr;
+    Registry* registry = nullptr;
+    EventDispatcher* eventDispatcher = nullptr;
+    World* world = nullptr;
+    InputManager* inputManager = nullptr;
+    EntityFactory* entityFactory = nullptr;
+    TimerManager* timerManager = nullptr;
 };
-
-#endif /* CORE_SYSTEMCONTEXT_ */

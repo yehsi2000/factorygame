@@ -16,7 +16,7 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
-#include "Core/InputPoller.h"
+#include "Core/InputManager.h"
 #include "Core/Item.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
@@ -35,7 +35,7 @@ InputSystem::InputSystem(const SystemContext &context)
     : registry(context.registry),
       eventDispatcher(context.eventDispatcher),
       world(context.world),
-      inputPoller(context.inputPoller) {
+      inputManager(context.inputManager) {
   RegisterInputBindings();
 }
 
@@ -52,27 +52,22 @@ void InputSystem::RegisterInputBindings() {
 
 void InputSystem::Update() {
   // Reset frame-specific mouse states
-  if (inputPoller->IsQuit()) {
+  if (inputManager->IsQuit()) {
     HandleInputAction(InputAction::Quit, InputType::KEYBOARD);
   }
 
-  if (inputPoller->WasMouseButtonPressed(InputPoller::Mouse::LEFT)) {
+  if (inputManager->WasMouseButtonPressed(MouseButton::LEFT)) {
     HandleInputAction(InputAction::StartInteraction, InputType::MOUSE);
 
-  } else if (inputPoller->WasMouseButtonReleased(InputPoller::Mouse::LEFT)) {
-    // ui release -> drop item
-    if (inputPoller->IsDraggingOutSide())
-      HandleInputAction(InputAction::MouseDrop, InputType::MOUSE);
-
-    else
-      HandleInputAction(InputAction::StopInteraction, InputType::MOUSE);
+  } else if (inputManager->WasMouseButtonReleased(MouseButton::LEFT)) {
+    HandleInputAction(InputAction::StopInteraction, InputType::MOUSE);
   }
 
   for (auto &[key, action] : keyBindings) {
-    if (inputPoller->WasKeyPressedThisFrame(key.Scancode) &&
+    if (inputManager->WasKeyPressedThisFrame(key.Scancode) &&
         key.EventType == SDL_KEYDOWN) {
       HandleInputAction(action, InputType::KEYBOARD);
-    } else if (inputPoller->WasKeyReleasedThisFrame(key.Scancode) &&
+    } else if (inputManager->WasKeyReleasedThisFrame(key.Scancode) &&
                key.EventType == SDL_KEYUP) {
       HandleInputAction(action, InputType::KEYBOARD);
     }
@@ -83,19 +78,14 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
   EntityID player = world->GetPlayer();
 
   switch (action) {
-    case InputAction::MouseDrop: {
-      eventDispatcher->Publish(MouseDropEvent{});
-      break;
-    }
-
     // Player started interacting
     case InputAction::StartInteraction: {
       Vec2f targetPos;
       if (type == InputType::MOUSE) {
         const Vec2f campos = util::GetCameraPosition(registry);
-        const Vec2f mousepos = inputPoller->GetMousePositon();
-        targetPos =
-            util::ScreenToWorld(mousepos, campos, inputPoller->GetScreenSize());
+        const Vec2f mousepos = inputManager->GetMousePosition();
+        targetPos = util::ScreenToWorld(mousepos, campos,
+                                        inputManager->GetScreenSize());
       } else if (type == InputType::KEYBOARD) {
         auto &playerTransform =
             registry->GetComponent<TransformComponent>(player);

@@ -18,7 +18,6 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
-
 #define TEXTLATER
 
 constexpr float ICONSPRITE_WIDTHF = static_cast<float>(ICONSPRITE_WIDTH);
@@ -56,18 +55,48 @@ UISystem::UISystem(const SystemContext &context)
 }
 
 void UISystem::Update() {
-  ImGui_ImplSDLRenderer2_NewFrame();
-  ImGui_ImplSDL2_NewFrame();
+  ItemDropBackground();
 
-  ImGui::NewFrame();
-  {
-    if (demoShow) ImGui::ShowDemoWindow(&demoShow);
-    if (showInventory) Inventory();
-    AssemblingMachineUI();
-    MiningDrillUI();
+  if (demoShow) ImGui::ShowDemoWindow(&demoShow);
+  if (showInventory) Inventory();
+  AssemblingMachineUI();
+  MiningDrillUI();
+}
+
+void UISystem::ItemDropBackground() {
+  const ImGuiViewport *viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGuiWindowFlags flags =
+      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground |
+      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoNav;
+
+  if (ImGui::GetDragDropPayload() == nullptr) {
+    flags |= ImGuiWindowFlags_NoInputs;
   }
 
-  ImGui::Render();
+  ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
+
+  ImGui::Begin("##GameWorldDropTarget", nullptr, flags);
+
+  ImGui::Dummy(ImGui::GetContentRegionAvail());
+
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("DND_ITEM")) {
+      IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
+      ItemPayload *item_payload = static_cast<ItemPayload *>(payload->Data);
+
+      eventDispatcher->Publish(ItemDropInWorldEvent{*item_payload});
+    }
+    ImGui::EndDragDropTarget();
+  }
+
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar();
+  ImGui::End();
 }
 
 void UISystem::Inventory() {
@@ -181,7 +210,6 @@ void UISystem::Inventory() {
             if (payload_ptr->itemIdx < invComp.items.size()) {
               std::swap(invComp.items[idx],
                         invComp.items[payload_ptr->itemIdx]);
-              *payload_ptr = {0, world->GetPlayer(), ItemID::None, 0};
             }
           }
         }
