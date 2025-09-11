@@ -45,7 +45,9 @@ void MainMenuState::Update(float deltaTime) {
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
   if (ImGui::Button("Connect To Server", ImVec2(buttonWidth, 50))) {
     ImGui::End();
-    gEngine->ChangeState(std::make_unique<ClientState>());
+    std::unique_ptr<ClientState> clientState = std::make_unique<ClientState>();
+    if(clientState->TryConnect())
+      gEngine->ChangeState(std::unique_ptr<IGameState>(std::move(clientState)));
     return;
   }
 

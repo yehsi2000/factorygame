@@ -1,16 +1,14 @@
 #include "Core/Server.h"
 
+#include "Core/Packet.h"
 #include "Core/ServerImpl.h"
-
 
 // Include the platform-specific implementation files
 #if defined(_WIN32)
-#include "Server/Server_windows.cpp"
+#include "Network/Server_windows.cpp"
 #elif defined(__linux__)
-#include "Server/Server_linux.cpp"
+#include "Network/Server_linux.cpp"
 #endif
-
-// --- Server class implementation ---
 
 Server::Server() {
 #if defined(_WIN32)
@@ -19,31 +17,30 @@ Server::Server() {
   pimpl = std::make_unique<LinuxServerImpl>();
 #else
   // No implementation for unsupported platforms, pimpl will be null.
-  // Alternatively, create a default "Unsupported" implementation.
+  // TODO : Create a default "Unsupported" implementation.
 #endif
 }
 
-// The destructor needs to be defined here where ServerImpl is a complete type.
 Server::~Server() = default;
 
-// Move semantics must also be defined here.
 Server::Server(Server&&) noexcept = default;
 Server& Server::operator=(Server&&) noexcept = default;
 
-bool Server::Init() {
-  if (pimpl) {
-    return pimpl->Init();
-  }
+bool Server::Init(ThreadSafeQueue<PacketPtr>* packQ, ThreadSafeQueue<SendRequest>* sendQ) {
+  if (pimpl)
+    return pimpl->Init(packQ, sendQ);
+  else
+    return false;
+}
+
+void Server::StartSend(){
+  if (pimpl) pimpl->StartSend();
 }
 
 void Server::Start() {
-  if (pimpl) {
-    pimpl->Start();
-  }
+  if (pimpl) pimpl->Start();
 }
 
 void Server::Stop() {
-  if (pimpl) {
-    pimpl->Stop();
-  }
+  if (pimpl) pimpl->Stop();
 }

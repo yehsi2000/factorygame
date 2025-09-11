@@ -68,7 +68,6 @@ UISystem::UISystem(const SystemContext &context)
       });
   chatLog = std::list<std::string>();
   playerChat = std::make_shared<std::string>("");
-  chatLog.push_back("test player : teststring");
 }
 
 void UISystem::PushChat(std::shared_ptr<std::string> str) {

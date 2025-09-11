@@ -1,15 +1,17 @@
-#ifndef CORE_SERVER_IMPL_
-#define CORE_SERVER_IMPL_
+#ifndef CORE_SERVERIMPL_
+#define CORE_SERVERIMPL_
+
+#include <cstdint>
+#include "Core/Packet.h"
+#include "Core/ThreadSafeQueue.h"
 
 class ServerImpl {
 public:
     virtual ~ServerImpl() = default;
-    virtual bool Init() = 0;
+    virtual bool Init(ThreadSafeQueue<PacketPtr>* packQ, ThreadSafeQueue<SendRequest>* sendQ) = 0;
+    virtual void StartSend() = 0;
     virtual void Start() = 0;
     virtual void Stop() = 0;
-
-    // You can add more pure virtual functions here for platform-specific logic
-    // e.g., virtual void WorkerThread() = 0;
 };
 
-#endif // CORE_SERVER_IMPL_
+#endif/* CORE_SERVERIMPL_ */

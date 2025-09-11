@@ -30,23 +30,25 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
+#include "Core/Packet.h"
 #include "Core/Registry.h"
+#include "Core/Socket.h"
+#include "Core/ThreadSafeQueue.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Core/WorldAssetManager.h"
-#include "GameState/ClientState.h"
 #include "GameState/IGameState.h"
 #include "GameState/MainMenuState.h"
 #include "System/AnimationSystem.h"
 #include "System/AssemblingMachineSystem.h"
 #include "System/CameraSystem.h"
+#include "System/ClientNetworkSystem.h"
 #include "System/InputSystem.h"
 #include "System/InteractionSystem.h"
 #include "System/InventorySystem.h"
 #include "System/ItemDragSystem.h"
 #include "System/MiningDrillSystem.h"
 #include "System/MovementSystem.h"
-#include "System/NetworkSystem.h"
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
 #include "System/ResourceNodeSystem.h"
@@ -54,7 +56,6 @@
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
 #include "imgui_impl_sdlrenderer2.h"
-
 
 ClientState::ClientState() {}
 
@@ -65,10 +66,12 @@ void ClientState::Init(GEngine* engine) {
   assetManager = engine->GetAssetManager();
   worldAssetManager = engine->GetWorldAssetManager();
 
-  registry = std::make_unique<Registry>();
-  timerManager = std::make_unique<TimerManager>();
   eventDispatcher = std::make_unique<EventDispatcher>();
+  registry = std::make_unique<Registry>(eventDispatcher.get());
+  timerManager = std::make_unique<TimerManager>();
   commandQueue = std::make_unique<CommandQueue>();
+  packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
+  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
 
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
@@ -91,14 +94,51 @@ void ClientState::Init(GEngine* engine) {
   systemContext.inputManager = engine->GetInputManager();
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
+  systemContext.packetQueue = packetQueue.get();
+  systemContext.sendQueue = sendQueue.get();
+  systemContext.socket = connectionSocket.get();
+  systemContext.clientID = clientID;
   InitCoreSystem();
 
+  messageBuffer = std::vector<char>(1024);
+
+  bIsReceiving = true;
+  messageThread = std::thread([this] { SocketReceiveWorker(); });
+
+  world->GeneratePlayer();
   EntityID player = world->GetPlayer();
 
   // Default item
   eventDispatcher->Publish(
       ItemAddEvent(player, ItemID::AssemblingMachine, 100));
   eventDispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 100));
+}
+
+bool ClientState::TryConnect() {
+  connectionSocket = std::make_unique<Socket>();
+
+  connectionSocket->Init();
+
+  clientID = connectionSocket->Connect("127.0.0.1", 27015);
+
+  if (clientID == 0) return false;
+  return true;
+}
+
+void ClientState::SocketReceiveWorker() {
+  while (bIsReceiving) {
+    int res =
+        connectionSocket->Receive(messageBuffer.data(), messageBuffer.size());
+
+    if (res <= 0) {
+      break;
+    }
+    
+    PacketPtr packet = std::make_unique<char[]>(res);
+    memcpy(packet.get(), messageBuffer.data(), res);
+    packetQueue->Push(std::move(packet));
+  }
+  return;
 }
 
 void ClientState::RegisterComponent() {
@@ -131,7 +171,7 @@ void ClientState::InitCoreSystem() {
   itemDragSystem = std::make_unique<ItemDragSystem>(systemContext);
   miningDrillSystem = std::make_unique<MiningDrillSystem>(systemContext);
   movementSystem = std::make_unique<MovementSystem>(systemContext);
-  networkSystem = std::make_unique<NetworkSystem>(systemContext);
+  networkSystem = std::make_unique<ClientNetworkSystem>(systemContext);
   refinerySystem = std::make_unique<RefinerySystem>(systemContext);
   resourceNodeSystem = std::make_unique<ResourceNodeSystem>(systemContext);
   timerExpireSystem = std::make_unique<TimerExpireSystem>(systemContext);
@@ -143,7 +183,8 @@ void ClientState::InitCoreSystem() {
 }
 
 void ClientState::Cleanup() {
-  GameEndEventHandle.reset();
+  bIsReceiving = false;
+  messageThread.join();
 }
 
 void ClientState::Update(float deltaTime) {
@@ -157,6 +198,7 @@ void ClientState::Update(float deltaTime) {
     }
   }
 
+  networkSystem->Update(deltaTime);
   itemDragSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();

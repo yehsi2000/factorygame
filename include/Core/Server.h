@@ -2,26 +2,29 @@
 #define CORE_SERVER_
 
 #include <memory>
+#include <cstdint>
 
-class ServerImpl; // Forward declaration of the implementation class
+#include "Core/Packet.h"
+#include "Core/ThreadSafeQueue.h"
+
+class ServerImpl;
 
 class Server {
-    std::unique_ptr<ServerImpl> pimpl; // Pointer to implementation
+    std::unique_ptr<ServerImpl> pimpl;
 
 public:
     Server();
-    ~Server(); // Destructor must be defined in the .cpp file
+    ~Server();
 
-    // Move-only semantics
     Server(Server&&) noexcept;
     Server& operator=(Server&&) noexcept;
 
-    bool Init();
+    bool Init(ThreadSafeQueue<PacketPtr>* packQ, ThreadSafeQueue<SendRequest>* sendQ);
+    void StartSend();
     void Start();
     void Stop();
 
 private:
-    // Disable copy semantics
     Server(const Server&) = delete;
     Server& operator=(const Server&) = delete;
 };

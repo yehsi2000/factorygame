@@ -3,12 +3,15 @@
 
 #include <memory>
 #include <tuple>
+#include <thread>
 #include <vector>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"
 #include "Core/SystemContext.h"
 #include "GameState/IGameState.h"
+#include "Core/ThreadSafeQueue.h"
+#include "Core/Packet.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
 
@@ -22,6 +25,7 @@ class SystemContext;
 class TimerManager;
 class World;
 class WorldAssetManager;
+class Socket;
 
 class AnimationSystem;
 class AssemblingMachineSystem;
@@ -31,7 +35,7 @@ class InteractionSystem;
 class ItemDragSystem;
 class InventorySystem;
 class MiningDrillSystem;
-class NetworkSystem;
+class ClientNetworkSystem;
 class MovementSystem;
 class RenderSystem;
 class RefinerySystem;
@@ -70,7 +74,7 @@ class ClientState : public IGameState {
   std::unique_ptr<ItemDragSystem> itemDragSystem;
   std::unique_ptr<MiningDrillSystem> miningDrillSystem;
   std::unique_ptr<MovementSystem> movementSystem;
-  std::unique_ptr<NetworkSystem> networkSystem;
+  std::unique_ptr<ClientNetworkSystem> networkSystem;
   std::unique_ptr<RefinerySystem> refinerySystem;
   std::unique_ptr<RenderSystem> renderSystem;
   std::unique_ptr<ResourceNodeSystem> resourceNodeSystem;
@@ -78,12 +82,22 @@ class ClientState : public IGameState {
   std::unique_ptr<TimerExpireSystem> timerExpireSystem;
   std::unique_ptr<InteractionSystem> interactionSystem;
   std::unique_ptr<UISystem> uiSystem;
+  
+  std::unique_ptr<Socket> connectionSocket;
+  std::unique_ptr<ThreadSafeQueue<PacketPtr>> packetQueue;
+  std::unique_ptr<ThreadSafeQueue<SendRequest>> sendQueue;
 
+  uintptr_t clientID;
+  std::vector<char> messageBuffer;
+  std::thread messageThread;
+  bool bIsReceiving;
+  
   Vec2 screenSize;
 
  public:
   ClientState();
   virtual void Init(GEngine *engine) override;
+  bool TryConnect();
   virtual void Cleanup() override;
   virtual void Update(float deltaTime) override;
 
@@ -99,6 +113,7 @@ class ClientState : public IGameState {
   };
 
  private:
+  void SocketReceiveWorker();
   void RegisterComponent();
   void InitCoreSystem();
 };

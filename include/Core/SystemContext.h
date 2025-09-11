@@ -1,5 +1,9 @@
 #pragma once
 
+#include "Core/Packet.h"
+#include "Core/ThreadSafeQueue.h"
+#include <cstdint>
+
 // Forward declarations
 class AssetManager;
 class WorldAssetManager;
@@ -7,19 +11,25 @@ class CommandQueue;
 class Registry;
 class EventDispatcher;
 class World;
+class Server;
 class InputManager;
 class EntityFactory;
 class TimerManager;
+class Socket;
 
 struct SystemContext {
-    AssetManager* assetManager = nullptr;
-    WorldAssetManager* worldAssetManager = nullptr;
-    CommandQueue* commandQueue = nullptr;
-    Registry* registry = nullptr;
-    EventDispatcher* eventDispatcher = nullptr;
-    World* world = nullptr;
-    InputManager* inputManager = nullptr;
-    EntityFactory* entityFactory = nullptr;
-    TimerManager* timerManager = nullptr;
-    bool bIsServer;
+  AssetManager* assetManager = nullptr;
+  WorldAssetManager* worldAssetManager = nullptr;
+  CommandQueue* commandQueue = nullptr;
+  Registry* registry = nullptr;
+  EventDispatcher* eventDispatcher = nullptr;
+  World* world = nullptr;
+  InputManager* inputManager = nullptr;
+  EntityFactory* entityFactory = nullptr;
+  TimerManager* timerManager = nullptr;
+  ThreadSafeQueue<PacketPtr>* packetQueue = nullptr;
+  ThreadSafeQueue<SendRequest>* sendQueue = nullptr;
+  Server* server = nullptr;
+  Socket* socket = nullptr;
+  uintptr_t clientID = 0;
 };

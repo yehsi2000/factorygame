@@ -32,6 +32,8 @@
 #include "Core/GEngine.h"
 #include "Core/Registry.h"
 #include "Core/Server.h"
+#include "Core/Packet.h"
+#include "Core/ThreadSafeQueue.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Core/WorldAssetManager.h"
@@ -47,7 +49,7 @@
 #include "System/ItemDragSystem.h"
 #include "System/MiningDrillSystem.h"
 #include "System/MovementSystem.h"
-#include "System/NetworkSystem.h"
+#include "System/ServerNetworkSystem.h"
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
 #include "System/ResourceNodeSystem.h"
@@ -65,12 +67,15 @@ void ServerState::Init(GEngine* engine) {
   assetManager = engine->GetAssetManager();
   worldAssetManager = engine->GetWorldAssetManager();
 
-  registry = std::make_unique<Registry>();
+  
   timerManager = std::make_unique<TimerManager>();
   eventDispatcher = std::make_unique<EventDispatcher>();
+  registry = std::make_unique<Registry>(eventDispatcher.get());
   commandQueue = std::make_unique<CommandQueue>();
+  packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
+  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
   server = std::make_unique<Server>();
-  server->Init();
+  server->Init(packetQueue.get(), sendQueue.get());
   server->Start();
 
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
@@ -94,9 +99,13 @@ void ServerState::Init(GEngine* engine) {
   systemContext.inputManager = engine->GetInputManager();
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
-  systemContext.bIsServer = true;
+  systemContext.packetQueue = packetQueue.get();
+  systemContext.sendQueue = sendQueue.get();
+  systemContext.server = server.get();
+
   InitCoreSystem();
 
+  world->GeneratePlayer();
   EntityID player = world->GetPlayer();
 
   // Default item
@@ -135,7 +144,7 @@ void ServerState::InitCoreSystem() {
   itemDragSystem = std::make_unique<ItemDragSystem>(systemContext);
   miningDrillSystem = std::make_unique<MiningDrillSystem>(systemContext);
   movementSystem = std::make_unique<MovementSystem>(systemContext);
-  networkSystem = std::make_unique<NetworkSystem>(systemContext);
+  networkSystem = std::make_unique<ServerNetworkSystem>(systemContext);
   refinerySystem = std::make_unique<RefinerySystem>(systemContext);
   resourceNodeSystem = std::make_unique<ResourceNodeSystem>(systemContext);
   timerExpireSystem = std::make_unique<TimerExpireSystem>(systemContext);
@@ -161,6 +170,7 @@ void ServerState::Update(float deltaTime) {
     }
   }
 
+  networkSystem->Update(deltaTime);
   itemDragSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();

@@ -6,29 +6,27 @@
 
 #include "Core/SystemContext.h"
 
-
 class EventHandle;
 
-class NetworkSystem {
-  /**
-   * //TODO : Networking prototype
-   * simple things, like sending player position to server,
-   * or broadcasting entity, chunk creation to client whatever
-   */
+class ClientNetworkSystem {
   AssetManager* assetManager;
   EventDispatcher* eventDispatcher;
   Registry* registry;
   TimerManager* timerManager;
+  ThreadSafeQueue<PacketPtr>* packetQueue;
+  ThreadSafeQueue<SendRequest>* sendQueue;
   World* world;
+  Socket* connectionSocket;
+  uintptr_t clientID;
 
  public:
-  NetworkSystem(const SystemContext& context);
-  ~NetworkSystem();
+  ClientNetworkSystem(const SystemContext& context);
+  ~ClientNetworkSystem();
   void Update(float deltatime);
 
  private:
   std::unique_ptr<EventHandle> sendChatHandle;
-  void SendChat(std::shared_ptr<std::string> chat);
+  void SendMessage(std::shared_ptr<std::string> message);
 };
 
 #endif /* SYSTEM_NETWORKSYSTEM_ */

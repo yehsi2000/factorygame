@@ -38,7 +38,6 @@ World::World(Registry *registry, WorldAssetManager *worldAssetManager,
   std::random_device rd;
   randomGenerator.seed(rd());
   distribution = std::normal_distribution<float>(0.0, 1.0);
-  GeneratePlayer();
 }
 
 void World::Update() {
