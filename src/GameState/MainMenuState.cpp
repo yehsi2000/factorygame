@@ -1,7 +1,8 @@
 ﻿#include "GameState/MainMenuState.h"
 
 #include "Core/GEngine.h"
-#include "GameState/PlayState.h"
+#include "GameState/ServerState.h"
+#include "GameState/ClientState.h"
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_ttf.h"
@@ -30,24 +31,22 @@ void MainMenuState::Update(float deltaTime) {
 
   ImGui::Begin("Main Menu", nullptr, window_flags);
 
-  // --- Add UI Elements ---
-
-  // Center the buttons
+  ImGui::SetCursorPosY(viewport->WorkSize.y/2 - 75.0f);
   float windowWidth = ImGui::GetWindowSize().x;
   float buttonWidth = 200.0f;
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
 
-  // The "New Game" button
-  if (ImGui::Button("New Game", ImVec2(buttonWidth, 50))) {
+  if (ImGui::Button("Start Server Game", ImVec2(buttonWidth, 50))) {
     ImGui::End();
-    gEngine->ChangeState(std::make_unique<PlayState>());
+    gEngine->ChangeState(std::make_unique<ServerState>());
     return;
   }
 
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
-  if (ImGui::Button("Load Game", ImVec2(buttonWidth, 50))) {
-    // TODO: Implement Load Game functionality
-    // gEngine->PushState(std::make_unique<LoadGameMenuState>());
+  if (ImGui::Button("Connect To Server", ImVec2(buttonWidth, 50))) {
+    ImGui::End();
+    gEngine->ChangeState(std::make_unique<ClientState>());
+    return;
   }
 
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);

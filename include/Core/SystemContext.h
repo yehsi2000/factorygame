@@ -21,4 +21,5 @@ struct SystemContext {
     InputManager* inputManager = nullptr;
     EntityFactory* entityFactory = nullptr;
     TimerManager* timerManager = nullptr;
+    bool bIsServer;
 };

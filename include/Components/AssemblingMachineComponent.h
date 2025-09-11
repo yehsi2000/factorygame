@@ -21,10 +21,10 @@ struct AssemblingMachineComponent {
   
   std::unordered_map<ItemID, int> outputInventory;
   
-  bool isAnimating = false;
+  bool bIsAnimating = false;
   
-  bool showUI = false;
-  bool showRecipeSelection = true; // true when no recipe selected
+  bool bIsShowingUI = false;
+  bool bIsShowingRecipeSelection = true; // true when no recipe selected
 };
 
 #endif/* COMPONENTS_ASSEMBLINGMACHINECOMPONENT_ */

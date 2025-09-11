@@ -4,7 +4,7 @@
 #include "Core/Entity.h"
 
 struct PlayerStateComponent{
-  bool isMining;
+  bool bIsMining;
   EntityID interactingEntity;
 };
 

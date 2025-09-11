@@ -20,7 +20,7 @@ void TimerSystem::Update(float deltaTime) {
       }
 
       TimerInstance* timer = timerManager->GetTimer(handle);
-      if (!timer || !timer->isActive || timer->isPaused) {
+      if (!timer || !timer->bIsActive || timer->bIsPaused) {
         continue;
       }
 

@@ -14,15 +14,15 @@ class EntityFactory {
 
  public:
   EntityFactory(Registry* registry, AssetManager* assetManager);
-  ~EntityFactory();
+  virtual ~EntityFactory();
   
-  EntityID CreateAssemblingMachine(World* world, Vec2f worldPos);
-  EntityID CreateAssemblingMachine(World* world, Vec2 tileIndex);
+  virtual EntityID CreateAssemblingMachine(World* world, Vec2f worldPos);
+  virtual EntityID CreateAssemblingMachine(World* world, Vec2 tileIndex);
 
-  EntityID CreateMiningDrill(World* world, Vec2f worldPos);
-  EntityID CreateMiningDrill(World* world, Vec2 tileIndex);
+  virtual EntityID CreateMiningDrill(World* world, Vec2f worldPos);
+  virtual EntityID CreateMiningDrill(World* world, Vec2 tileIndex);
 
-  EntityID CreatePlayer(World* world, Vec2f worldPos);
+  virtual EntityID CreatePlayer(World* world, Vec2f worldPos);
 };
 
 #endif /* CORE_ENTITYFACTORY_ */

@@ -26,9 +26,9 @@ struct TimerInstance {
   TimerHandle handle = INVALID_TIMER_HANDLE;
   float duration = 0.0f;
   float elapsed = 0.0f;
-  bool isRepeating = false;
-  bool isPaused = false;
-  bool isActive = false;
+  bool bIsRepeating = false;
+  bool bIsPaused = false;
+  bool bIsActive = false;
 };
 
 struct TimerComponent {
@@ -45,4 +45,4 @@ struct TimerExpiredTag {
   TimerId expiredId;
 };
 
-#endif /* COMPONENTS_TIMERCOMPONENT_ */
+#endif/* COMPONENTS_TIMERCOMPONENT_ */

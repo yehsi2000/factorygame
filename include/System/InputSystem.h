@@ -15,6 +15,7 @@ enum class InputAction {
   StartInteraction,
   StopInteraction,
   Inventory,
+  Chat,
   Quit
 };
 

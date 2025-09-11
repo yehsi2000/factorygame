@@ -47,7 +47,7 @@ void MiningDrillSystem::Update() {
           continue;  // continue mining
 
         util::DetachTimer(registry, timerManager, entity, TimerId::Mine);
-        drill.isAnimating = false;
+        drill.bIsAnimating = false;
         break;
       }
 
@@ -94,7 +94,7 @@ void MiningDrillSystem::StartMining(MiningDrillComponent& drill,
       return;
     } else {
       drill.state = MiningDrillState::Mining;
-      drill.isAnimating = true;
+      drill.bIsAnimating = true;
       util::AttachTimer(registry, timerManager, entity, TimerId::Mine, 1.f,
                         true);
     }
@@ -121,14 +121,14 @@ void MiningDrillSystem::UpdateAnimationState(MiningDrillComponent& drill,
 
   auto& animation = registry->GetComponent<AnimationComponent>(entity);
 
-  if (drill.isAnimating &&
+  if (drill.bIsAnimating &&
       animation.currentAnimation != AnimationName::DRILL_WORKING) {
     util::SetAnimation(AnimationName::DRILL_WORKING, animation, true);
-  } else if (!drill.isAnimating &&
+  } else if (!drill.bIsAnimating &&
              animation.currentAnimation != AnimationName::DRILL_IDLE) {
     util::SetAnimation(AnimationName::DRILL_IDLE, animation, true);
   } else {
-    animation.isPlaying = drill.isAnimating;
+    animation.bIsPlaying = drill.bIsAnimating;
   }
 }
 

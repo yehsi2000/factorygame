@@ -18,10 +18,10 @@ InputManager::InputManager(SDL_Window* window) : window(window), io(ImGui::GetIO
 InputManager::~InputManager() = default;
 
 void InputManager::PrepareForNewFrame() {
-  state.leftMousePressed = false;
-  state.rightMousePressed = false;
-  state.leftMouseReleased = false;
-  state.rightMouseReleased = false;
+  state.bIsLeftMousePressed = false;
+  state.bIsRightMousePressed = false;
+  state.bIsLeftMouseReleased = false;
+  state.bIsRightMouseReleased = false;
   state.mouseWheel = {0, 0};
   state.mouseDelta = {0, 0};
 
@@ -31,43 +31,43 @@ void InputManager::PrepareForNewFrame() {
 
 void InputManager::ProcessEvent(const SDL_Event& event) {
   if (event.type == SDL_QUIT) {
-    state.isQuit = true;
+    state.bIsQuit = true;
   }
 
   // This is the new, more robust condition
-  bool UIBusy = io.WantCaptureMouse || ImGui::IsAnyItemActive();
+  bool bIsUIBusy = io.WantCaptureMouse || ImGui::IsAnyItemActive();
 
   switch (event.type) {
     case SDL_MOUSEBUTTONDOWN:
-      if (UIBusy) break;
+      if (bIsUIBusy) break;
       if (event.button.button == SDL_BUTTON_LEFT) {
-        state.leftMouseDown = true;
-        state.leftMousePressed = true;
+        state.bIsLeftMouseDown = true;
+        state.bIsLeftMousePressed = true;
       } else if (event.button.button == SDL_BUTTON_RIGHT) {
-        state.rightMouseDown = true;
-        state.rightMousePressed = true;
+        state.bIsRightMouseDown = true;
+        state.bIsRightMousePressed = true;
       }
       break;
 
     case SDL_MOUSEBUTTONUP:
-      if (UIBusy) break;
+      if (bIsUIBusy) break;
       if (event.button.button == SDL_BUTTON_LEFT) {
-        state.leftMouseDown = false;
-        state.leftMouseReleased = true;
+        state.bIsLeftMouseDown = false;
+        state.bIsLeftMouseReleased = true;
       } else if (event.button.button == SDL_BUTTON_RIGHT) {
-        state.rightMouseDown = false;
-        state.rightMouseReleased = true;
+        state.bIsRightMouseDown = false;
+        state.bIsRightMouseReleased = true;
       }
       break;
 
     case SDL_MOUSEWHEEL:
-      if (UIBusy) break;
+      if (bIsUIBusy) break;
       state.mouseWheel = {event.wheel.x, event.wheel.y};
       break;
 
     case SDL_MOUSEMOTION:
       state.mousePos = {event.motion.x, event.motion.y};
-      if (UIBusy) break;
+      if (bIsUIBusy) break;
       state.mouseDelta = {event.motion.xrel, event.motion.yrel};
       break;
   }
@@ -107,8 +107,8 @@ bool InputManager::WasKeyReleasedThisFrame(SDL_Scancode key) const {
 
 bool InputManager::IsMouseButtonDown(MouseButton button) const {
   if (io.WantCaptureMouse) return false;
-  if (button == MouseButton::LEFT) return state.leftMouseDown;
-  if (button == MouseButton::RIGHT) return state.rightMouseDown;
+  if (button == MouseButton::LEFT) return state.bIsLeftMouseDown;
+  if (button == MouseButton::RIGHT) return state.bIsRightMouseDown;
   return false;
 }
 
@@ -118,55 +118,17 @@ bool InputManager::IsMouseButtonUp(MouseButton button) const {
 
 bool InputManager::WasMouseButtonPressed(MouseButton button) const {
   if (io.WantCaptureMouse) return false;
-  if (button == MouseButton::LEFT) return state.leftMousePressed;
-  if (button == MouseButton::RIGHT) return state.rightMousePressed;
+  if (button == MouseButton::LEFT) return state.bIsLeftMousePressed;
+  if (button == MouseButton::RIGHT) return state.bIsRightMousePressed;
   return false;
 }
 
 bool InputManager::WasMouseButtonReleased(MouseButton button) const {
   if (io.WantCaptureMouse) return false;
-  if (button == MouseButton::LEFT) return state.leftMouseReleased;
-  if (button == MouseButton::RIGHT) return state.rightMouseReleased;
+  if (button == MouseButton::LEFT) return state.bIsLeftMouseReleased;
+  if (button == MouseButton::RIGHT) return state.bIsRightMouseReleased;
   return false;
 }
-
-// bool InputManager::IsUIMouseButtonDown(MouseButton button) const {
-//   if (!io.WantCaptureMouse) return false;
-//   if (button == MouseButton::LEFT)
-//     return io.MouseDown[0];
-//   else if (button == MouseButton::RIGHT)
-//     return io.MouseDown[1];
-//   return false;
-// }
-
-// bool InputManager::IsUIMouseButtonUp(MouseButton button) const {
-//   if (!io.WantCaptureMouse) return false;
-//   if (button == MouseButton::LEFT)
-//     return !io.MouseDown[0];
-//   else if (button == MouseButton::RIGHT)
-//     return !io.MouseDown[1];
-//   return false;
-// }
-
-// bool InputManager::WasUIMouseButtonPressed(MouseButton button) const {
-//   if (!io.WantCaptureMouse) return false;
-//   if (button == MouseButton::LEFT)
-//     return io.MouseClicked[0];
-//   else if (button == MouseButton::RIGHT)
-//     return io.MouseClicked[1];
-//   return false;
-// }
-
-// bool InputManager::WasUIMouseButtonReleased(MouseButton button) const {
-//   if (!io.WantCaptureMouse) return false;
-//   if (button == MouseButton::LEFT)
-//     return io.MouseReleased[0];
-//   else if (button == MouseButton::RIGHT)
-//     return io.MouseReleased[1];
-//   return false;
-// }
-
-
 
 Vec2 InputManager::GetMousePosition() const { return state.mousePos; }
 
@@ -185,4 +147,4 @@ Vec2 InputManager::GetScreenSize() {
   return screenSize;
 }
 
-bool InputManager::IsQuit() const { return state.isQuit; }
+bool InputManager::IsQuit() const { return state.bIsQuit; }

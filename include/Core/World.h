@@ -118,6 +118,8 @@ class World {
   bool DoesTileBlockMovement(Vec2f worldPos);
   bool DoesTileBlockMovement(Vec2 tileIdx);
 
+  void GeneratePlayer(Vec2f pos = {0.f,0.f});
+
   const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {
     return activeChunks;
   }
@@ -130,7 +132,6 @@ class World {
   void LoadChunk(int chunkX, int chunkY);
   void GenerateChunk(Chunk& chunk);
   void UnloadChunk(Chunk& chunk);
-  void GeneratePlayer();
 
   std::mt19937 randomGenerator;
   std::normal_distribution<float> distribution;

@@ -46,7 +46,7 @@ class Registry {
   std::size_t GetComponentArraySize() {
     std::size_t compTypeId = GetComponentTypeID<T>();
     if (componentArrays.size() <= compTypeId) return 0;
-    return componentArrays[compTypeId]->getSize();
+    return componentArrays[compTypeId]->GetSize();
   }
 
  public:
@@ -80,7 +80,7 @@ class Registry {
     assert(livingEntityCount > 0 && "Destroying non-existent entity.");
 
     for (auto& compArray : componentArrays) {
-      compArray->entityDestroyed(entity);
+      compArray->EntityDestroyed(entity);
     }
 
     availableEntities.push(entity);
@@ -109,7 +109,7 @@ class Registry {
    */
   template <typename T>
   void AddComponent(EntityID entity, T &&component) {
-    GetComponentArray<T>()->addData(entity, std::move(component));
+    GetComponentArray<T>()->AddData(entity, std::move(component));
   }
 
   /**
@@ -121,7 +121,7 @@ class Registry {
    */
   template <typename T, typename... Args>
   void EmplaceComponent(EntityID entity, Args &&...args) {
-    GetComponentArray<T>()->emplaceData(entity, std::forward<Args>(args)...);
+    GetComponentArray<T>()->EmplaceData(entity, std::forward<Args>(args)...);
   }
 
   /**
@@ -131,7 +131,7 @@ class Registry {
    */
   template <typename T>
   void RemoveComponent(EntityID entity) {
-    GetComponentArray<T>()->removeData(entity);
+    GetComponentArray<T>()->RemoveData(entity);
   }
 
   /**
@@ -142,7 +142,7 @@ class Registry {
    */
   template <typename T>
   T &GetComponent(EntityID entity) {
-    return GetComponentArray<T>()->getData(entity);
+    return GetComponentArray<T>()->GetData(entity);
   }
 
   /**
@@ -157,7 +157,7 @@ class Registry {
     if (componentArrays.size() <= compTypeId)
       return false;
     else 
-      return componentArrays[compTypeId]->hasEntity(entity);
+      return componentArrays[compTypeId]->HasEntity(entity);
     
   }
 
@@ -182,15 +182,15 @@ class Registry {
 
     // Find smallest array
     std::sort(arrays.begin(), arrays.end(), [](const auto &a, const auto &b) {
-      return a->getSize() < b->getSize();
+      return a->GetSize() < b->GetSize();
     });
-    std::vector<EntityID> result = arrays[0]->getAllEntities();
+    std::vector<EntityID> result = arrays[0]->GetAllEntities();
 
     // Prune entities which doesn't have all components passed
     for (size_t i = 1; i < arrays.size(); ++i) {
       result.erase(std::remove_if(result.begin(), result.end(),
                                   [&](EntityID entity) {
-                                    return !arrays[i]->hasEntity(entity);
+                                    return !arrays[i]->HasEntity(entity);
                                   }),
                    result.end());
     }

@@ -34,7 +34,7 @@ void TimerExpireSystem::Update() {
       TimerInstance* timer = timerManager->GetTimer(handle);
       if (timer) {
         // Cleanup timer first
-        if (timer->isRepeating) {
+        if (timer->bIsRepeating) {
           timer->elapsed = 0.0f;
         } else {
           timerComp.timers[static_cast<int>(expiredId)] = INVALID_TIMER_HANDLE;

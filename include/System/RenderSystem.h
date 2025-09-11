@@ -30,7 +30,7 @@ private:
   void RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom);
   void RenderDebugRect(Vec2f cameraPos, Vec2 screenSize, float zoom);
 
-  bool isOffScreen(Vec2f screenPos, Vec2 screenSize, Vec2f entitySize);
+  bool IsOffScreen(Vec2f screenPos, Vec2 screenSize, Vec2f entitySize);
 };
 
 #endif/* SYSTEM_RENDERSYSTEM_ */

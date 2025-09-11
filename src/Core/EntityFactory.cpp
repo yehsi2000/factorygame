@@ -68,7 +68,7 @@ EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
                      spritesheet, {0, 32, 8.0f, 214, 226, true});
 
   anim.currentAnimation = AnimationName::ASSEMBLING_MACHINE_IDLE;
-  anim.isPlaying = false;
+  anim.bIsPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
   // Add assembling machine component
@@ -135,7 +135,7 @@ EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
                      {0, 32, 8.0f, 185, 168, true});
 
   anim.currentAnimation = AnimationName::DRILL_IDLE;
-  anim.isPlaying = false;
+  anim.bIsPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
   MiningDrillComponent drill;
@@ -190,7 +190,7 @@ EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos) {
       player, MovementComponent{.speed = 300.f});
 
   registry->EmplaceComponent<PlayerStateComponent>(
-      player, PlayerStateComponent{.isMining = false,
+      player, PlayerStateComponent{.bIsMining = false,
                                    .interactingEntity = INVALID_ENTITY});
 
   registry->EmplaceComponent<MovableComponent>(player);

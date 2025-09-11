@@ -19,10 +19,10 @@ class TimerManager {
    * 
    * @param id TimerId to represent purpose of is timer.
    * @param duration How long does this timer take to expire.
-   * @param isRepeating If true, repeat timer after it's expiration.
+   * @param bIsRepeating If true, repeat timer after it's expiration.
    * @return TimerHandle 
    */
-  TimerHandle CreateTimer(TimerId id, float duration, bool isRepeating);
+  TimerHandle CreateTimer(TimerId id, float duration, bool bIsRepeating);
 
   /**
    * @brief Retrieves a pointer to a timer instance from its handle.

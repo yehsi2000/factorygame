@@ -46,7 +46,7 @@ void MovementSystem::Update(float deltaTime) {
       float iy = inputManager->GetYAxis();
 
       if (ix == 0.f && iy == 0.f) {
-        if(!playerStateComp.isMining) util::SetAnimation(AnimationName::PLAYER_IDLE, playerAnimComp, true);
+        if(!playerStateComp.bIsMining) util::SetAnimation(AnimationName::PLAYER_IDLE, playerAnimComp, true);
         return;
       }
 
@@ -70,8 +70,8 @@ void MovementSystem::Update(float deltaTime) {
       }
 
       // Stop player interaction
-      if (playerStateComp.isMining) {
-        playerStateComp.isMining = false;
+      if (playerStateComp.bIsMining) {
+        playerStateComp.bIsMining = false;
         playerStateComp.interactingEntity = INVALID_ENTITY;
         util::DetachTimer(registry, timerManager, entity, TimerId::Mine);
       }

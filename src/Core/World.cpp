@@ -79,9 +79,8 @@ void World::Update() {
   }
 }
 
-void World::GeneratePlayer() {
-  // HACK currently always spawns in 0,0
-  player = factory->CreatePlayer(this, Vec2f{0.f, 0.f});
+void World::GeneratePlayer(Vec2f pos) {
+  player = factory->CreatePlayer(this, pos);
 }
 
 TileData *World::GetTileAtWorldPosition(Vec2f position) {
@@ -391,7 +390,7 @@ void World::GenerateChunk(Chunk &chunk) {
   // Create and add the chunk component with the pre-rendered texture
   ChunkComponent chunkComp;
   chunkComp.chunkTexture = worldAssetManager->CreateChunkTexture(chunk);
-  chunkComp.needsRedraw = false;
+  chunkComp.bNeedsRedraw = false;
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
 
   // std::cout << "Generated Chunk at (" << chunk.chunkX << ", " << chunk.chunkY

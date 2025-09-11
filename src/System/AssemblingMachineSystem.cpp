@@ -183,10 +183,10 @@ void AssemblingMachineSystem::ProduceOutput(EntityID entity) {
     StartCrafting(entity, machine);
   } else if (!CanStoreOutput(entity)) {
     machine.state = AssemblingMachineState::OutputFull;
-    machine.isAnimating = false;
+    machine.bIsAnimating = false;
   } else {
     machine.state = AssemblingMachineState::WaitingForIngredients;
-    machine.isAnimating = false;
+    machine.bIsAnimating = false;
   }
 }
 
@@ -194,7 +194,7 @@ void AssemblingMachineSystem::StartCrafting(
     EntityID entity, AssemblingMachineComponent &machine) {
   ConsumeIngredients(entity, machine);
   machine.state = AssemblingMachineState::Crafting;
-  machine.isAnimating = true;
+  machine.bIsAnimating = true;
 
   // Start crafting timer using TimerUtil
   if (machine.currentRecipe != RecipeID::None) {
@@ -212,16 +212,16 @@ void AssemblingMachineSystem::UpdateAnimationState(
 
   auto &animComp = registry->GetComponent<AnimationComponent>(entity);
 
-  if (machine.isAnimating &&
+  if (machine.bIsAnimating &&
       animComp.currentAnimation != AnimationName::ASSEMBLING_MACHINE_WORKING) {
     util::SetAnimation(AnimationName::ASSEMBLING_MACHINE_WORKING, animComp,
                        true);
-  } else if (!machine.isAnimating &&
+  } else if (!machine.bIsAnimating &&
              animComp.currentAnimation !=
                  AnimationName::ASSEMBLING_MACHINE_IDLE) {
     util::SetAnimation(AnimationName::ASSEMBLING_MACHINE_IDLE, animComp, false);
   } else {
-    animComp.isPlaying = machine.isAnimating;
+    animComp.bIsPlaying = machine.bIsAnimating;
   }
 }
 

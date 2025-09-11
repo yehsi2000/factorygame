@@ -1,5 +1,5 @@
-﻿#ifndef GAMESTATE_PLAYSTATE_
-#define GAMESTATE_PLAYSTATE_
+﻿#ifndef GAMESTATE_CLIENTSTATE_
+#define GAMESTATE_CLIENTSTATE_
 
 #include <memory>
 #include <tuple>
@@ -31,6 +31,7 @@ class InteractionSystem;
 class ItemDragSystem;
 class InventorySystem;
 class MiningDrillSystem;
+class NetworkSystem;
 class MovementSystem;
 class RenderSystem;
 class RefinerySystem;
@@ -42,7 +43,7 @@ class UISystem;
 /**
  * @brief Represents the primary gameplay state.
  */
-class PlayState : public IGameState {
+class ClientState : public IGameState {
   SDL_Window *gWindow;
   SDL_Renderer *gRenderer;
   TTF_Font *gFont;
@@ -69,6 +70,7 @@ class PlayState : public IGameState {
   std::unique_ptr<ItemDragSystem> itemDragSystem;
   std::unique_ptr<MiningDrillSystem> miningDrillSystem;
   std::unique_ptr<MovementSystem> movementSystem;
+  std::unique_ptr<NetworkSystem> networkSystem;
   std::unique_ptr<RefinerySystem> refinerySystem;
   std::unique_ptr<RenderSystem> renderSystem;
   std::unique_ptr<ResourceNodeSystem> resourceNodeSystem;
@@ -80,7 +82,7 @@ class PlayState : public IGameState {
   Vec2 screenSize;
 
  public:
-  PlayState();
+  ClientState();
   virtual void Init(GEngine *engine) override;
   virtual void Cleanup() override;
   virtual void Update(float deltaTime) override;
@@ -101,4 +103,5 @@ class PlayState : public IGameState {
   void InitCoreSystem();
 };
 
-#endif /* GAMESTATE_PLAYSTATE_ */
+
+#endif/* GAMESTATE_CLIENTSTATE_ */
