@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "Core/ComponentArray.h"
+#include "Core/EventDispatcher.h"
 
 constexpr int MAX_ENTITIES = 1000000;
 
@@ -24,6 +25,7 @@ class Registry {
   std::size_t COMPONENT_ID = 0;
 
   std::vector<std::unique_ptr<IComponentArray>> componentArrays{};
+  EventDispatcher* eventDispatcher;
 
   template <typename T>
   std::size_t GetComponentTypeID() {
@@ -50,7 +52,7 @@ class Registry {
   }
 
  public:
-  Registry() {
+  Registry(EventDispatcher* dispatcher) : eventDispatcher(dispatcher) {
     for (EntityID entity = 1; entity < MAX_ENTITIES; ++entity) {
       availableEntities.push(entity);
     }
@@ -78,6 +80,8 @@ class Registry {
    */
   void DestroyEntity(EntityID entity) {
     assert(livingEntityCount > 0 && "Destroying non-existent entity.");
+
+    eventDispatcher->Publish(EntityDestroyedEvent(entity));
 
     for (auto& compArray : componentArrays) {
       compArray->EntityDestroyed(entity);

@@ -6,6 +6,8 @@
 #include "SDL_ttf.h"
 
 struct SDL_Renderer;
+class EventHandle;
+struct EntityDestroyedEvent;
 
 /**
  * @brief Responsible for rendering every entity, chunk and text
@@ -16,12 +18,14 @@ class RenderSystem {
   SDL_Renderer *renderer;
   World *world;
   TTF_Font *font;
+  std::unique_ptr<EventHandle> entityDestroyedEventHandle;
 
 public:
   RenderSystem(const SystemContext& context, SDL_Renderer* renderer, TTF_Font *f);
   ~RenderSystem();
 
   void Update();
+  void OnEntityDestroyed(const EntityDestroyedEvent& event);
 
 private:
   void RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom);

@@ -105,6 +105,11 @@ struct YAxisEvent : public Event {
   float val;
 };
 
+struct EntityDestroyedEvent : public Event {
+  EntityDestroyedEvent(EntityID entity) : entity(entity) {}
+  EntityID entity;
+};
+
 struct QuitEvent : public Event {};
 
 #endif/* CORE_EVENT_ */

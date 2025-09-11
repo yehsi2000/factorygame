@@ -12,6 +12,8 @@
 #include "Components/TransformComponent.h"
 #include "Core/Chunk.h"
 #include "Core/Entity.h"
+#include "Core/Event.h"
+#include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
@@ -21,7 +23,9 @@
 
 
 RenderSystem::RenderSystem(const SystemContext &context, SDL_Renderer* renderer, TTF_Font *font)
-    : registry(context.registry), renderer(renderer), world(context.world), font(font) {}
+    : registry(context.registry), renderer(renderer), world(context.world), font(font) {
+      entityDestroyedEventHandle = context.eventDispatcher->Subscribe<EntityDestroyedEvent>([this](const auto& event) { this->OnEntityDestroyed(event); });
+    }
 
 void RenderSystem::Update() {
   SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
@@ -45,6 +49,17 @@ void RenderSystem::Update() {
   RenderTexts(cameraPos, screenSize, zoom);
 
   RenderDebugRect(cameraPos, screenSize, zoom);
+}
+
+void RenderSystem::OnEntityDestroyed(const EntityDestroyedEvent& event)
+{
+  if (registry->HasComponent<TextComponent>(event.entity)) {
+    auto &text = registry->GetComponent<TextComponent>(event.entity);
+    if (text.texture) {
+      SDL_DestroyTexture(text.texture);
+      text.texture = nullptr;
+    }
+  }
 }
 
 void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
@@ -140,16 +155,27 @@ bool RenderSystem::IsOffScreen(Vec2f screenPos, Vec2 screenSize,
 void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<DebugRectComponent>(entity)) continue;
+
+    auto &text = registry->GetComponent<TextComponent>(entity);
+    const auto &transform = registry->GetComponent<TransformComponent>(entity);
+    Vec2f screenPos =
+        util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
+
+    if (IsOffScreen(screenPos, screenSize, {0.f, 0.f})) {
+      if (text.texture) {
+        SDL_DestroyTexture(text.texture);
+        text.texture = nullptr;
+      }
+      continue;
+    }
+
     if (registry->HasComponent<InactiveComponent>(entity)) {
-      const auto &transform =
-          registry->GetComponent<TransformComponent>(entity);
-      Vec2f screenPos =
-          util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
+      // Special case for inactive entities, render "inactive" text
+      // This part is not cached as it's a temporary state overlay
       SDL_Surface *textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
       SDL_Texture *textTexture =
           SDL_CreateTextureFromSurface(renderer, textSurface);
-      SDL_FreeSurface(textSurface);
 
       SDL_Rect textRect;
       textRect.x = static_cast<int>(screenPos.x);
@@ -159,31 +185,36 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
 
       SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
 
+      SDL_FreeSurface(textSurface);
       SDL_DestroyTexture(textTexture);
       continue;
     }
-    const auto &text = registry->GetComponent<TextComponent>(entity);
-    const auto &transform = registry->GetComponent<TransformComponent>(entity);
-    Vec2f screenPos =
-        util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    if (IsOffScreen(screenPos, screenSize, {0.f, 0.f})) {
-      continue;
+    if (text.isDirty) {
+      if (text.texture) {
+        SDL_DestroyTexture(text.texture);
+        text.texture = nullptr;
+      }
+
+      SDL_Surface *textSurface =
+          TTF_RenderUTF8_Blended(font, text.text, text.color);
+      if (textSurface) {
+        text.texture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        text.w = textSurface->w;
+        text.h = textSurface->h;
+        SDL_FreeSurface(textSurface);
+      }
+      text.isDirty = false;
     }
 
-    SDL_Surface *textSurface =
-        TTF_RenderUTF8_Blended(font, text.text, text.color);
-    SDL_Texture *textTexture =
-        SDL_CreateTextureFromSurface(renderer, textSurface);
-
-    SDL_Rect textRect;
-    textRect.x = static_cast<int>(screenPos.x + text.x * zoom);
-    textRect.y = static_cast<int>(screenPos.y + text.y * zoom);
-    textRect.w = static_cast<int>(textSurface->w * zoom);
-    textRect.h = static_cast<int>(textSurface->h * zoom);
-    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
-    SDL_FreeSurface(textSurface);
-    SDL_DestroyTexture(textTexture);
+    if (text.texture) {
+      SDL_Rect textRect;
+      textRect.x = static_cast<int>(screenPos.x + text.x * zoom);
+      textRect.y = static_cast<int>(screenPos.y + text.y * zoom);
+      textRect.w = static_cast<int>(text.w * zoom);
+      textRect.h = static_cast<int>(text.h * zoom);
+      SDL_RenderCopy(renderer, text.texture, nullptr, &textRect);
+    }
   }
 }
 
@@ -283,4 +314,11 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
-RenderSystem::~RenderSystem() = default;
+RenderSystem::~RenderSystem() {
+  for (EntityID entity : registry->view<TextComponent>()) {
+    auto &text = registry->GetComponent<TextComponent>(entity);
+    if (text.texture) {
+      SDL_DestroyTexture(text.texture);
+    }
+  }
+}

@@ -5,7 +5,6 @@
 #include "Core/Registry.h"
 #include "Core/World.h"
 
-
 ResourceNodeSystem::ResourceNodeSystem(const SystemContext &context)
     : registry(context.registry), world(context.world) {}
 
@@ -16,8 +15,11 @@ void ResourceNodeSystem::Update() {
       const ResourceNodeComponent &resource =
           registry->GetComponent<ResourceNodeComponent>(entity);
       TextComponent &textComp = registry->GetComponent<TextComponent>(entity);
-      snprintf(textComp.text, sizeof(textComp.text), "%lld",
-               static_cast<unsigned long long>(resource.LeftResource));
+      if (strtoll(textComp.text, NULL, 10) != resource.LeftResource) {
+        snprintf(textComp.text, sizeof(textComp.text), "%lld",
+                 static_cast<unsigned long long>(resource.LeftResource));
+        textComp.isDirty = true;
+      }
     }
   }
 }
