@@ -11,7 +11,7 @@
 #include "GameState/IGameState.h"
 #include "GameState/MainMenuState.h"
 #include "GameState/PauseState.h"
-#include "GameState/PlayState.h"
+#include "GameState/ServerState.h"
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_ttf.h"
@@ -94,7 +94,6 @@ void GEngine::Run() {
       gameStates.back()->Update(deltaTime);
     }
 
-    // 6. RENDER UI AND PRESENT
     ImGui::Render();
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), gRenderer);
     SDL_RenderPresent(gRenderer);

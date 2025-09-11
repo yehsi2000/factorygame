@@ -1,4 +1,4 @@
-﻿#include "GameState/PlayState.h"
+﻿#include "GameState/ServerState.h"
 
 #include <cassert>
 #include <chrono>
@@ -30,14 +30,16 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
-
 #include "Core/Registry.h"
+#include "Core/Server.h"
+#include "Core/Packet.h"
+#include "Core/ThreadSafeQueue.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Core/WorldAssetManager.h"
 #include "GameState/IGameState.h"
 #include "GameState/MainMenuState.h"
-#include "GameState/PlayState.h"
+#include "GameState/ServerState.h"
 #include "System/AnimationSystem.h"
 #include "System/AssemblingMachineSystem.h"
 #include "System/CameraSystem.h"
@@ -47,6 +49,7 @@
 #include "System/ItemDragSystem.h"
 #include "System/MiningDrillSystem.h"
 #include "System/MovementSystem.h"
+#include "System/ServerNetworkSystem.h"
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
 #include "System/ResourceNodeSystem.h"
@@ -55,28 +58,32 @@
 #include "System/UISystem.h"
 #include "imgui_impl_sdlrenderer2.h"
 
-PlayState::PlayState() {}
+ServerState::ServerState() {}
 
-void PlayState::Init(GEngine* engine) {
+void ServerState::Init(GEngine* engine) {
   gWindow = engine->GetWindow();
   gRenderer = engine->GetRenderer();
   gFont = engine->GetFont();
   assetManager = engine->GetAssetManager();
   worldAssetManager = engine->GetWorldAssetManager();
 
-  registry = std::make_unique<Registry>();
+  
   timerManager = std::make_unique<TimerManager>();
   eventDispatcher = std::make_unique<EventDispatcher>();
+  registry = std::make_unique<Registry>(eventDispatcher.get());
   commandQueue = std::make_unique<CommandQueue>();
-  
-  
+  packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
+  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
+  server = std::make_unique<Server>();
+  server->Init(packetQueue.get(), sendQueue.get());
+  server->Start();
+
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
   assert(eventDispatcher &&
          "Fail to initialize GEngine : Invalid eventDispatcher");
   assert(commandQueue && "Fail to initialize GEngine : Invalid command queue");
 
-  
   RegisterComponent();
 
   world = std::make_unique<World>(registry.get(), worldAssetManager,
@@ -92,8 +99,13 @@ void PlayState::Init(GEngine* engine) {
   systemContext.inputManager = engine->GetInputManager();
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
+  systemContext.packetQueue = packetQueue.get();
+  systemContext.sendQueue = sendQueue.get();
+  systemContext.server = server.get();
+
   InitCoreSystem();
 
+  world->GeneratePlayer();
   EntityID player = world->GetPlayer();
 
   // Default item
@@ -102,7 +114,7 @@ void PlayState::Init(GEngine* engine) {
   eventDispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 100));
 }
 
-void PlayState::RegisterComponent() {
+void ServerState::RegisterComponent() {
   // Register all component type inside typeArray to regsitry
   // powered by Lambda TMP Magic™
   using ComponentTypes =
@@ -121,7 +133,7 @@ void PlayState::RegisterComponent() {
   }(std::make_index_sequence<ComponentTypes::size>{});
 }
 
-void PlayState::InitCoreSystem() {
+void ServerState::InitCoreSystem() {
   animationSystem = std::make_unique<AnimationSystem>(systemContext);
   assemblingMachineSystem =
       std::make_unique<AssemblingMachineSystem>(systemContext);
@@ -132,6 +144,7 @@ void PlayState::InitCoreSystem() {
   itemDragSystem = std::make_unique<ItemDragSystem>(systemContext);
   miningDrillSystem = std::make_unique<MiningDrillSystem>(systemContext);
   movementSystem = std::make_unique<MovementSystem>(systemContext);
+  networkSystem = std::make_unique<ServerNetworkSystem>(systemContext);
   refinerySystem = std::make_unique<RefinerySystem>(systemContext);
   resourceNodeSystem = std::make_unique<ResourceNodeSystem>(systemContext);
   timerExpireSystem = std::make_unique<TimerExpireSystem>(systemContext);
@@ -142,9 +155,11 @@ void PlayState::InitCoreSystem() {
       std::make_unique<RenderSystem>(systemContext, gRenderer, gFont);
 }
 
-void PlayState::Cleanup() {}
+void ServerState::Cleanup() {
+  GameEndEventHandle.reset();
+}
 
-void PlayState::Update(float deltaTime) {
+void ServerState::Update(float deltaTime) {
   SDL_GetWindowSize(gWindow, &screenSize.x, &screenSize.y);
   inputSystem->Update();
   // Process all pending commands.
@@ -155,6 +170,7 @@ void PlayState::Update(float deltaTime) {
     }
   }
 
+  networkSystem->Update(deltaTime);
   itemDragSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();

@@ -2,6 +2,8 @@
 #define SYSTEM_UISYSTEM_
 
 #include <memory>
+#include <list>
+#include <string>
 
 #include "Core/Entity.h"
 #include "Core/Item.h"
@@ -21,19 +23,27 @@ class UISystem {
   UISystem(const SystemContext& context);
   ~UISystem();
   void Update();
-  inline void ToggleInventory() { showInventory = !showInventory; }
+  inline void ToggleInventory() { bIsShowingInventory = !bIsShowingInventory; }
 
  private:
+  void ChatWindow();
+  void ChatInput();
   void ItemDropBackground();
   void Inventory();
   void AssemblingMachineUI();
   void AssemblingMachineRecipeSelection(EntityID entity);
   void MiningDrillUI();
+  void PushChat(std::shared_ptr<std::string> str);
 
-  std::unique_ptr<EventHandle> showInventoryEvent;
+  std::unique_ptr<EventHandle> showInventoryHandle;
+  std::unique_ptr<EventHandle> showChatHandle;
+  std::unique_ptr<EventHandle> newChatHandle;
   ItemPayload payload;
-  bool showInventory = false;
-  bool demoShow = false;
+  bool bIsShowingInventory = false;
+  bool bIsShowingChatInput = false;
+  bool bDemoShow = true;
+  std::shared_ptr<std::string> playerChat;
+  std::list<std::string> chatLog;
 };
 
-#endif /* SYSTEM_UISYSTEM_ */
+#endif/* SYSTEM_UISYSTEM_ */

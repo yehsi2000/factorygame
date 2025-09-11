@@ -10,17 +10,17 @@ enum class MiningDrillState { Idle, TileEmpty, Mining, OutputFull };
 
 struct MiningDrillComponent {
   MiningDrillState state;
-  bool isAnimating;
-  bool showUI;
+  bool bIsAnimating;
+  bool bIsShowingUI;
   EntityID oreEntity;
 
   constexpr MiningDrillComponent(
-      MiningDrillState state = MiningDrillState::Idle, bool isAnimating = false,
-      bool showUI = false,
+      MiningDrillState state = MiningDrillState::Idle, bool bIsAnimating = false,
+      bool bIsShowingUI = false,
       std::pair<ItemID, int> outputSlot = {ItemID::None, 0})
       : state(state),
-        isAnimating(isAnimating),
-        showUI(showUI),
+        bIsAnimating(bIsAnimating),
+        bIsShowingUI(bIsShowingUI),
         oreEntity(INVALID_ENTITY) {}
 };
 

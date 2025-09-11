@@ -44,8 +44,8 @@ void InteractionSystem::OnPlayerEndInteractEvent(
     auto &playerStateComp =
         registry->GetComponent<PlayerStateComponent>(player);
 
-    if (playerStateComp.isMining) {
-      playerStateComp.isMining = false;
+    if (playerStateComp.bIsMining) {
+      playerStateComp.bIsMining = false;
 
       auto &animComp = registry->GetComponent<AnimationComponent>(player);
 
@@ -95,7 +95,7 @@ void InteractionSystem::ResourceNodeInteractionHandler(EntityID player,
   auto &playerSpriteComp = registry->GetComponent<SpriteComponent>(player);
   auto &oreTransComp = registry->GetComponent<TransformComponent>(targetEntity);
 
-  playerStateComp.isMining = true;
+  playerStateComp.bIsMining = true;
   playerStateComp.interactingEntity = targetEntity;
 
   Vec2f dir = (oreTransComp.position - playerTransComp.position);
@@ -123,19 +123,19 @@ void InteractionSystem::AssemblyMachineInteractionHandler(
   auto &machine =
       registry->GetComponent<AssemblingMachineComponent>(targetEntity);
 
-  machine.showUI = true;
+  machine.bIsShowingUI = true;
   // If no recipe is selected, show recipe selection
   if (machine.currentRecipe == RecipeID::None) {
-    machine.showRecipeSelection = true;
+    machine.bIsShowingRecipeSelection = true;
   } else {
-    machine.showRecipeSelection = false;
+    machine.bIsShowingRecipeSelection = false;
   }
 }
 
 void InteractionSystem::MiningDrillInteractionHandler(EntityID player,
                                                       EntityID targetEntity) {
   auto &drill = registry->GetComponent<MiningDrillComponent>(targetEntity);
-  drill.showUI = true;
+  drill.bIsShowingUI = true;
 }
 
 void InteractionSystem::Update() {}

@@ -11,10 +11,10 @@
 class IComponentArray {
  public:
   virtual ~IComponentArray() = default;
-  virtual void entityDestroyed(EntityID entity) = 0;
-  virtual bool hasEntity(EntityID entity) = 0;
-  virtual std::size_t getSize() = 0;
-  virtual std::vector<EntityID> getAllEntities() = 0;
+  virtual void EntityDestroyed(EntityID entity) = 0;
+  virtual bool HasEntity(EntityID entity) = 0;
+  virtual std::size_t GetSize() = 0;
+  virtual std::vector<EntityID> GetAllEntities() = 0;
 };
 
 // TODO : in case of bottleneck -> refactor to entt-style sparse map
@@ -32,7 +32,7 @@ class ComponentArray : public IComponentArray {
   std::unordered_map<std::size_t, EntityID> indexToEntityMap;
 
  public:
-  void addData(EntityID entity, T &&component) {
+  void AddData(EntityID entity, T &&component) {
     assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
 
@@ -42,7 +42,7 @@ class ComponentArray : public IComponentArray {
     componentArray.push_back(std::move(component));
   }
 
-  void removeData(EntityID entity) {
+  void RemoveData(EntityID entity) {
     assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
            "Removing non-existent component.");
 
@@ -60,7 +60,7 @@ class ComponentArray : public IComponentArray {
   }
 
   template <typename... Args>
-  void emplaceData(EntityID entity, Args &&...args) {
+  void EmplaceData(EntityID entity, Args &&...args) {
     assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
            "Component added to same entity more than once.");
     std::size_t newIndex = componentArray.size();
@@ -69,7 +69,7 @@ class ComponentArray : public IComponentArray {
     componentArray.push_back(T{std::forward<Args>(args)...});
   }
 
-  T &getData(EntityID entity) {
+  T &GetData(EntityID entity) {
     assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
            "Retrieving non-existent component.");
     return componentArray[entityToIndexMap[entity]];
@@ -82,7 +82,7 @@ class ComponentArray : public IComponentArray {
     }
   }
 
-  std::vector<EntityID> getAllEntities() override {
+  std::vector<EntityID> GetAllEntities() override {
     std::vector<EntityID> res;
     res.reserve(entityToIndexMap.size());
     for (auto &[id, _] : entityToIndexMap) {
@@ -91,18 +91,18 @@ class ComponentArray : public IComponentArray {
     return res;
   }
 
-  bool hasEntity(EntityID entity) override {
+  bool HasEntity(EntityID entity) override {
     return entityToIndexMap.count(entity) > 0;
   }
 
   // Called when entity is destoryed
-  void entityDestroyed(EntityID entity) override {
+  void EntityDestroyed(EntityID entity) override {
     if (entityToIndexMap.count(entity)) {
-      removeData(entity);
+      RemoveData(entity);
     }
   }
 
-  std::size_t getSize() override { return componentArray.size(); }
+  std::size_t GetSize() override { return componentArray.size(); }
 };
 
 #endif /* CORE_COMPONENTARRAY_ */

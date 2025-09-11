@@ -19,8 +19,8 @@ class ItemDragSystem {
   EventDispatcher* eventDispatcher;
   EntityFactory* factory;
 
-  bool isPreviewingBuilding;
-  bool isBuildingPlaced;
+  bool bIsPreviewingBuilding;
+  bool bIsBuildingPlaced;
   ItemID previewingItemID;
   EntityID previewEntity;
   std::unique_ptr<EventHandle> itemDropHandle;

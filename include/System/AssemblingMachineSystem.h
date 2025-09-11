@@ -45,4 +45,4 @@ class AssemblingMachineSystem {
                             AssemblingMachineComponent &machine);
 };
 
-#endif /* SYSTEM_ASSEMBLINGMACHINESYSTEM_ */
+#endif/* SYSTEM_ASSEMBLINGMACHINESYSTEM_ */

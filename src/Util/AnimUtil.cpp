@@ -14,7 +14,7 @@ void SetAnimation(AnimationName name, AnimationComponent &animComp,
     animComp.currentFrameIndex = 0;
     animComp.frameTimer = 0.f;
   }
-  animComp.isPlaying = bPlay;
+  animComp.bIsPlaying = bPlay;
 }
 
 void AddAnimation(AnimationComponent &animComp, const AnimationName &animName,

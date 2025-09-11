@@ -12,7 +12,7 @@ TimerManager::TimerManager()
 }
 
 TimerHandle TimerManager::CreateTimer(TimerId id, float duration,
-                                      bool isRepeating) {
+                                      bool bIsRepeating) {
   TimerHandle handle;
 
   // Reuse a handle from the free list if available.
@@ -34,10 +34,10 @@ TimerHandle TimerManager::CreateTimer(TimerId id, float duration,
   timer->id = id;
   timer->handle = handle;
   timer->duration = duration;
-  timer->isRepeating = isRepeating;
+  timer->bIsRepeating = bIsRepeating;
   timer->elapsed = 0.0f;
-  timer->isPaused = false;
-  timer->isActive = true;
+  timer->bIsPaused = false;
+  timer->bIsActive = true;
 
   handleToInstanceMap[handle] = std::move(timer);
   return handle;
@@ -59,7 +59,7 @@ void TimerManager::DestroyTimer(TimerHandle handle) {
 
   auto timer = std::move(handleToInstanceMap[handle]);
   if (timer) {
-    timer->isActive = false;  // Mark as inactive.
+    timer->bIsActive = false;  // Mark as inactive.
     timerPool.Release(std::move(timer));
     // The unique_ptr in the map is now null after the move.
     freeHandles.push_back(

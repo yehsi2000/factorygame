@@ -24,7 +24,7 @@ struct AnimationSequence {
   float frameRate;
   int frameWidth; // single frame size in spritesheet
   int frameHeight;
-  bool loop;
+  bool bIsLoop;
   int sheetWidth;
   int sheetHeight;
   SDL_Texture *texture; // Cached texture reference
@@ -36,8 +36,8 @@ struct AnimationComponent {
 
   int currentFrameIndex = 0;
   float frameTimer = 0.f;
-  bool isPlaying = true;
+  bool bIsPlaying = true;
   SDL_Texture *lastTexture = nullptr;
 };
 
-#endif /* COMPONENTS_ANIMATIONCOMPONENT_ */
+#endif/* COMPONENTS_ANIMATIONCOMPONENT_ */

@@ -28,12 +28,6 @@ public:
     bool IsMouseButtonUp(MouseButton button) const;
     bool WasMouseButtonPressed(MouseButton button) const;
     bool WasMouseButtonReleased(MouseButton button) const;
-    
-    
-    // bool IsUIMouseButtonDown(MouseButton button) const;
-    // bool IsUIMouseButtonUp(MouseButton button) const;
-    // bool WasUIMouseButtonPressed(MouseButton button) const;
-    // bool WasUIMouseButtonReleased(MouseButton button) const;
 
     Vec2 GetMousePosition() const;
     Vec2 GetMouseDelta() const;

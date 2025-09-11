@@ -65,7 +65,7 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
     Vec2 chunkTextureSize = Vec2{CHUNK_WIDTH * TILE_PIXEL_SIZE * zoom,
                                  CHUNK_HEIGHT * TILE_PIXEL_SIZE * zoom};
     // Cull chunks that are off-screen
-    if (isOffScreen(screenPos, screenSize, chunkTextureSize)) {
+    if (IsOffScreen(screenPos, screenSize, chunkTextureSize)) {
       continue;
     }
 
@@ -118,7 +118,7 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
                         sprite.renderRect.h * transform.scale.y * zoom};
 
     // Simple culling - skip entities that are clearly off-screen
-    if (isOffScreen(screenPos, screenSize, entitySize)) {
+    if (IsOffScreen(screenPos, screenSize, entitySize)) {
       continue;
     }
 
@@ -131,7 +131,7 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
   }
 }
 
-bool RenderSystem::isOffScreen(Vec2f screenPos, Vec2 screenSize,
+bool RenderSystem::IsOffScreen(Vec2f screenPos, Vec2 screenSize,
                                Vec2f entitySize) {
   return (screenPos.x + entitySize.x < 0 || screenPos.x > screenSize.x ||
           screenPos.y + entitySize.y < 0 || screenPos.y > screenSize.y);
@@ -167,7 +167,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    if (isOffScreen(screenPos, screenSize, {0.f, 0.f})) {
+    if (IsOffScreen(screenPos, screenSize, {0.f, 0.f})) {
       continue;
     }
 

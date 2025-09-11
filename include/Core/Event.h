@@ -1,9 +1,14 @@
 ﻿#ifndef CORE_EVENT_
 #define CORE_EVENT_
 
+#include <string>
+#include <utility>
+#include <memory>
+
 #include "Core/Entity.h"
 #include "Core/Item.h"
 #include "Core/Type.h"
+
 
 struct Event {
   virtual ~Event() = default;
@@ -76,6 +81,20 @@ struct ToggleInventoryEvent : public Event {
   ToggleInventoryEvent() = default;
 };
 
+struct ToggleChatInputEvent : public Event {
+  ToggleChatInputEvent() = default;
+};
+
+struct SendChatEvent : public Event {
+  SendChatEvent(std::shared_ptr<std::string> msg) : message(msg) {}
+  std::shared_ptr<std::string> message;
+};
+
+struct NewChatEvent : public Event {
+  NewChatEvent(std::shared_ptr<std::string> msg) : message(msg) {}
+  std::shared_ptr<std::string> message;
+};
+
 struct XAxisEvent : public Event {
   XAxisEvent(float i) : val(i) {}
   float val;
@@ -88,4 +107,4 @@ struct YAxisEvent : public Event {
 
 struct QuitEvent : public Event {};
 
-#endif /* CORE_EVENT_ */
+#endif/* CORE_EVENT_ */

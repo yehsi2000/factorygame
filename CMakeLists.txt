@@ -28,7 +28,7 @@ add_subdirectory(vendored/SDL_ttf)
 file(GLOB IMGUI_SOURCES "src/lib/*.cpp")
 add_library(imgui_lib STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui_lib PUBLIC 
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/Lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/lib"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_image/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_ttf"
@@ -75,6 +75,10 @@ target_link_libraries(FactoryGameLib PUBLIC
     imgui_lib
     ${SDL_LIBS}
 )
+
+if(WIN32)
+    target_link_libraries(FactoryGameLib PRIVATE ws2_32.lib kernel32.lib)
+endif()
 
 # --- Main Executable ---
 add_executable(FactoryGame src/main.cpp)

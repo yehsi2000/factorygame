@@ -1,6 +1,8 @@
 ﻿#include "System/UISystem.h"
 
 #include <algorithm>
+#include <list>
+#include <utility>
 #include <string>
 
 #include "Common.h"
@@ -8,6 +10,7 @@
 #include "Components/InventoryComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Core/AssetManager.h"
+#include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/Item.h"
 #include "Core/Recipe.h"
@@ -17,6 +20,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+#include "imgui_stdlib.h"
 
 #define TEXTLATER
 
@@ -50,17 +54,89 @@ UISystem::UISystem(const SystemContext &context)
       eventDispatcher(context.eventDispatcher),
       registry(context.registry),
       world(context.world) {
-  showInventoryEvent = eventDispatcher->Subscribe<ToggleInventoryEvent>(
-      [this](ToggleInventoryEvent e) { showInventory = !showInventory; });
+  showInventoryHandle = eventDispatcher->Subscribe<ToggleInventoryEvent>(
+      [this](ToggleInventoryEvent e) { bIsShowingInventory = !bIsShowingInventory; });
+  newChatHandle = eventDispatcher->Subscribe<NewChatEvent>(
+      [this](NewChatEvent e) { PushChat(std::move(e.message)); });
+  showChatHandle = eventDispatcher->Subscribe<ToggleChatInputEvent>(
+      [this](ToggleChatInputEvent e) {
+        if (!bIsShowingChatInput) {
+          SDL_StartTextInput();
+          bIsShowingChatInput = true;
+          ImGui::SetKeyboardFocusHere(0);
+        }
+      });
+  chatLog = std::list<std::string>();
+  playerChat = std::make_shared<std::string>("");
+}
+
+void UISystem::PushChat(std::shared_ptr<std::string> str) {
+  chatLog.push_back(*str.get());
+  if (chatLog.size() > 10) chatLog.pop_front();
 }
 
 void UISystem::Update() {
   ItemDropBackground();
-
-  if (demoShow) ImGui::ShowDemoWindow(&demoShow);
-  if (showInventory) Inventory();
+  ChatWindow();
+  if (bDemoShow) {
+    ImGui::ShowDemoWindow(&bDemoShow);
+  }
+  if (bIsShowingInventory) Inventory();
+  if (bIsShowingChatInput) {
+    ChatInput();
+  }
+  // SDL_StopTextInput();
   AssemblingMachineUI();
   MiningDrillUI();
+}
+
+void UISystem::ChatInput() {
+  const ImGuiViewport *viewport = ImGui::GetMainViewport();
+  ImVec2 pos = viewport->WorkSize;
+  ImVec2 size = ImVec2{viewport->WorkSize.x / 3.f, 30};
+  ImGui::SetNextWindowSize(size);
+  ImGui::SetNextWindowPos(ImVec2{pos.x / 2 - size.x / 2, pos.y - 50});
+  ImGuiWindowFlags flags =
+      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar;
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
+
+  ImGui::Begin("##ChatInput", nullptr, flags);
+  if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+  ImGui::SetNextItemWidth(size.x);
+  ImGui::InputText("##ChatInputText", playerChat.get());
+  if (ImGui::IsItemFocused()) {
+    if (ImGui::IsKeyPressed(ImGuiKey_Enter, false)) {
+      bIsShowingChatInput = false;
+      eventDispatcher->Publish(SendChatEvent(playerChat));
+      PushChat(playerChat);
+      playerChat->clear();
+      SDL_StopTextInput();
+    }
+  }
+  ImGui::End();
+  ImGui::PopStyleVar();
+}
+
+void UISystem::ChatWindow() {
+  static int location = -1;
+  ImGuiIO &io = ImGui::GetIO();
+  ImGuiWindowFlags window_flags =
+      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+      ImGuiWindowFlags_NoNav;
+  ImGui::SetNextWindowBgAlpha(0.35f);
+  ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.f, 1.f, 0.f, 1.f));
+  ImGui::PushFont(nullptr, 16);
+  if (ImGui::Begin("##ChatWindow", nullptr, window_flags)) {
+    for (std::string_view chat : chatLog) {
+      ImGui::Text(chat.data());
+      ImGui::Separator();
+    }
+  }
+  ImGui::PopFont();
+  ImGui::PopStyleColor();
+  ImGui::End();
 }
 
 void UISystem::ItemDropBackground() {
@@ -76,7 +152,8 @@ void UISystem::ItemDropBackground() {
     flags |= ImGuiWindowFlags_NoInputs;
   }
 
-  ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+  ImGui::PushStyleColor(ImGuiCol_DragDropTarget,
+                        ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
 
   ImGui::Begin("##GameWorldDropTarget", nullptr, flags);
@@ -108,7 +185,7 @@ void UISystem::Inventory() {
   int column = invComp.column;
   ImVec2 padding = ImGui::GetStyle().FramePadding;
 
-  ImGui::Begin("Inventory", &showInventory,
+  ImGui::Begin("Inventory", &bIsShowingInventory,
                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
   for (int r = 0; r < row; ++r) {
@@ -243,17 +320,17 @@ void UISystem::AssemblingMachineUI() {
   for (auto machineEntity : registry->view<AssemblingMachineComponent>()) {
     auto &assemblingComp =
         registry->GetComponent<AssemblingMachineComponent>(machineEntity);
-    if (assemblingComp.showUI) {
-      if (assemblingComp.showRecipeSelection) {
+    if (assemblingComp.bIsShowingUI) {
+      if (assemblingComp.bIsShowingRecipeSelection) {
         AssemblingMachineRecipeSelection(machineEntity);
       } else {
         // Show crafting UI
         ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
         std::string windowName =
             "Assembling Machine##" + std::to_string(machineEntity);
-        bool showUI = assemblingComp.showUI;
+        bool bIsShowingUI = assemblingComp.bIsShowingUI;
 
-        if (ImGui::Begin(windowName.c_str(), &showUI,
+        if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
                          ImGuiWindowFlags_NoCollapse)) {
           const auto &recipeData =
               RecipeDatabase::instance().get(assemblingComp.currentRecipe);
@@ -262,7 +339,7 @@ void UISystem::AssemblingMachineUI() {
           ImGui::Text("Crafting Time: %.1fs", recipeData.craftingTime);
 
           if (ImGui::Button("Change Recipe")) {
-            assemblingComp.showRecipeSelection = true;
+            assemblingComp.bIsShowingRecipeSelection = true;
           }
 
           ImGui::Separator();
@@ -352,7 +429,7 @@ void UISystem::AssemblingMachineUI() {
             // Would need to get progress from timer system
             ImGui::Separator();
             ImGui::Text("Crafting... (Animation: %s)",
-                        assemblingComp.isAnimating ? "ON" : "OFF");
+                        assemblingComp.bIsAnimating ? "ON" : "OFF");
           } else if (assemblingComp.state ==
                      AssemblingMachineState::WaitingForIngredients) {
             ImGui::Text("Waiting for ingredients");
@@ -363,7 +440,7 @@ void UISystem::AssemblingMachineUI() {
         }
         ImGui::End();
 
-        assemblingComp.showUI = showUI;
+        assemblingComp.bIsShowingUI = bIsShowingUI;
       }
     }
   }
@@ -374,7 +451,7 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
       registry->GetComponent<AssemblingMachineComponent>(entity);
 
   std::string windowName = "Select Recipe##" + std::to_string(entity);
-  bool showSelection = assemblingComp.showRecipeSelection;
+  bool showSelection = assemblingComp.bIsShowingRecipeSelection;
 
   if (ImGui::Begin(
           windowName.c_str(), &showSelection,
@@ -393,7 +470,7 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
         // Set the recipe using AssemblingMachineSystem
         // For now, set it directly - should use system method
         assemblingComp.currentRecipe = recipeId;
-        assemblingComp.showRecipeSelection = false;
+        assemblingComp.bIsShowingRecipeSelection = false;
         assemblingComp.state = AssemblingMachineState::Idle;
         showSelection = false;
       }
@@ -409,9 +486,9 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
   }
   ImGui::End();
 
-  assemblingComp.showRecipeSelection = showSelection;
+  assemblingComp.bIsShowingRecipeSelection = showSelection;
   if (!showSelection && assemblingComp.currentRecipe == RecipeID::None) {
-    assemblingComp.showUI =
+    assemblingComp.bIsShowingUI =
         false;  // Close UI if no recipe selected and cancelled
   }
 }
@@ -421,10 +498,10 @@ void UISystem::MiningDrillUI() {
   ImVec2 outputSlotSize(60, 60);
   for (auto drillEntity : registry->view<MiningDrillComponent>()) {
     auto &drillComp = registry->GetComponent<MiningDrillComponent>(drillEntity);
-    if (drillComp.showUI) {
+    if (drillComp.bIsShowingUI) {
       std::string windowName = "Mining Drill##" + std::to_string(drillEntity);
-      bool showUI = drillComp.showUI;
-      if (ImGui::Begin(windowName.c_str(), &showUI,
+      bool bIsShowingUI = drillComp.bIsShowingUI;
+      if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
                        ImGuiWindowFlags_AlwaysAutoResize |
                            ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Mining Drill");
@@ -463,7 +540,7 @@ void UISystem::MiningDrillUI() {
         }
       }
       ImGui::End();
-      drillComp.showUI = showUI;
+      drillComp.bIsShowingUI = bIsShowingUI;
     }
   }
 }

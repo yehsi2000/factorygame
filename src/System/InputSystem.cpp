@@ -48,6 +48,8 @@ void InputSystem::RegisterInputBindings() {
       {{SDL_SCANCODE_ESCAPE, SDL_KEYDOWN}, InputAction::Quit});
   keyBindings.push_back(
       {{SDL_SCANCODE_I, SDL_KEYDOWN}, InputAction::Inventory});
+  keyBindings.push_back(
+      {{SDL_SCANCODE_RETURN, SDL_KEYDOWN}, InputAction::Chat});
 }
 
 void InputSystem::Update() {
@@ -106,6 +108,9 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
       eventDispatcher->Publish(ToggleInventoryEvent{});
       break;
 
+    case InputAction::Chat:
+      eventDispatcher->Publish(ToggleChatInputEvent{});
+      break;
     // Quit game
     case InputAction::Quit:
       eventDispatcher->Publish(QuitEvent{});
