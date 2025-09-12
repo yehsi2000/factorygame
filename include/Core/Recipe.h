@@ -1,4 +1,4 @@
-#ifndef CORE_RECIPE_
+﻿#ifndef CORE_RECIPE_
 #define CORE_RECIPE_
 
 #include <string>

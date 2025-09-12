@@ -1,10 +1,11 @@
-#ifndef SYSTEM_NETWORKSYSTEM_20COPY_
+﻿#ifndef SYSTEM_NETWORKSYSTEM_20COPY_
 #define SYSTEM_NETWORKSYSTEM_20COPY_
 #ifndef SYSTEM_NETWORKSYSTEM_
 #define SYSTEM_NETWORKSYSTEM_
 
 #include <memory>
 #include <string>
+#include <cstdint>
 
 #include "Core/SystemContext.h"
 

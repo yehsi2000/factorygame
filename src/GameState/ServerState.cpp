@@ -1,7 +1,9 @@
-#include "GameState/ServerState.h"
+﻿#include "GameState/ServerState.h"
 
 #include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <tuple>
 #include <utility>
 

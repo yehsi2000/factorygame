@@ -2,6 +2,12 @@
 
 #include "Core/SocketImpl.h"
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <cstddef>
+
+
 // Include the platform-specific implementation files
 #if defined(_WIN32)
 #include "Network/Socket_windows.cpp"

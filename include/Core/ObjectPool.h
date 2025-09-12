@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <memory>
+#include <cstddef>
 #include <queue>
 
 template <typename T>
@@ -39,7 +40,7 @@ class ObjectPool {
     pool.push(std::move(object));
   }
 
-  size_t Size() const { return pool.size(); }
+  std::size_t Size() const { return pool.size(); }
 
   void Clear() {
     while (!pool.empty()) {
@@ -53,8 +54,8 @@ class ObjectPool {
    * 
    * @param count Desired object pool size
    */
-  void PreAllocate(size_t count) {
-    for (size_t i = 0; i < count; ++i) {
+  void PreAllocate(std::size_t count) {
+    for (std::size_t i = 0; i < count; ++i) {
       pool.push(createFunction());
     }
   }

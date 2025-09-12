@@ -1,5 +1,6 @@
-#include "System/ServerNetworkSystem.h"
+﻿#include "System/ServerNetworkSystem.h"
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 
@@ -10,14 +11,15 @@
 #include "Core/ThreadSafeQueue.h"
 #include "Util/PacketUtil.h"
 
+
 ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
     : assetManager(context.assetManager),
       eventDispatcher(context.eventDispatcher),
       registry(context.registry),
       world(context.world),
       timerManager(context.timerManager),
-      packetQueue(context.packetQueue), // Incoming packets
-      sendQueue(context.serverSendQueue), // Outgoing packets (server-specific)
+      packetQueue(context.packetQueue),    // Incoming packets
+      sendQueue(context.serverSendQueue),  // Outgoing packets (server-specific)
       server(context.server) {
   sendChatHandle =
       eventDispatcher->Subscribe<SendChatEvent>([this](SendChatEvent e) {
@@ -37,9 +39,9 @@ void ServerNetworkSystem::Update(float deltatime) {
     switch (packetId) {
       case PACKET::CHAT_CLIENT:
         clientid_t clientId = util::Read64BigEnd(p);
-        
+
         char* msgStart = reinterpret_cast<char*>(p);
-        size_t msgSize = packetSize - sHeaderAndId;
+        std::size_t msgSize = packetSize - sHeaderAndId;
 
         eventDispatcher->Publish(
             NewChatEvent(std::make_shared<std::string>(msgStart, msgSize)));

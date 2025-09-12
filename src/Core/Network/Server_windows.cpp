@@ -256,7 +256,7 @@ class WindowsServerImpl : public ServerImpl {
 
     threadPool = std::vector<HANDLE>(nThreadCnt);
 
-    for (size_t i = 0; i < nThreadCnt; i++) {
+    for (std::size_t i = 0; i < nThreadCnt; i++) {
       threadPool[i] = (HANDLE)_beginthreadex(
           nullptr, 0, &WindowsServerImpl::ThreadEntry, this, 0, nullptr);
       if (threadPool[i] == nullptr) {
@@ -395,13 +395,13 @@ class WindowsServerImpl : public ServerImpl {
     closesocket(listenSocket);
     CloseHandle(serverThreadHandle);
 
-    for (size_t i = 0; i < threadPool.size(); ++i)
+    for (std::size_t i = 0; i < threadPool.size(); ++i)
       PostQueuedCompletionStatus(iocpHandle, 0, SHUT_DOWN_KEY, NULL);
 
     WaitForMultipleObjects(static_cast<DWORD>(threadPool.size()),
                            threadPool.data(), TRUE, INFINITE);
 
-    for (size_t i = 0; i < threadPool.size(); ++i) CloseHandle(threadPool[i]);
+    for (std::size_t i = 0; i < threadPool.size(); ++i) CloseHandle(threadPool[i]);
 
     CloseHandle(iocpHandle);
 

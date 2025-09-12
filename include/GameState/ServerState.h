@@ -1,10 +1,11 @@
-#ifndef GAMESTATE_SERVERSTATE_
+﻿#ifndef GAMESTATE_SERVERSTATE_
 #define GAMESTATE_SERVERSTATE_
 
 #include <memory>
 #include <tuple>
 #include <vector>
 #include <cstdint>
+#include <cstddef>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"

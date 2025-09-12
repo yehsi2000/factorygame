@@ -1,7 +1,12 @@
 #include "Core/EventDispatcher.h"
 
-EventHandle::EventHandle(EventDispatcher* eventDispatcher, std::type_index typeIndex,
-                         size_t id)
+#include <cstddef>
+#include <typeindex>
+#include <vector>
+
+
+EventHandle::EventHandle(EventDispatcher* eventDispatcher,
+                         std::type_index typeIndex, std::size_t id)
     : eventDispatcher(eventDispatcher), typeIndex(typeIndex), callbackID(id) {}
 
 EventHandle::~EventHandle() {
@@ -9,8 +14,6 @@ EventHandle::~EventHandle() {
     eventDispatcher->Unsubscribe(typeIndex, callbackID);
   }
 }
-
-// --- EventDispatcher Implementation ---
 
 void EventDispatcher::Unsubscribe(const std::type_index& ti, CallbackID id) {
   auto it = listeners.find(ti);

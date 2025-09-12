@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <string>
+#include <cstdint>
+#include <cstddef>
 
 #include "Core/Packet.h"
 
@@ -27,13 +29,13 @@ inline void Write64BigEnd(uint8_t*& p, uint64_t v) {
   *p++ = static_cast<uint8_t>((v >> 8) & 0xFF);
   *p++ = static_cast<uint8_t>(v & 0xFF);
 }
-inline uint16_t Read16BigEnd(const uint8_t*& p) {
+inline uint16_t Read16BigEnd(uint8_t*& p) {
   uint16_t v =
       (static_cast<uint16_t>(p[0]) << 8) | (static_cast<uint16_t>(p[1]));
   p += 2;
   return v;
 }
-inline uint32_t Read32BigEnd(const uint8_t*& p) {
+inline uint32_t Read32BigEnd(uint8_t*& p) {
   uint32_t v = (static_cast<uint32_t>(p[0]) << 24) |
                (static_cast<uint32_t>(p[1]) << 16) |
                (static_cast<uint32_t>(p[2]) << 8) |
@@ -41,7 +43,7 @@ inline uint32_t Read32BigEnd(const uint8_t*& p) {
   p += 4;
   return v;
 }
-inline uint64_t Read64BigEnd(const uint8_t*& p) {
+inline uint64_t Read64BigEnd(uint8_t*& p) {
   uint64_t v = (static_cast<uint64_t>(p[0]) << 56) |
                (static_cast<uint64_t>(p[1]) << 48) |
                (static_cast<uint64_t>(p[2]) << 40) |

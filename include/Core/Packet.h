@@ -19,7 +19,6 @@ struct Packet {
 enum class ESendType {
   UNICAST,
   BROADCAST,
-  REQUEST,
 };
 
 struct SendRequest {

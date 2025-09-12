@@ -1,7 +1,8 @@
-#include "GameState/ClientState.h"
+﻿#include "GameState/ClientState.h"
 
 #include <cassert>
 #include <chrono>
+#include <cstdint>
 #include <tuple>
 #include <utility>
 

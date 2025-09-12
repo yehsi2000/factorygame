@@ -1,9 +1,11 @@
 #include "System/UISystem.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <list>
-#include <utility>
 #include <string>
+#include <utility>
 
 #include "Common.h"
 #include "Components/AssemblingMachineComponent.h"
@@ -21,6 +23,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui_stdlib.h"
+
 
 #define TEXTLATER
 
@@ -55,7 +58,9 @@ UISystem::UISystem(const SystemContext &context)
       registry(context.registry),
       world(context.world) {
   showInventoryHandle = eventDispatcher->Subscribe<ToggleInventoryEvent>(
-      [this](ToggleInventoryEvent e) { bIsShowingInventory = !bIsShowingInventory; });
+      [this](ToggleInventoryEvent e) {
+        bIsShowingInventory = !bIsShowingInventory;
+      });
   newChatHandle = eventDispatcher->Subscribe<NewChatEvent>(
       [this](NewChatEvent e) { PushChat(std::move(e.message)); });
   showChatHandle = eventDispatcher->Subscribe<ToggleChatInputEvent>(

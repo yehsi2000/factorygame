@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <memory>
+#include <cstddef>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -16,13 +17,13 @@
 class EventHandle {
 public:
   EventHandle(class EventDispatcher *eventDispatcher, std::type_index typeIndex,
-              size_t id);
+              std::size_t id);
   ~EventHandle();
 
 private:
   class EventDispatcher *eventDispatcher;
   std::type_index typeIndex;
-  size_t callbackID;
+  std::size_t callbackID;
 };
 
 /**
@@ -35,7 +36,7 @@ private:
 class EventDispatcher {
   friend class EventHandle;
   using Callback = std::function<void(const Event &)>;
-  using CallbackID = size_t;
+  using CallbackID = std::size_t;
 
   std::unordered_map<std::type_index,
                      std::vector<std::pair<CallbackID, Callback>>>

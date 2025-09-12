@@ -1,4 +1,4 @@
-#ifndef GAMESTATE_CLIENTSTATE_
+﻿#ifndef GAMESTATE_CLIENTSTATE_
 #define GAMESTATE_CLIENTSTATE_
 
 #include <memory>
@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 #include <cstdio>
+#include <cstdint>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"
