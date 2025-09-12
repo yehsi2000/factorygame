@@ -1,4 +1,4 @@
-﻿#include "Util/MathUtil.h"
+#include "Util/MathUtil.h"
 
 #include "Core/Type.h"
 #include "cmath"

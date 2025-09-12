@@ -1,4 +1,4 @@
-﻿#ifndef UTIL_ANIMUTIL_
+#ifndef UTIL_ANIMUTIL_
 #define UTIL_ANIMUTIL_
 
 #include "Components/AnimationComponent.h"

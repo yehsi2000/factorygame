@@ -1,4 +1,4 @@
-﻿#include "Core/GEngine.h"
+#include "Core/GEngine.h"
 
 #include <cassert>
 #include <chrono>

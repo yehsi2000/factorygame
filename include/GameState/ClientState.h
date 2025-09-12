@@ -1,10 +1,11 @@
-﻿#ifndef GAMESTATE_CLIENTSTATE_
+#ifndef GAMESTATE_CLIENTSTATE_
 #define GAMESTATE_CLIENTSTATE_
 
 #include <memory>
 #include <tuple>
 #include <thread>
 #include <vector>
+#include <cstdio>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"
@@ -47,6 +48,9 @@ class UISystem;
 /**
  * @brief Represents the primary gameplay state.
  */
+
+constexpr std::size_t MAX_BUFFER = 1024;
+
 class ClientState : public IGameState {
   SDL_Window *gWindow;
   SDL_Renderer *gRenderer;
@@ -85,10 +89,10 @@ class ClientState : public IGameState {
   
   std::unique_ptr<Socket> connectionSocket;
   std::unique_ptr<ThreadSafeQueue<PacketPtr>> packetQueue;
-  std::unique_ptr<ThreadSafeQueue<SendRequest>> sendQueue;
+  std::unique_ptr<ThreadSafeQueue<PacketPtr>> sendQueue; // Now queues PacketPtr directly for client
 
-  uintptr_t clientID;
-  std::vector<char> messageBuffer;
+  uint64_t clientID;
+  std::vector<uint8_t> messageBuffer;
   std::thread messageThread;
   bool bIsReceiving;
   

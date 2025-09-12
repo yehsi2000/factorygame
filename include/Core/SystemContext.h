@@ -27,9 +27,10 @@ struct SystemContext {
   InputManager* inputManager = nullptr;
   EntityFactory* entityFactory = nullptr;
   TimerManager* timerManager = nullptr;
-  ThreadSafeQueue<PacketPtr>* packetQueue = nullptr;
-  ThreadSafeQueue<SendRequest>* sendQueue = nullptr;
+  ThreadSafeQueue<PacketPtr>* packetQueue = nullptr; // For incoming packets (both client and server)
+  ThreadSafeQueue<SendRequest>* serverSendQueue = nullptr; // For server outgoing packets (needs SendRequest)
+  ThreadSafeQueue<PacketPtr>* clientSendQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
   Server* server = nullptr;
   Socket* socket = nullptr;
-  uintptr_t clientID = 0;
+  uint64_t clientID = 0;
 };

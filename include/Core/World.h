@@ -1,4 +1,4 @@
-﻿#ifndef CORE_WORLD_
+#ifndef CORE_WORLD_
 #define CORE_WORLD_
 
 #include <map>

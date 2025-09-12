@@ -1,4 +1,4 @@
-﻿#ifndef CORE_TYPE_
+#ifndef CORE_TYPE_
 #define CORE_TYPE_
 
 #include <iostream>

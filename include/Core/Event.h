@@ -1,4 +1,4 @@
-﻿#ifndef CORE_EVENT_
+#ifndef CORE_EVENT_
 #define CORE_EVENT_
 
 #include <string>

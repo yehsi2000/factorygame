@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_UISYSTEM_
+#ifndef SYSTEM_UISYSTEM_
 #define SYSTEM_UISYSTEM_
 
 #include <memory>

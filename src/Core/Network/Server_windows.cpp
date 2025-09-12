@@ -203,7 +203,7 @@ class WindowsServerImpl : public ServerImpl {
         if (pSocketOverlapped->operationType == IO_OPERATION::RECEIVE) {
           std::cout << "Bytes received: " << recvByteCnt << std::endl;
 
-          auto packetBuffer = std::make_unique<char[]>(recvByteCnt);
+          auto packetBuffer = std::make_unique<uint8_t[]>(recvByteCnt);
           memcpy(packetBuffer.get(), pSocketOverlapped->messageBuffer,
                  recvByteCnt);
           packetQueue->Push(std::move(packetBuffer));

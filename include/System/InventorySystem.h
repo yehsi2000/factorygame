@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_INVENTORYSYSTEM_
+#ifndef SYSTEM_INVENTORYSYSTEM_
 #define SYSTEM_INVENTORYSYSTEM_
 
 #include <memory>

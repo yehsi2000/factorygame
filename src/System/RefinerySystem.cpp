@@ -1,4 +1,4 @@
-﻿#include "System/RefinerySystem.h"
+#include "System/RefinerySystem.h"
 
 #include "Components/RefineryComponent.h"
 

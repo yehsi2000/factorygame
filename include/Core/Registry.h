@@ -1,4 +1,4 @@
-﻿#ifndef CORE_REGISTRY_
+#ifndef CORE_REGISTRY_
 #define CORE_REGISTRY_
 
 #include <algorithm>

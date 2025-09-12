@@ -1,4 +1,4 @@
-﻿#include "System/MovementSystem.h"
+#include "System/MovementSystem.h"
 
 #include <cmath>
 

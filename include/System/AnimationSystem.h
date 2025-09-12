@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_ANIMATIONSYSTEM_
+#ifndef SYSTEM_ANIMATIONSYSTEM_
 #define SYSTEM_ANIMATIONSYSTEM_
 
 #include "Core/SystemContext.h"

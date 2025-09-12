@@ -1,4 +1,4 @@
-﻿#include "Util/AnimUtil.h"
+#include "Util/AnimUtil.h"
 
 #include "Components/AnimationComponent.h"
 

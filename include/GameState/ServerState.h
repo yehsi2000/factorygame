@@ -1,4 +1,4 @@
-﻿#ifndef GAMESTATE_SERVERSTATE_
+#ifndef GAMESTATE_SERVERSTATE_
 #define GAMESTATE_SERVERSTATE_
 
 #include <memory>
@@ -64,7 +64,7 @@ class ServerState : public IGameState {
   std::unique_ptr<World> world;
   std::unique_ptr<Server> server;
   std::unique_ptr<ThreadSafeQueue<PacketPtr>> packetQueue;
-  std::unique_ptr<ThreadSafeQueue<SendRequest>> sendQueue;
+  std::unique_ptr<ThreadSafeQueue<SendRequest>> serverSendQueue; // Renamed for clarity
 
 
   SystemContext systemContext;

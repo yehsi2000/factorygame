@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_MININGDRILLSYSTEM_
+#ifndef SYSTEM_MININGDRILLSYSTEM_
 #define SYSTEM_MININGDRILLSYSTEM_
 
 #include "Core/SystemContext.h"

@@ -1,4 +1,4 @@
-﻿#ifndef CORE_ENTITY_
+#ifndef CORE_ENTITY_
 #define CORE_ENTITY_
 
 using EntityID = unsigned long long;

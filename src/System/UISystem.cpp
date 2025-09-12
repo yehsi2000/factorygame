@@ -1,4 +1,4 @@
-﻿#include "System/UISystem.h"
+#include "System/UISystem.h"
 
 #include <algorithm>
 #include <list>

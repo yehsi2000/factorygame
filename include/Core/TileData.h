@@ -1,4 +1,4 @@
-﻿#ifndef CORE_TILEDATA_
+#ifndef CORE_TILEDATA_
 #define CORE_TILEDATA_
 
 #include "Core/Entity.h"

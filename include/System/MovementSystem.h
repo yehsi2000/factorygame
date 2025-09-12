@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_MOVEMENTSYSTEM_
+#ifndef SYSTEM_MOVEMENTSYSTEM_
 #define SYSTEM_MOVEMENTSYSTEM_
 
 #include "Core/SystemContext.h"

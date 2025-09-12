@@ -1,4 +1,4 @@
-﻿#include "System/ResourceNodeSystem.h"
+#include "System/ResourceNodeSystem.h"
 
 #include "Components/ResourceNodeComponent.h"
 #include "Components/TextComponent.h"

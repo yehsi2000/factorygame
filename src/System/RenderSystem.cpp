@@ -1,4 +1,4 @@
-﻿#include "System/RenderSystem.h"
+#include "System/RenderSystem.h"
 
 #include <algorithm>
 #include <vector>

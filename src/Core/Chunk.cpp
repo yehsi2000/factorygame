@@ -1,4 +1,4 @@
-﻿#include "Core/Chunk.h"
+#include "Core/Chunk.h"
 
 #include "Core/Type.h"
 

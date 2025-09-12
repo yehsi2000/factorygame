@@ -1,4 +1,4 @@
-﻿#ifndef CORE_WORLDASSETMANAGER_
+#ifndef CORE_WORLDASSETMANAGER_
 #define CORE_WORLDASSETMANAGER_
 
 #include <memory>

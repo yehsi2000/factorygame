@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_TIMEREXPIRESYSTEM_
+#ifndef SYSTEM_TIMEREXPIRESYSTEM_
 #define SYSTEM_TIMEREXPIRESYSTEM_
 
 #include "Core/SystemContext.h"

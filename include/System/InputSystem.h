@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_INPUTSYSTEM_
+#ifndef SYSTEM_INPUTSYSTEM_
 #define SYSTEM_INPUTSYSTEM_
 
 #include <cstddef>

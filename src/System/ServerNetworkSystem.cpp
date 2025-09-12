@@ -1,4 +1,4 @@
-﻿#include "System/ServerNetworkSystem.h"
+#include "System/ServerNetworkSystem.h"
 
 #include <iostream>
 #include <memory>
@@ -16,29 +16,41 @@ ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
       registry(context.registry),
       world(context.world),
       timerManager(context.timerManager),
-      packetQueue(context.packetQueue),
-      sendQueue(context.sendQueue),
+      packetQueue(context.packetQueue), // Incoming packets
+      sendQueue(context.serverSendQueue), // Outgoing packets (server-specific)
       server(context.server) {
-  sendChatHandle = eventDispatcher->Subscribe<SendChatEvent>(
-      [this](SendChatEvent e) { Broadcast(util::ChatBroadcastPacket(e.message)); });
+  sendChatHandle =
+      eventDispatcher->Subscribe<SendChatEvent>([this](SendChatEvent e) {
+        Broadcast(util::ChatBroadcastPacket(e.message));
+      });
 }
 
 void ServerNetworkSystem::Update(float deltatime) {
   PacketPtr packet;
   while (packetQueue->TryPop(packet)) {
-    PacketHeader* header = reinterpret_cast<PacketHeader*>(packet.get());
-    switch (header->packet_id) {
-      case CHAT_CLIENT:
-        eventDispatcher->Publish(NewChatEvent(std::make_shared<std::string>(
-            reinterpret_cast<char*>(packet.get()) + sizeof(PacketHeader) + sizeof(uintptr_t),
-            header->packet_size - sizeof(PacketHeader) - sizeof(uintptr_t))));
+    uint8_t* p = packet.get();
+    std::size_t packetSize;
+    PACKET packetId;
+
+    util::GetHeader(p, packetId, packetSize);
+
+    switch (packetId) {
+      case PACKET::CHAT_CLIENT:
+        clientid_t clientId = util::Read64BigEnd(p);
+        
+        char* msgStart = reinterpret_cast<char*>(p);
+        size_t msgSize = packetSize - sHeaderAndId;
+
+        eventDispatcher->Publish(
+            NewChatEvent(std::make_shared<std::string>(msgStart, msgSize)));
+
         Broadcast(std::move(packet));
         break;
     }
   }
 }
 
-void ServerNetworkSystem::Unicast(uintptr_t clientId, PacketPtr packet) {
+void ServerNetworkSystem::Unicast(clientid_t clientId, PacketPtr packet) {
   SendRequest request;
   request.type = ESendType::UNICAST;
   request.targetClientId = clientId;

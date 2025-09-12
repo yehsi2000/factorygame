@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_NETWORKSYSTEM_20COPY_
+#ifndef SYSTEM_NETWORKSYSTEM_20COPY_
 #define SYSTEM_NETWORKSYSTEM_20COPY_
 #ifndef SYSTEM_NETWORKSYSTEM_
 #define SYSTEM_NETWORKSYSTEM_
@@ -15,8 +15,8 @@ class ServerNetworkSystem {
   EventDispatcher* eventDispatcher;
   Registry* registry;
   TimerManager* timerManager;
-  ThreadSafeQueue<PacketPtr>* packetQueue;
-  ThreadSafeQueue<SendRequest>* sendQueue;
+  ThreadSafeQueue<PacketPtr>* packetQueue; // Incoming packets
+  ThreadSafeQueue<SendRequest>* sendQueue; // Outgoing packets (server-specific)
   World* world;
   Server* server;
 
@@ -27,7 +27,7 @@ class ServerNetworkSystem {
 
  private:
   std::unique_ptr<EventHandle> sendChatHandle;
-  void Unicast(uintptr_t clientId, PacketPtr packet);
+  void Unicast(uint64_t clientId, PacketPtr packet);
   void Broadcast(PacketPtr packet);
 };
 

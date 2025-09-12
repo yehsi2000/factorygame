@@ -1,4 +1,4 @@
-﻿#ifndef CORE_ASSETMANAGER_
+#ifndef CORE_ASSETMANAGER_
 #define CORE_ASSETMANAGER_
 
 #include <memory>

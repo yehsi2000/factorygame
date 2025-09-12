@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_RESOURCENODESYSTEM_
+#ifndef SYSTEM_RESOURCENODESYSTEM_
 #define SYSTEM_RESOURCENODESYSTEM_
 
 #include "Core/SystemContext.h"

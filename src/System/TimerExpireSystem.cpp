@@ -1,4 +1,4 @@
-﻿#include "System/TimerExpireSystem.h"
+#include "System/TimerExpireSystem.h"
 
 #include "Commands/ResourceMineCommand.h"
 #include "Components/AssemblingMachineComponent.h"

@@ -1,4 +1,4 @@
-﻿#include "GameState/ClientState.h"
+#include "GameState/ClientState.h"
 
 #include <cassert>
 #include <chrono>
@@ -71,7 +71,7 @@ void ClientState::Init(GEngine* engine) {
   timerManager = std::make_unique<TimerManager>();
   commandQueue = std::make_unique<CommandQueue>();
   packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
-  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
+  sendQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>(); // Initialize as PacketPtr queue
 
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
@@ -95,12 +95,12 @@ void ClientState::Init(GEngine* engine) {
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
   systemContext.packetQueue = packetQueue.get();
-  systemContext.sendQueue = sendQueue.get();
+  systemContext.clientSendQueue = sendQueue.get(); // Pass to the client-specific send queue
   systemContext.socket = connectionSocket.get();
   systemContext.clientID = clientID;
   InitCoreSystem();
 
-  messageBuffer = std::vector<char>(1024);
+  messageBuffer = std::vector<uint8_t>(MAX_BUFFER);
 
   bIsReceiving = true;
   messageThread = std::thread([this] { SocketReceiveWorker(); });
@@ -134,7 +134,7 @@ void ClientState::SocketReceiveWorker() {
       break;
     }
     
-    PacketPtr packet = std::make_unique<char[]>(res);
+    PacketPtr packet = std::make_unique<uint8_t[]>(res);
     memcpy(packet.get(), messageBuffer.data(), res);
     packetQueue->Push(std::move(packet));
   }

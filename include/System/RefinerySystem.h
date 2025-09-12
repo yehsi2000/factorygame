@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_REFINERYSYSTEM_
+#ifndef SYSTEM_REFINERYSYSTEM_
 #define SYSTEM_REFINERYSYSTEM_
 
 #include "Core/SystemContext.h"

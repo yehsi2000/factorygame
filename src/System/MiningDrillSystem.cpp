@@ -1,4 +1,4 @@
-﻿#include "System/MiningDrillSystem.h"
+#include "System/MiningDrillSystem.h"
 
 #include "Components/AnimationComponent.h"
 #include "Components/InventoryComponent.h"

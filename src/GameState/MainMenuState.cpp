@@ -1,4 +1,4 @@
-﻿#include "GameState/MainMenuState.h"
+#include "GameState/MainMenuState.h"
 
 #include "Core/GEngine.h"
 #include "GameState/ServerState.h"

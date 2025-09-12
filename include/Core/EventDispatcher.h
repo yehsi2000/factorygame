@@ -1,4 +1,4 @@
-﻿#ifndef CORE_EVENTDISPATCHER_
+#ifndef CORE_EVENTDISPATCHER_
 #define CORE_EVENTDISPATCHER_
 
 #include <functional>

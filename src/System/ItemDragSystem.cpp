@@ -1,4 +1,4 @@
-﻿#include "System/ItemDragSystem.h"
+#include "System/ItemDragSystem.h"
 
 #include <memory>
 

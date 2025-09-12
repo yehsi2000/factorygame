@@ -1,4 +1,4 @@
-﻿#include "GameState/ServerState.h"
+#include "GameState/ServerState.h"
 
 #include <cassert>
 #include <chrono>
@@ -73,9 +73,9 @@ void ServerState::Init(GEngine* engine) {
   registry = std::make_unique<Registry>(eventDispatcher.get());
   commandQueue = std::make_unique<CommandQueue>();
   packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
-  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
-  server = std::make_unique<Server>();
-  server->Init(packetQueue.get(), sendQueue.get());
+  serverSendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>(); // Initialize as SendRequest queue
+  server = std::make_unique<Server>(); // ServerImpl needs SendRequest queue
+  server->Init(packetQueue.get(), serverSendQueue.get());
   server->Start();
 
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
@@ -100,7 +100,7 @@ void ServerState::Init(GEngine* engine) {
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
   systemContext.packetQueue = packetQueue.get();
-  systemContext.sendQueue = sendQueue.get();
+  systemContext.serverSendQueue = serverSendQueue.get(); // Pass to server-specific send queue
   systemContext.server = server.get();
 
   InitCoreSystem();

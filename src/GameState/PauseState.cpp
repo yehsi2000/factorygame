@@ -1,4 +1,4 @@
-﻿#include "GameState/PauseState.h"
+#include "GameState/PauseState.h"
 
 #include "Core/GEngine.h"
 

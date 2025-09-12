@@ -1,4 +1,4 @@
-﻿#ifndef CORE_COMMANDQUEUE_
+#ifndef CORE_COMMANDQUEUE_
 #define CORE_COMMANDQUEUE_
 
 #include <memory>

@@ -1,4 +1,4 @@
-﻿#ifndef CORE_TEXTUREDELETER_
+#ifndef CORE_TEXTUREDELETER_
 #define CORE_TEXTUREDELETER_
 
 #include "SDL.h"

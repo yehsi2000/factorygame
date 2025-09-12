@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_RENDERSYSTEM_
+#ifndef SYSTEM_RENDERSYSTEM_
 #define SYSTEM_RENDERSYSTEM_
 
 #include "Core/Type.h"

@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_NETWORKSYSTEM_
+#ifndef SYSTEM_NETWORKSYSTEM_
 #define SYSTEM_NETWORKSYSTEM_
 
 #include <memory>
@@ -14,10 +14,10 @@ class ClientNetworkSystem {
   Registry* registry;
   TimerManager* timerManager;
   ThreadSafeQueue<PacketPtr>* packetQueue;
-  ThreadSafeQueue<SendRequest>* sendQueue;
+  ThreadSafeQueue<PacketPtr>* sendQueue; // Now queues PacketPtr directly
   World* world;
   Socket* connectionSocket;
-  uintptr_t clientID;
+  uint64_t clientID;
 
  public:
   ClientNetworkSystem(const SystemContext& context);

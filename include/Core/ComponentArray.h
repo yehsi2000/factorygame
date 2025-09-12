@@ -1,4 +1,4 @@
-﻿#ifndef CORE_COMPONENTARRAY_
+#ifndef CORE_COMPONENTARRAY_
 #define CORE_COMPONENTARRAY_
 
 #include <cassert>

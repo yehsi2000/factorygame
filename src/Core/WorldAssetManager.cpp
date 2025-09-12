@@ -1,4 +1,4 @@
-﻿#include "Core/WorldAssetManager.h"
+#include "Core/WorldAssetManager.h"
 
 #include <iostream>
 #include <memory>

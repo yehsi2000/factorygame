@@ -30,17 +30,17 @@ bool Socket::Init() {
   return false;
 }
 
-uintptr_t Socket::Connect(std::string ip, int port) {
+uint64_t Socket::Connect(std::string ip, int port) {
   if (pimpl) return pimpl->Connect(ip, port);
   return 0;
 }
 
-int Socket::Send(char* buffer, std::size_t size) {
+int Socket::Send(uint8_t* buffer, std::size_t size) {
   if (pimpl) return pimpl->Send(buffer, size);
   return 0;
 }
 
-int Socket::Receive(char* buffer, std::size_t size) {
+int Socket::Receive(uint8_t* buffer, std::size_t size) {
   if (pimpl) return pimpl->Receive(buffer, size);
   return 0;
 }

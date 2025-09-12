@@ -1,12 +1,14 @@
 #include "Components/MovementComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Registry.h"
+#include "Core/EventDispatcher.h"
 #include <SDL.h>
+
 #include <iostream>
 
-
 bool test_entity_creation() {
-  Registry registry;
+  EventDispatcher eventDispatcher;
+  Registry registry(&eventDispatcher);
   registry.RegisterComponent<TransformComponent>();
   registry.RegisterComponent<MovementComponent>();
 
@@ -29,7 +31,8 @@ bool test_entity_creation() {
 }
 
 bool test_component_access() {
-  Registry registry;
+  EventDispatcher eventDispatcher;
+  Registry registry(&eventDispatcher);
   registry.RegisterComponent<TransformComponent>();
   registry.RegisterComponent<MovementComponent>();
 
@@ -58,7 +61,8 @@ bool test_component_access() {
 }
 
 bool test_entity_view() {
-  Registry registry;
+  EventDispatcher eventDispatcher;
+  Registry registry(&eventDispatcher);
   registry.RegisterComponent<TransformComponent>();
   registry.RegisterComponent<MovementComponent>();
 

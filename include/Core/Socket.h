@@ -1,4 +1,4 @@
-﻿#ifndef CORE_SOCKET_
+#ifndef CORE_SOCKET_
 #define CORE_SOCKET_
 
 #include <memory>
@@ -19,9 +19,9 @@ public:
     Socket& operator=(Socket&&) noexcept;
 
     bool Init();
-    uintptr_t Connect(std::string ip, int port);
-    int Send(char* buffer, std::size_t size);
-    int Receive(char* buffer, std::size_t size);
+    uint64_t Connect(std::string ip, int port);
+    int Send(uint8_t* buffer, std::size_t size);
+    int Receive(uint8_t* buffer, std::size_t size);
     void Close();
 
 

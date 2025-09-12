@@ -1,4 +1,4 @@
-﻿#ifndef CORE_GENGINE_
+#ifndef CORE_GENGINE_
 #define CORE_GENGINE_
 
 #include <memory>

@@ -1,4 +1,4 @@
-﻿#ifndef CORE_PACKETQUEUE_
+#ifndef CORE_PACKETQUEUE_
 #define CORE_PACKETQUEUE_
 
 #include <condition_variable>
@@ -10,16 +10,16 @@ class ThreadSafeQueue {
  public:
   void Push(T value) {
     std::lock_guard<std::mutex> lock(queueMutex);
-    packetQueue.push(std::move(value));
+    safeQueue.push(std::move(value));
     queueCV.notify_one();
   }
 
   // Blocking Pop
   T WaitAndPop() {
     std::unique_lock<std::mutex> lock(queueMutex);
-    queueCV.wait(lock, [this] { return !packetQueue.empty(); });
-    T value = std::move(packetQueue.front());
-    packetQueue.pop();
+    queueCV.wait(lock, [this] { return !safeQueue.empty(); });
+    T value = std::move(safeQueue.front());
+    safeQueue.pop();
     return value;
   }
 
@@ -27,15 +27,15 @@ class ThreadSafeQueue {
   bool TryPop(T& value) {
     std::lock_guard<std::mutex> lock(queueMutex);
 
-    if (packetQueue.empty()) return false;
+    if (safeQueue.empty()) return false;
 
-    value = std::move(packetQueue.front());
-    packetQueue.pop();
+    value = std::move(safeQueue.front());
+    safeQueue.pop();
     return true;
   }
 
  private:
-  std::queue<T> packetQueue;
+  std::queue<T> safeQueue;
   std::mutex queueMutex;
   std::condition_variable queueCV;
 };

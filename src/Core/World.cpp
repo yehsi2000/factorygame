@@ -1,4 +1,4 @@
-﻿#include "Core/World.h"
+#include "Core/World.h"
 
 #include <cmath>
 #include <iostream>

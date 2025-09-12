@@ -1,13 +1,13 @@
-﻿#include "System/ClientNetworkSystem.h"
+#include "System/ClientNetworkSystem.h"
 
 #include <iostream>
 #include <memory>
 
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
-#include "Core/Socket.h"
 #include "Core/Packet.h"
-
+#include "Core/Socket.h"
+#include "Util/PacketUtil.h"
 
 ClientNetworkSystem::ClientNetworkSystem(const SystemContext& context)
     : assetManager(context.assetManager),
@@ -15,8 +15,8 @@ ClientNetworkSystem::ClientNetworkSystem(const SystemContext& context)
       registry(context.registry),
       world(context.world),
       timerManager(context.timerManager),
-      packetQueue(context.packetQueue),
-      sendQueue(context.sendQueue),
+      packetQueue(context.packetQueue), // Incoming packets
+      sendQueue(context.clientSendQueue), // Outgoing packets (client-specific)
       connectionSocket(context.socket),
       clientID(context.clientID) {
   sendChatHandle = eventDispatcher->Subscribe<SendChatEvent>(
@@ -30,44 +30,33 @@ void ClientNetworkSystem::Update(float deltatime) {
     switch (header->packet_id) {
       case CHAT_BROADCAST:
         eventDispatcher->Publish(NewChatEvent(std::make_shared<std::string>(
-            reinterpret_cast<char*>(packet.get()) + sizeof(PacketHeader),
-            header->packet_size - sizeof(PacketHeader))));
+            reinterpret_cast<uint8_t*>(packet.get()) + sPacketHeader,
+            header->packet_size - sPacketHeader)));
         break;
     }
   }
-  SendRequest sendreq;
-  while (sendQueue->TryPop(sendreq)) {
-    switch (sendreq.type) {
-      case ESendType::SERVER:
-        PacketHeader* header = reinterpret_cast<PacketHeader*>(sendreq.packet.get());
-        connectionSocket->Send(sendreq.packet.get(), header->packet_size);
-        break;
-    }
+  PacketPtr outgoingPacket;
+  while (sendQueue->TryPop(outgoingPacket)) { // Pop PacketPtr directly
+    PacketHeader* header =
+        reinterpret_cast<PacketHeader*>(outgoingPacket.get());
+    connectionSocket->Send(outgoingPacket.get(), header->packet_size);
   }
 }
 
 void ClientNetworkSystem::SendMessage(std::shared_ptr<std::string> message) {
   SendRequest request;
-  request.type = ESendType::SERVER;
-  request.targetClientId = 0;
+  request.type = ESendType::REQUEST;
+  request.targetClientId = clientID;
+  PacketPtr packet = std::make_unique<uint8_t[]>(sHeaderAndId + message->size());
 
-  PacketPtr packet = std::make_unique<char[]>(
-      sizeof(PacketHeader) + sizeof(clientID) + message->size());
+  uint8_t* p = packet.get();
+  util::WriteHeader(p, PACKET::CHAT_CLIENT, sHeaderAndId + message->size());
 
-  PacketHeader* header = reinterpret_cast<PacketHeader*>(packet.get());
-  header->packet_id = PACKET::CHAT_CLIENT;
-  header->packet_size =
-      sizeof(PacketHeader) + sizeof(clientID) + message->size();
+  util::Write64BigEnd(p, clientID);
 
-  char* data = packet.get() + sizeof(PacketHeader);
-  memcpy(data, &clientID, sizeof(clientID));
-
-  data += sizeof(clientID);
-
-  memcpy(data, message->c_str(), message->size());
-  request.packet = std::move(packet);
-
-  sendQueue->Push(std::move(request));
+  memcpy(p, message->c_str(), message->size());
+  // No SendRequest wrapper needed, push PacketPtr directly
+  sendQueue->Push(std::move(packet));
 }
 
 ClientNetworkSystem::~ClientNetworkSystem() = default;

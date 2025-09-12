@@ -1,4 +1,4 @@
-﻿#ifndef GAMESTATE_PAUSESTATE_
+#ifndef GAMESTATE_PAUSESTATE_
 #define GAMESTATE_PAUSESTATE_
 
 #include "GameState/IGameState.h"

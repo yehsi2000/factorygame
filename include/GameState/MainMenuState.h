@@ -1,4 +1,4 @@
-﻿#ifndef GAMESTATE_MAINMENUSTATE_
+#ifndef GAMESTATE_MAINMENUSTATE_
 #define GAMESTATE_MAINMENUSTATE_
 
 #include "GameState/IGameState.h"

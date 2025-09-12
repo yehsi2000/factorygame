@@ -1,4 +1,4 @@
-﻿#ifndef COMMON_
+#ifndef COMMON_
 #define COMMON_
 
 /**

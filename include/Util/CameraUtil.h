@@ -1,4 +1,4 @@
-﻿#ifndef UTIL_CAMERAUTIL_
+#ifndef UTIL_CAMERAUTIL_
 #define UTIL_CAMERAUTIL_
 
 #include "Core/Registry.h"

@@ -1,4 +1,4 @@
-﻿#ifndef GAMESTATE_IGAMESTATE_
+#ifndef GAMESTATE_IGAMESTATE_
 #define GAMESTATE_IGAMESTATE_
 
 class GEngine;

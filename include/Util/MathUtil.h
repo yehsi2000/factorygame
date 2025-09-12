@@ -1,4 +1,4 @@
-﻿#ifndef UTIL_MATHUTIL_
+#ifndef UTIL_MATHUTIL_
 #define UTIL_MATHUTIL_
 
 #include "Core/Type.h"

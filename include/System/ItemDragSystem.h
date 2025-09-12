@@ -1,4 +1,4 @@
-﻿#ifndef SYSTEM_ITEMDRAGSYSTEM_
+#ifndef SYSTEM_ITEMDRAGSYSTEM_
 #define SYSTEM_ITEMDRAGSYSTEM_
 
 #include <memory>

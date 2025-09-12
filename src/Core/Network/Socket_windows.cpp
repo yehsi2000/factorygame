@@ -1,4 +1,4 @@
-﻿#include "Core/SocketImpl.h"
+#include "Core/SocketImpl.h"
 
 #ifdef _WIN32
 
@@ -38,7 +38,7 @@ class WindowsSocketImpl : public SocketImpl {
     return true;
   }
 
-  uintptr_t Connect(std::string ip, int port) override {
+  uint64_t Connect(std::string ip, int port) override {
     if (connectSocket != INVALID_SOCKET) {
       return 0;
     }
@@ -81,11 +81,11 @@ class WindowsSocketImpl : public SocketImpl {
 
     printf("Connected to server\n");
 
-    return static_cast<uintptr_t>(connectSocket);
+    return static_cast<uint64_t>(connectSocket);
   }
 
-  int Send(char* buffer, std::size_t size) override {
-    int res = send(connectSocket, buffer, size, 0);
+  int Send(uint8_t* buffer, std::size_t size) override {
+    int res = send(connectSocket, reinterpret_cast<char*>(buffer), size, 0);
     if (res == SOCKET_ERROR) {
       fprintf(stderr, "Error at send() error code: %d\n", WSAGetLastError());
       Close();
@@ -94,8 +94,8 @@ class WindowsSocketImpl : public SocketImpl {
     return res;
   }
 
-  int Receive(char* buffer, std::size_t size) override {
-    int res = recv(connectSocket, buffer, size, 0);
+  int Receive(uint8_t* buffer, std::size_t size) override {
+    int res = recv(connectSocket, reinterpret_cast<char*>(buffer), size, 0);
     if (res > 0) {
       printf("Bytes received: %d\n", res);
     } else if (res == 0) {
