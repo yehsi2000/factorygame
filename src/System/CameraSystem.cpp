@@ -19,7 +19,7 @@ void CameraSystem::InitCameraSystem() {
 }
 
 void CameraSystem::Update(float deltaTime) {
-  playerEntity = world->GetPlayer();
+  playerEntity = world->GetLocalPlayer();
 
   if (playerEntity == INVALID_ENTITY) return;
 

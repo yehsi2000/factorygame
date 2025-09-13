@@ -50,7 +50,7 @@ void ItemDragSystem::Update() {
     ItemPayload *itemPayload = static_cast<ItemPayload *>(payload_ptr->Data);
 
     // Only handle dragging from player inventory
-    if (itemPayload->owner == world->GetPlayer() &&
+    if (itemPayload->owner == world->GetLocalPlayer() &&
         itemPayload->id != ItemID::None) {
       const ItemDatabase &db = ItemDatabase::instance();
 
@@ -131,7 +131,7 @@ void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
 }
 
 void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
-  EntityID player = world->GetPlayer();
+  EntityID player = world->GetLocalPlayer();
 
   const ItemDatabase &db = ItemDatabase::instance();
 

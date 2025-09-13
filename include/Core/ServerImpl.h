@@ -8,7 +8,7 @@
 class ServerImpl {
 public:
     virtual ~ServerImpl() = default;
-    virtual bool Init(ThreadSafeQueue<PacketPtr>* packQ, ThreadSafeQueue<SendRequest>* sendQ) = 0;
+    virtual bool Init(ThreadSafeQueue<RecvPacket>* recvQ, ThreadSafeQueue<SendRequest>* sendQ) = 0;
     virtual void StartSend() = 0;
     virtual void Start() = 0;
     virtual void Stop() = 0;

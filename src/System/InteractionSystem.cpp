@@ -38,7 +38,7 @@ InteractionSystem::InteractionSystem(const SystemContext &context)
 
 void InteractionSystem::OnPlayerEndInteractEvent(
     const PlayerEndInteractEvent &event) {
-  EntityID player = world->GetPlayer();
+  EntityID player = world->GetLocalPlayer();
 
   if (registry->HasComponent<PlayerStateComponent>(player)) {
     auto &playerStateComp =
@@ -59,7 +59,7 @@ void InteractionSystem::OnPlayerInteractEvent(
     const PlayerInteractEvent &event) {
   if (!registry || !world) return;
 
-  EntityID player = world->GetPlayer();
+  EntityID player = world->GetLocalPlayer();
   auto& ptrans = registry->GetComponent<TransformComponent>(player);
   if(maxInteractionDistance < util::dist(ptrans.position, event.target)){
     return;

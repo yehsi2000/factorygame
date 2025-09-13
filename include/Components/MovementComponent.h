@@ -3,6 +3,7 @@
 
 struct MovementComponent {
   float speed=0.f;  // per pixel
+  
 };
 
-#endif /* COMPONENTS_MOVEMENTCOMPONENT_ */
+#endif/* COMPONENTS_MOVEMENTCOMPONENT_ */

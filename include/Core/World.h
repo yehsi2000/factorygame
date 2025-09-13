@@ -1,12 +1,14 @@
 #ifndef CORE_WORLD_
 #define CORE_WORLD_
 
+#include <cassert>
 #include <map>
 #include <random>
 
 #include "Components/ResourceNodeComponent.h"
 #include "Core/Chunk.h"
 #include "Core/Entity.h"
+#include "Core/Packet.h"
 #include "Core/TileData.h"
 #include "Core/Type.h"
 #include "SDL_ttf.h"
@@ -43,12 +45,13 @@ class World {
   WorldAssetManager* worldAssetManager;
   EventDispatcher* eventDispatcher;
   EntityFactory* factory;
-  EntityID player;
+  EntityID localPlayer;
+  bool bIsServer;
 
  public:
   World(Registry* registry, WorldAssetManager* worldAssetManager,
         EntityFactory* factory, EventDispatcher* eventDispatcher,
-        TTF_Font* font);
+        TTF_Font* font, bool IsServer);
   ~World();
 
   /**
@@ -100,8 +103,7 @@ class World {
    * @param height The height of the building in tiles.
    */
   void OccupyTile(EntityID entity, Vec2 tileIndex, int width, int height);
-  void OccupyTile(EntityID entity, int tileX, int tileY, int width,
-                     int height);
+  void OccupyTile(EntityID entity, int tileX, int tileY, int width, int height);
 
   /**
    * @brief Frees tiles previously occupied by a building.
@@ -118,14 +120,22 @@ class World {
   bool DoesTileBlockMovement(Vec2f worldPos);
   bool DoesTileBlockMovement(Vec2 tileIdx);
 
-  void GeneratePlayer(Vec2f pos = {0.f,0.f});
+  void GeneratePlayer(clientid_t clientID, Vec2f worldPos = {0.f, 0.f},
+                      bool bIsLocalPlayer = false);
+  inline EntityID GetLocalPlayer() const { return localPlayer; }
+  inline EntityID GetEntityByClientID(clientid_t clientID) const {
+    auto it = clientPlayerMap.find(clientID);
+    if (it != clientPlayerMap.end()) {
+      return it->second;
+    }
+    return INVALID_ENTITY;
+  }
 
-  const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {
+  inline const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {
     return activeChunks;
   }
   inline rsrc_amt_t GetMinironOreAmount() const { return minironOreAmount; }
   inline rsrc_amt_t GetMaxironOreAmount() const { return maxironOreAmount; }
-  inline EntityID GetPlayer() const { return player; }
   inline int GetViewDistance() const { return viewDistance; }
 
  private:
@@ -137,6 +147,7 @@ class World {
   std::normal_distribution<float> distribution;
   std::map<ChunkCoord, Chunk> activeChunks;
   std::map<ChunkCoord, Chunk> chunkCache;
+  std::map<clientid_t, EntityID> clientPlayerMap;
   rsrc_amt_t minironOreAmount;
   // TODO should be configurable
   rsrc_amt_t maxironOreAmount = 10000;
@@ -144,4 +155,4 @@ class World {
   int viewDistance = 2;  // Chunk load distance from player
 };
 
-#endif/* CORE_WORLD_ */
+#endif /* CORE_WORLD_ */

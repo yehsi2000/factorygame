@@ -162,10 +162,10 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
     if (IsOffScreen(screenPos, screenSize, {0.f, 0.f})) {
-      if (text.texture) {
-        SDL_DestroyTexture(text.texture);
-        text.texture = nullptr;
-      }
+      // if (text.texture) {
+      //   SDL_DestroyTexture(text.texture);
+      //   text.texture = nullptr;
+      // }
       continue;
     }
 

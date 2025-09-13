@@ -18,39 +18,12 @@
 #include "Core/Recipe.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
-#include "System/AssemblingMachineSystem.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui_stdlib.h"
 
-
 #define TEXTLATER
-
-constexpr float ICONSPRITE_WIDTHF = static_cast<float>(ICONSPRITE_WIDTH);
-constexpr float ICONSPRITE_HEIGHTF = static_cast<float>(ICONSPRITE_HEIGHT);
-
-constexpr float uB0 = 0 / ICONSPRITE_WIDTHF;
-constexpr float vB0 = 0.f;
-constexpr float uB1 = ICONSIZE_BIG / ICONSPRITE_WIDTHF;
-constexpr float vB1 = ICONSIZE_BIG / ICONSPRITE_HEIGHTF;
-
-constexpr float uM0 = ICONSIZE_BIG / ICONSPRITE_WIDTHF;
-constexpr float vM0 = 0.f;
-constexpr float uM1 = ICONSIZE_MID_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vM1 = ICONSIZE_MID / ICONSPRITE_HEIGHTF;
-
-constexpr float uS0 = ICONSIZE_MID_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vS0 = 0.f;
-constexpr float uS1 = ICONSIZE_SMALL_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vS1 = ICONSIZE_SMALL / ICONSPRITE_HEIGHTF;
-
-constexpr float uT0 = ICONSIZE_SMALL_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vT0 = 0.f;
-constexpr float uT1 = ICONSIZE_TINY_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vT1 = ICONSIZE_TINY / ICONSPRITE_HEIGHTF;
-
-constexpr float invNodeSize = 64.f;
 
 UISystem::UISystem(const SystemContext &context)
     : assetManager(context.assetManager),
@@ -62,7 +35,7 @@ UISystem::UISystem(const SystemContext &context)
         bIsShowingInventory = !bIsShowingInventory;
       });
   newChatHandle = eventDispatcher->Subscribe<NewChatEvent>(
-      [this](NewChatEvent e) { PushChat(std::move(e.message)); });
+      [this](NewChatEvent e) { PushChat(e.message); });
   showChatHandle = eventDispatcher->Subscribe<ToggleChatInputEvent>(
       [this](ToggleChatInputEvent e) {
         if (!bIsShowingChatInput) {
@@ -183,7 +156,7 @@ void UISystem::ItemDropBackground() {
 
 void UISystem::Inventory() {
   InventoryComponent &invComp =
-      registry->GetComponent<InventoryComponent>(world->GetPlayer());
+      registry->GetComponent<InventoryComponent>(world->GetLocalPlayer());
   const ItemDatabase &itemdb = ItemDatabase::instance();
 
   int row = invComp.row;
@@ -214,20 +187,20 @@ void UISystem::Inventory() {
 
             ItemPayload *payload_ptr =
                 static_cast<ItemPayload *>(payload->Data);
-            if (payload_ptr->owner != world->GetPlayer()) {
+            if (payload_ptr->owner != world->GetLocalPlayer()) {
               if (registry->HasComponent<InventoryComponent>(
                       payload_ptr->owner)) {
                 eventDispatcher->Publish(
-                    ItemMoveEvent(payload_ptr->owner, world->GetPlayer(),
+                    ItemMoveEvent(payload_ptr->owner, world->GetLocalPlayer(),
                                   payload_ptr->id, payload_ptr->amount));
               } else if (registry->HasComponent<AssemblingMachineComponent>(
                              payload_ptr->owner)) {
                 eventDispatcher->Publish(AssemblyTakeOutputEvent(
-                    payload_ptr->owner, world->GetPlayer(), payload_ptr->id,
+                    payload_ptr->owner, world->GetLocalPlayer(), payload_ptr->id,
                     payload_ptr->amount));
               } else {
                 eventDispatcher->Publish(ItemAddEvent(
-                    world->GetPlayer(), payload_ptr->id, payload_ptr->amount));
+                    world->GetLocalPlayer(), payload_ptr->id, payload_ptr->amount));
               }
             }
           }
@@ -258,7 +231,7 @@ void UISystem::Inventory() {
 
       // Handle dragging start
       if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-        payload = ItemPayload{idx, world->GetPlayer(), invItemId, invItemAmt};
+        payload = ItemPayload{idx, world->GetLocalPlayer(), invItemId, invItemAmt};
         ImGui::SetDragDropPayload("DND_ITEM", &payload, sizeof(ItemPayload));
         ImGui::Image(iconTexture, iconSize, ImVec2{uB0, vB0}, ImVec2{uB1, vB1});
 
@@ -273,20 +246,20 @@ void UISystem::Inventory() {
 
           ItemPayload *payload_ptr = static_cast<ItemPayload *>(payload->Data);
 
-          if (payload_ptr->owner != world->GetPlayer()) {
+          if (payload_ptr->owner != world->GetLocalPlayer()) {
             if (registry->HasComponent<InventoryComponent>(
                     payload_ptr->owner)) {
               eventDispatcher->Publish(
-                  ItemMoveEvent(payload_ptr->owner, world->GetPlayer(),
+                  ItemMoveEvent(payload_ptr->owner, world->GetLocalPlayer(),
                                 payload_ptr->id, payload_ptr->amount));
             } else if (registry->HasComponent<AssemblingMachineComponent>(
                            payload_ptr->owner)) {
               eventDispatcher->Publish(AssemblyTakeOutputEvent(
-                  payload_ptr->owner, world->GetPlayer(), payload_ptr->id,
+                  payload_ptr->owner, world->GetLocalPlayer(), payload_ptr->id,
                   payload_ptr->amount));
             } else {
               eventDispatcher->Publish(ItemAddEvent(
-                  world->GetPlayer(), payload_ptr->id, payload_ptr->amount));
+                  world->GetLocalPlayer(), payload_ptr->id, payload_ptr->amount));
             }
           } else {
             if (payload_ptr->itemIdx < invComp.items.size()) {
@@ -431,7 +404,7 @@ void UISystem::AssemblingMachineUI() {
 
           // Show crafting progress
           if (assemblingComp.state == AssemblingMachineState::Crafting) {
-            // Would need to get progress from timer system
+            // TODO : Add progress bar with timer component
             ImGui::Separator();
             ImGui::Text("Crafting... (Animation: %s)",
                         assemblingComp.bIsAnimating ? "ON" : "OFF");
@@ -472,8 +445,6 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
 
       if (ImGui::Button((const char *)recipeData.name.c_str(),
                         ImVec2(200, 0))) {
-        // Set the recipe using AssemblingMachineSystem
-        // For now, set it directly - should use system method
         assemblingComp.currentRecipe = recipeId;
         assemblingComp.bIsShowingRecipeSelection = false;
         assemblingComp.state = AssemblingMachineState::Idle;

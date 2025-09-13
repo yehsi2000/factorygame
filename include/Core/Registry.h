@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "Core/ComponentArray.h"
+#include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 
 constexpr int MAX_ENTITIES = 1000000;

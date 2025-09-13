@@ -11,9 +11,9 @@
 #include <process.h>
 #include <windows.h>
 
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -44,7 +44,8 @@ class WindowsSocketImpl : public SocketImpl {
       return 0;
     }
 
-    int res = getaddrinfo(ip.c_str(), std::to_string(port).c_str(), &hints, &addrInfoList);
+    int res = getaddrinfo(ip.c_str(), std::to_string(port).c_str(), &hints,
+                          &addrInfoList);
     if (res != 0) {
       fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(res));
       return 0;
@@ -55,14 +56,16 @@ class WindowsSocketImpl : public SocketImpl {
       connectSocket = socket(addrIter->ai_family, addrIter->ai_socktype,
                              addrIter->ai_protocol);
       if (connectSocket == INVALID_SOCKET) {
-        fprintf(stderr, "Error at socket() error code: %d\n", WSAGetLastError());
+        fprintf(stderr, "Error at socket() error code: %d\n",
+                WSAGetLastError());
         continue;
       }
 
       res =
           connect(connectSocket, addrIter->ai_addr, (int)addrIter->ai_addrlen);
       if (res == SOCKET_ERROR) {
-        fprintf(stderr, "Error at connect() error code: %d\n", WSAGetLastError());
+        fprintf(stderr, "Error at connect() error code: %d\n",
+                WSAGetLastError());
         closesocket(connectSocket);
         connectSocket = INVALID_SOCKET;
         continue;
@@ -92,13 +95,22 @@ class WindowsSocketImpl : public SocketImpl {
       Close();
       return res;
     }
+    printf("sent bytes : ");
+    for (int i = 0; i < size; ++i) {
+      printf("%x ", buffer[i]);
+    }
+    printf("\n");
     return res;
   }
 
   int Receive(uint8_t* buffer, std::size_t size) override {
     int res = recv(connectSocket, reinterpret_cast<char*>(buffer), size, 0);
     if (res > 0) {
-      printf("Bytes received: %d\n", res);
+      printf("received bytes : ");
+      for (int i = 0; i < size; ++i) {
+        printf("%x", buffer[i]);
+      }
+      printf("\n");
     } else if (res == 0) {
       printf("Connection closed\n");
     } else {

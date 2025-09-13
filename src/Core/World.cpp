@@ -9,6 +9,7 @@
 #include "Components/BuildingComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/DebugRectComponent.h"
+#include "Components/MoveIntentComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
@@ -26,25 +27,26 @@
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
 
-
 World::World(Registry *registry, WorldAssetManager *worldAssetManager,
              EntityFactory *factory, EventDispatcher *eventDispatcher,
-             TTF_Font *font)
+             TTF_Font *font, bool bIsServer)
     : registry(registry),
       factory(factory),
       worldAssetManager(worldAssetManager),
       eventDispatcher(eventDispatcher),
-      font(font) {
+      font(font),
+      localPlayer(INVALID_ENTITY),
+      bIsServer(bIsServer) {
   std::random_device rd;
   randomGenerator.seed(rd());
   distribution = std::normal_distribution<float>(0.0, 1.0);
 }
 
 void World::Update() {
-  if (!registry->HasComponent<TransformComponent>(player)) return;
+  if (!registry->HasComponent<TransformComponent>(localPlayer)) return;
 
   const Vec2f playerPosition =
-      registry->GetComponent<TransformComponent>(player).position;
+      registry->GetComponent<TransformComponent>(localPlayer).position;
 
   int playerChunkX =
       std::floor(playerPosition.x / (CHUNK_WIDTH * TILE_PIXEL_SIZE));
@@ -78,8 +80,11 @@ void World::Update() {
   }
 }
 
-void World::GeneratePlayer(Vec2f pos) {
-  player = factory->CreatePlayer(this, pos);
+void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool bIsLocal) {
+  EntityID player = factory->CreatePlayer(this, pos, clientID, bIsLocal);
+  if (bIsServer) registry->EmplaceComponent<MoveIntentComponent>(player);
+  if (bIsLocal) localPlayer = player;
+  clientPlayerMap[clientID] = player;
 }
 
 TileData *World::GetTileAtWorldPosition(Vec2f position) {
@@ -136,8 +141,7 @@ bool World::HasNoOcuupyingEntity(Vec2 tileIndex, int width, int height) {
   return HasNoOcuupyingEntity(tileIndex.x, tileIndex.y, width, height);
 }
 
-bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width,
-                             int height) {
+bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width, int height) {
   // Check if all tiles for this building are available
   for (int dy = 0; dy < height; ++dy) {
     for (int dx = 0; dx < width; ++dx) {
@@ -159,20 +163,20 @@ bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width,
         return false;  // Cannot build on water or invalid tiles
       }
 
-      auto& playertrans = registry->GetComponent<TransformComponent>(player);
-      if(tile == GetTileAtWorldPosition(playertrans.position)) return false;
+      auto &playertrans =
+          registry->GetComponent<TransformComponent>(localPlayer);
+      if (tile == GetTileAtWorldPosition(playertrans.position)) return false;
     }
   }
   return true;
 }
 
-void World::OccupyTile(EntityID entity, Vec2 tileIndex, int width,
-                          int height) {
+void World::OccupyTile(EntityID entity, Vec2 tileIndex, int width, int height) {
   OccupyTile(entity, tileIndex.x, tileIndex.y, width, height);
 }
 
 void World::OccupyTile(EntityID entity, int tileX, int tileY, int width,
-                          int height) {
+                       int height) {
   std::vector<Vec2> occupiedTiles;
 
   // Mark all tiles as occupied by this building

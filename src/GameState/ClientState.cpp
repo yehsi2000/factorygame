@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <tuple>
 #include <utility>
 
@@ -15,9 +16,11 @@
 #include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/InventoryComponent.h"
+#include "Components/LocalPlayerComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
+#include "Components/NetPredictionComponent.h"
 #include "Components/PlayerStateComponent.h"
 #include "Components/RefineryComponent.h"
 #include "Components/ResourceNodeComponent.h"
@@ -71,8 +74,10 @@ void ClientState::Init(GEngine* engine) {
   registry = std::make_unique<Registry>(eventDispatcher.get());
   timerManager = std::make_unique<TimerManager>();
   commandQueue = std::make_unique<CommandQueue>();
-  packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
-  sendQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>(); // Initialize as PacketPtr queue
+  recvQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
+  sendQueue =
+      std::make_unique<ThreadSafeQueue<PacketPtr>>();  // Initialize as
+                                                       // PacketPtr queue
 
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
@@ -84,7 +89,7 @@ void ClientState::Init(GEngine* engine) {
 
   world = std::make_unique<World>(registry.get(), worldAssetManager,
                                   entityFactory.get(), eventDispatcher.get(),
-                                  gFont);
+                                  gFont, false);
 
   systemContext.assetManager = assetManager;
   systemContext.worldAssetManager = worldAssetManager;
@@ -95,34 +100,29 @@ void ClientState::Init(GEngine* engine) {
   systemContext.inputManager = engine->GetInputManager();
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
-  systemContext.packetQueue = packetQueue.get();
-  systemContext.clientSendQueue = sendQueue.get(); // Pass to the client-specific send queue
+  systemContext.clientRecvQueue = recvQueue.get();
+  systemContext.clientSendQueue = sendQueue.get();
   systemContext.socket = connectionSocket.get();
-  systemContext.clientID = clientID;
+  systemContext.clientNameMap = &clientNameMap;
+  systemContext.bIsServer = false;
   InitCoreSystem();
 
+  // TODO : move message buffer and receiving thread to network system
   messageBuffer = std::vector<uint8_t>(MAX_BUFFER);
 
   bIsReceiving = true;
   messageThread = std::thread([this] { SocketReceiveWorker(); });
-
-  world->GeneratePlayer();
-  EntityID player = world->GetPlayer();
-
-  // Default item
-  eventDispatcher->Publish(
-      ItemAddEvent(player, ItemID::AssemblingMachine, 100));
-  eventDispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 100));
+  networkSystem->Init(u8"Client");
 }
 
 bool ClientState::TryConnect() {
   connectionSocket = std::make_unique<Socket>();
-
   connectionSocket->Init();
 
-  clientID = connectionSocket->Connect("127.0.0.1", 27015);
+  int res = connectionSocket->Connect("127.0.0.1", 27015);
+  // TODO : send duplicate name check packet and return if duplicate name exists
 
-  if (clientID == 0) return false;
+  if (res == 0) return false;
   return true;
 }
 
@@ -134,10 +134,10 @@ void ClientState::SocketReceiveWorker() {
     if (res <= 0) {
       break;
     }
-    
+
     PacketPtr packet = std::make_unique<uint8_t[]>(res);
-    memcpy(packet.get(), messageBuffer.data(), res);
-    packetQueue->Push(std::move(packet));
+    std::memcpy(packet.get(), messageBuffer.data(), res);
+    recvQueue->Push(std::move(packet));
   }
   return;
 }
@@ -150,9 +150,10 @@ void ClientState::RegisterComponent() {
                 BuildingComponent, BuildingPreviewComponent, CameraComponent,
                 ChunkComponent, DebugRectComponent, InactiveComponent,
                 InventoryComponent, MiningDrillComponent, MovableComponent,
-                MovementComponent, PlayerStateComponent, RefineryComponent,
-                ResourceNodeComponent, SpriteComponent, TimerComponent,
-                TimerExpiredTag, TransformComponent, TextComponent>;
+                MovementComponent, NetPredictionComponent, LocalPlayerComponent,
+                PlayerStateComponent, RefineryComponent, ResourceNodeComponent,
+                SpriteComponent, TimerComponent, TimerExpiredTag,
+                TransformComponent, TextComponent>;
 
   [reg = registry.get()]<std::size_t... Is>(std::index_sequence<Is...>) {
     ((reg->RegisterComponent<
@@ -189,8 +190,8 @@ void ClientState::Cleanup() {
 }
 
 void ClientState::Update(float deltaTime) {
-  SDL_GetWindowSize(gWindow, &screenSize.x, &screenSize.y);
-  inputSystem->Update();
+  networkSystem->Update(deltaTime);
+
   // Process all pending commands.
   while (!commandQueue->IsEmpty()) {
     std::unique_ptr<Command> command = commandQueue->Dequeue();
@@ -199,7 +200,9 @@ void ClientState::Update(float deltaTime) {
     }
   }
 
-  networkSystem->Update(deltaTime);
+  if (world->GetLocalPlayer() == INVALID_ENTITY) return;
+  inputSystem->Update();
+
   itemDragSystem->Update();
   timerSystem->Update(deltaTime);
   timerExpireSystem->Update();

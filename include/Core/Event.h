@@ -14,6 +14,11 @@ struct Event {
   virtual ~Event() = default;
 };
 
+struct EntityDestroyedEvent : public Event{
+  EntityDestroyedEvent(EntityID entity) : entity(entity) {}
+  EntityID entity;
+};
+
 struct PlayerInteractEvent : public Event {
   PlayerInteractEvent(Vec2f t) : target(t) {}
   Vec2f target;
@@ -91,23 +96,8 @@ struct SendChatEvent : public Event {
 };
 
 struct NewChatEvent : public Event {
-  NewChatEvent(std::shared_ptr<std::string> msg) : message(msg) {}
+  NewChatEvent(std::string name, std::shared_ptr<std::string> msg) : message(msg) {}
   std::shared_ptr<std::string> message;
-};
-
-struct XAxisEvent : public Event {
-  XAxisEvent(float i) : val(i) {}
-  float val;
-};
-
-struct YAxisEvent : public Event {
-  YAxisEvent(float i) : val(i) {}
-  float val;
-};
-
-struct EntityDestroyedEvent : public Event {
-  EntityDestroyedEvent(EntityID entity) : entity(entity) {}
-  EntityID entity;
 };
 
 struct QuitEvent : public Event {};
