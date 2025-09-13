@@ -67,6 +67,7 @@ class ServerState : public IGameState {
 
   std::unique_ptr<ThreadSafeQueue<RecvPacket>> recvQueue;
   std::unique_ptr<ThreadSafeQueue<SendRequest>> sendQueue;
+  std::unique_ptr<ThreadSafeQueue<MoveApplied>> pendingMoves;
 
   std::unordered_map<clientid_t, std::string> clientNameMap;
 
@@ -90,6 +91,8 @@ class ServerState : public IGameState {
   std::unique_ptr<TimerExpireSystem> timerExpireSystem;
   std::unique_ptr<InteractionSystem> interactionSystem;
   std::unique_ptr<UISystem> uiSystem;
+
+  bool bIsQuit = false;
 
  public:
   ServerState();

@@ -10,6 +10,17 @@
 #include "Core/Packet.h"
 
 namespace util {
+
+// Wrap-safe seq greater-than: true if a is newer than b
+static inline bool seq_gt(uint16_t a, uint16_t b) {
+  return (static_cast<uint16_t>(a - b) < 0x8000) && (a != b);
+}
+
+// Helper for uint16 sequence order with wrap-around
+static inline bool seq_leq(uint16_t a, uint16_t b) {
+  return static_cast<uint16_t>(b - a) < 0x8000;
+}
+
 inline void Write16BigEnd(uint8_t*& p, uint16_t v) {
   *p++ = static_cast<uint8_t>((v >> 8) & 0xFF);
   *p++ = static_cast<uint8_t>(v & 0xFF);
@@ -103,13 +114,14 @@ static void WriteHeader(uint8_t*& beginPtr, enum PACKET packetID,
   Write16BigEnd(beginPtr, static_cast<uint16_t>(size));
 }
 
-static void GetHeader(uint8_t*& beginPtr, enum PACKET& packetID,
+static void GetHeader(const uint8_t*& beginPtr, enum PACKET& packetID,
                       std::size_t& size) {
   packetID = static_cast<PACKET>(Read16BigEnd(beginPtr));
   size = Read16BigEnd(beginPtr);
 }
 
-static PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message, clientid_t senderId) {
+static PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message,
+                                     clientid_t senderId) {
   const std::size_t payload = sizeof(clientid_t) + message->size();
   const std::size_t total = sPacketHeader + payload;
   PacketPtr packet = std::make_unique<uint8_t[]>(total);
@@ -126,4 +138,4 @@ static PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message) {
 
 }  // namespace util
 
-#endif /* UTIL_PACKETUTIL_ */
+#endif/* UTIL_PACKETUTIL_ */

@@ -3,12 +3,12 @@
 
 #include <algorithm>
 
-#include "Components/InventoryComponent.h"
 #include "Commands/Command.h"
-#include "Core/Registry.h"
+#include "Components/InventoryComponent.h"
 #include "Core/EventDispatcher.h"
-#include "Core/World.h"
 #include "Core/Item.h"
+#include "Core/Registry.h"
+#include "Core/World.h"
 
 class InventoryCommand : public Command {
  public:
@@ -16,32 +16,31 @@ class InventoryCommand : public Command {
                    EntityID instigator = INVALID_ENTITY)
       : target(target), item(item), amount(amount), instigator(instigator) {}
 
-  void Execute(Registry *registry, EventDispatcher* eventDispatcher, World* world) override {
+  void Execute(Registry *registry, EventDispatcher *eventDispatcher,
+               World *world) override {
     if (!registry || !eventDispatcher || !world) return;
     if (!registry->HasComponent<InventoryComponent>(target)) return;
 
-    InventoryComponent &targetInventory =
-        registry->GetComponent<InventoryComponent>(target);
+    auto &targetInventory = registry->GetComponent<InventoryComponent>(target);
 
-    if (instigator != INVALID_ENTITY) {
+    if (instigator != INVALID_ENTITY &&
+        registry->HasComponent<InventoryComponent>(instigator)) {
       // Item Transfer
-      if (!registry->HasComponent<InventoryComponent>(instigator)) return;
-      InventoryComponent &instigatorInventory =
+      auto &instigatorInventory =
           registry->GetComponent<InventoryComponent>(instigator);
+
       if (amount > 0) {
         int actualCnt = TryConsumeItem(instigatorInventory, amount);
         TryAddItem(targetInventory, actualCnt);
       }
-    } else {
-      // Simple Item Add, Remove
+    }
+    // Simple Item Add, Remove
+    else {
       if (amount > 0)
         TryAddItem(targetInventory, amount);
       else
         TryConsumeItem(targetInventory, -amount);
     }
-    // add item
-
-    // consume item
   }
 
  private:
@@ -88,7 +87,6 @@ class InventoryCommand : public Command {
     int actualConsumeAmt = 0;
     if (amount <= 0) return actualConsumeAmt;
 
-    
     while (amount) {
       auto it = std::find_if(inventory.items.begin(), inventory.items.end(),
                              [this](const auto &itempair) {
@@ -108,4 +106,4 @@ class InventoryCommand : public Command {
   }
 };
 
-#endif/* COMMANDS_INVENTORYCOMMAND_ */
+#endif /* COMMANDS_INVENTORYCOMMAND_ */

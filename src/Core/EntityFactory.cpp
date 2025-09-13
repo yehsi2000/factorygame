@@ -197,6 +197,7 @@ EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
   playerState.interactingEntity = INVALID_ENTITY;
   playerState.clientID = clientID;
   playerState.lastProcessedSeq = 0;
+  playerState.lastSeqSentToClient = 0;
   registry->AddComponent<PlayerStateComponent>(player, std::move(playerState));
 
   if (bIsLocalPlayer) {

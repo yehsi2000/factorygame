@@ -19,9 +19,9 @@ void CameraSystem::InitCameraSystem() {
 }
 
 void CameraSystem::Update(float deltaTime) {
-  playerEntity = world->GetLocalPlayer();
+  localPlayer = world->GetLocalPlayer();
 
-  if (playerEntity == INVALID_ENTITY) return;
+  if (localPlayer == INVALID_ENTITY) return;
 
   UpdateCameraFollow(deltaTime);
   UpdateCameraDrag(deltaTime);
@@ -31,9 +31,9 @@ void CameraSystem::UpdateCameraFollow(float deltaTime) {
   auto &camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
   // Update target position to player position
-  if (registry->HasComponent<TransformComponent>(playerEntity)) {
+  if (registry->HasComponent<TransformComponent>(localPlayer)) {
     const auto &playerTransform =
-        registry->GetComponent<TransformComponent>(playerEntity);
+        registry->GetComponent<TransformComponent>(localPlayer);
     camera.target = playerTransform.position;
   }
 
@@ -78,7 +78,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   if (inputManager->GetMouseWheelScroll() != 0) {
-    camera.zoom = camera.zoom * ((inputManager->GetMouseWheelScroll()) * 0.1);
+    camera.zoom += ((inputManager->GetMouseWheelScroll()) * 0.05f);
     // inputManager->mouseWheel = {0, 0};
   }
 
@@ -99,9 +99,9 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
       bIsPlayerMoving) {
     if (camera.bIsDragging) {
       // Store the offset for smooth transition back to following
-      if (registry->HasComponent<TransformComponent>(playerEntity)) {
+      if (registry->HasComponent<TransformComponent>(localPlayer)) {
         const auto &playerTransform =
-            registry->GetComponent<TransformComponent>(playerEntity);
+            registry->GetComponent<TransformComponent>(localPlayer);
         camera.offset = {camera.position.x - playerTransform.position.x,
                          camera.position.y - playerTransform.position.y};
       }

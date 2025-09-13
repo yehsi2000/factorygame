@@ -10,6 +10,7 @@
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/BuildingComponent.h"
+#include "Components/InputStateComponent.h"
 #include "Components/BuildingPreviewComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
@@ -23,7 +24,6 @@
 #include "Components/NetPredictionComponent.h"
 #include "Components/PlayerStateComponent.h"
 #include "Components/RefineryComponent.h"
-#include "Components/MoveIntentComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
@@ -66,6 +66,7 @@
 ServerState::ServerState() {}
 
 void ServerState::Init(GEngine* engine) {
+  gEngine = engine;
   gWindow = engine->GetWindow();
   gRenderer = engine->GetRenderer();
   gFont = engine->GetFont();
@@ -77,9 +78,9 @@ void ServerState::Init(GEngine* engine) {
   registry = std::make_unique<Registry>(eventDispatcher.get());
   commandQueue = std::make_unique<CommandQueue>();
   recvQueue = std::make_unique<ThreadSafeQueue<RecvPacket>>();
-  sendQueue =
-      std::make_unique<ThreadSafeQueue<SendRequest>>();  // Initialize as
-                                                         // SendRequest queue
+  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
+
+  pendingMoves = std::make_unique<ThreadSafeQueue<MoveApplied>>();
   server = std::make_unique<Server>();  // ServerImpl needs SendRequest queue
   server->Init(recvQueue.get(), sendQueue.get());
   server->Start();
@@ -108,6 +109,7 @@ void ServerState::Init(GEngine* engine) {
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
   systemContext.serverRecvQueue = recvQueue.get();
+  systemContext.pendingMoves = pendingMoves.get();
   systemContext.serverSendQueue =
       sendQueue.get();  // Pass to server-specific send queue
   systemContext.server = server.get();
@@ -115,6 +117,9 @@ void ServerState::Init(GEngine* engine) {
   systemContext.bIsServer = true;
 
   InitCoreSystem();
+
+  eventDispatcher->Subscribe<QuitEvent>(
+      [this](QuitEvent e) { bIsQuit = true; });
 
   // TODO : Move Server player generation to be handled by menu ui
   world->GeneratePlayer(0, {0.f, 0.f}, true);
@@ -127,11 +132,11 @@ void ServerState::RegisterComponent() {
       typeArray<AnimationComponent, AssemblingMachineComponent,
                 BuildingComponent, BuildingPreviewComponent, CameraComponent,
                 ChunkComponent, DebugRectComponent, InactiveComponent,
-                InventoryComponent, MiningDrillComponent, MovableComponent,
-                MovementComponent, MoveIntentComponent, NetPredictionComponent, LocalPlayerComponent,
-                PlayerStateComponent, RefineryComponent, ResourceNodeComponent,
-                SpriteComponent, TimerComponent, TimerExpiredTag,
-                TransformComponent, TextComponent>;
+                InventoryComponent, InputStateComponent, MiningDrillComponent, MovableComponent,
+                MovementComponent, NetPredictionComponent,
+                LocalPlayerComponent, PlayerStateComponent, RefineryComponent,
+                ResourceNodeComponent, SpriteComponent, TimerComponent,
+                TimerExpiredTag, TransformComponent, TextComponent>;
 
   [reg = registry.get()]<std::size_t... Is>(std::index_sequence<Is...>) {
     ((reg->RegisterComponent<
@@ -162,9 +167,15 @@ void ServerState::InitCoreSystem() {
       std::make_unique<RenderSystem>(systemContext, gRenderer, gFont);
 }
 
-void ServerState::Cleanup() { GameEndEventHandle.reset(); }
+void ServerState::Cleanup() {}
 
 void ServerState::Update(float deltaTime) {
+  if (bIsQuit) {
+    if (!gEngine->IsChangeRequested())
+      gEngine->ChangeState(std::make_unique<MainMenuState>());
+    return;  // The state is now being destroyed, so we should not continue.
+  }
+
   inputSystem->Update();
   // Process all pending commands.
   while (!commandQueue->IsEmpty()) {

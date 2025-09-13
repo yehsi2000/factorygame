@@ -131,20 +131,15 @@ void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
 }
 
 void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
-  EntityID player = world->GetLocalPlayer();
+  EntityID player = event.payload.owner;
 
   const ItemDatabase &db = ItemDatabase::instance();
 
-  Vec2f mouseWorldPos = util::ScreenToWorld(inputManager->GetMousePosition(),
-                                            util::GetCameraPosition(registry),
-                                            inputManager->GetScreenSize());
-
-  // only handle item inside player's inventory
-  if (event.payload.owner != player) return;
-
   // Check if we're dragging to place building
-  if (db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
-    Vec2 tileIndex = world->GetTileIndexFromWorldPosition(mouseWorldPos);
+  if (player != INVALID_ENTITY && bIsPreviewingBuilding &&
+      previewingItemID != ItemID::None &&
+      db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
+    Vec2 tileIndex = world->GetTileIndexFromWorldPosition(event.worldPos);
 
     Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
 
@@ -171,8 +166,9 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
   else if (!db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
     EntityID itemEntity = registry->CreateEntity();
 
+    // TODO : scatter item if there's more than one
     registry->EmplaceComponent<TransformComponent>(
-        itemEntity, TransformComponent{mouseWorldPos});
+        itemEntity, TransformComponent{event.worldPos});
 
     const ItemData &itemData = db.get(event.payload.id);
     SDL_Texture *texture = assetManager->getTexture(itemData.icon);
@@ -184,11 +180,9 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
     sprite.renderOrder = 0;
     registry->EmplaceComponent<SpriteComponent>(itemEntity, sprite);
 
-    eventDispatcher->Publish(ItemConsumeEvent{player, event.payload.id, 1});
-
-    std::cout << "Dropped " << (const char *)itemData.name.c_str()
-              << " at world position " << mouseWorldPos.x << ","
-              << mouseWorldPos.y << std::endl;
+    if (player != INVALID_ENTITY)
+      eventDispatcher->Publish(
+          ItemConsumeEvent{player, event.payload.id, event.payload.amount});
   }
 }
 

@@ -11,15 +11,16 @@ class MovementSystem {
   World* world;
   bool bIsServer;
 
+  ThreadSafeQueue<MoveApplied>* pendingMoves;
+
  public:
   MovementSystem(const SystemContext& context);
   ~MovementSystem();
   void Update(float deltaTime);
 
-  private:
-  void AddServerMoveIntent(float deltaTime);
+ private:
   void ServerUpdate(float deltaTime);
   void ClientUpdate(float deltaTime);
 };
 
-#endif /* SYSTEM_MOVEMENTSYSTEM_ */
+#endif/* SYSTEM_MOVEMENTSYSTEM_ */

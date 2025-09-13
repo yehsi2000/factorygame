@@ -77,7 +77,8 @@ void InputSystem::Update() {
 }
 
 void InputSystem::HandleInputAction(InputAction action, InputType type) {
-  EntityID player = world->GetLocalPlayer();
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
 
   switch (action) {
     // Player started interacting
@@ -90,7 +91,7 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
                                         inputManager->GetScreenSize());
       } else if (type == InputType::KEYBOARD) {
         auto &playerTransform =
-            registry->GetComponent<TransformComponent>(player);
+            registry->GetComponent<TransformComponent>(localPlayer);
         targetPos = playerTransform.position;
       }
       eventDispatcher->Publish(PlayerInteractEvent(targetPos));

@@ -53,12 +53,12 @@ class UISystem;
 constexpr std::size_t MAX_BUFFER = 1024;
 
 class ClientState : public IGameState {
+  GEngine *gEngine;
   SDL_Window *gWindow;
   SDL_Renderer *gRenderer;
   TTF_Font *gFont;
   AssetManager *assetManager;
   WorldAssetManager *worldAssetManager;
-  GEngine *gEngine;
 
   std::unique_ptr<Registry> registry;
   std::unique_ptr<TimerManager> timerManager;
@@ -81,6 +81,7 @@ class ClientState : public IGameState {
   std::thread messageThread;
   std::size_t clientID;
   bool bIsReceiving;
+  bool bIsQuit;
 
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<AssemblingMachineSystem> assemblingMachineSystem;

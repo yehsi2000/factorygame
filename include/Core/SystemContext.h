@@ -33,6 +33,7 @@ struct SystemContext {
   ThreadSafeQueue<SendRequest>* serverSendQueue = nullptr; // For server outgoing packets (needs SendRequest)
   ThreadSafeQueue<PacketPtr>* clientRecvQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
   ThreadSafeQueue<PacketPtr>* clientSendQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
+  ThreadSafeQueue<MoveApplied>* pendingMoves = nullptr;
   std::unordered_map<clientid_t, std::string>* clientNameMap = nullptr;
   Server* server = nullptr;
   Socket* socket = nullptr;

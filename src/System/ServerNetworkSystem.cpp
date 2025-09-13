@@ -1,14 +1,16 @@
-﻿#include "System/ServerNetworkSystem.h"
+#include "System/ServerNetworkSystem.h"
 
 #include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <memory>
 
+#include "Commands/PlayerDisconnectedCommnad.h"
 #include "Commands/PlayerSpawnCommand.h"
+#include "Components/InputStateComponent.h"
 #include "Components/PlayerStateComponent.h"
+#include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
-#include "Components/MoveIntentComponent.h"
 #include "Core/CommandQueue.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
@@ -16,6 +18,7 @@
 #include "Core/Server.h"
 #include "Core/ThreadSafeQueue.h"
 #include "Util/PacketUtil.h"
+
 
 ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
     : assetManager(context.assetManager),
@@ -28,6 +31,7 @@ ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
       sendQueue(context.serverSendQueue),  // Outgoing packets (server-specific)
       server(context.server),
       clientNameMap(context.clientNameMap),
+      pendingMoves(context.pendingMoves),
       syncTimer(0.f),
       playerSnapShotSize(0) {
   // Subscribe chat event
@@ -39,153 +43,238 @@ ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
   for (auto& [id, name] : *clientNameMap)
     playerSnapShotSize += sClientID + sizeof(uint8_t) + name.size();
 }
-void ServerNetworkSystem::Update(float deltatime) {
-  syncTimer += deltatime;
-  if (syncTimer >= (1.f / syncRate)) {
-    syncTimer -= syncRate;
-    AddSyncPacket();
+
+void ServerNetworkSystem::ConnectSynHandler(const RecvPacket& recv,
+                                            clientid_t clientID,
+                                            const uint8_t* rp,
+                                            std::size_t packetSize) {
+  std::cout << "CONNECT_SYN from clientID: " << clientID << "\n";
+  const uint8_t nameLen = *rp++;
+  if (packetSize < (static_cast<size_t>(rp - recv.packet.get()) + nameLen)) {
+    // invalid
+    return;
+  }
+  constexpr size_t cap = NAME_MAX_LEN - 1;
+  size_t copyLen = util::utf8_clamp_to_codepoint(rp, nameLen, cap);
+  std::string name(reinterpret_cast<const char*>(rp), copyLen);
+
+  // Generate character of connected client
+  commandQueue->Enqueue(std::make_unique<PlayerSpawnCommand>(clientID, false));
+
+  {  // Send CONNECT_ACK for connected client
+    std::size_t totalPacketSize = sPacketHeader + sizeof(clientid_t) +
+                                  sizeof(uint16_t) +
+                                  playerSnapShotSize;  // header + playercnt
+
+    std::unique_ptr<uint8_t[]> snapshotPacket =
+        std::make_unique<uint8_t[]>(totalPacketSize);
+
+    uint8_t* wp = snapshotPacket.get();
+
+    util::WriteHeader(wp, PACKET::CONNECT_ACK, totalPacketSize);
+    util::Write64BigEnd(wp, clientID);
+    if (clientNameMap->size() != 0) {
+      util::Write16BigEnd(wp, static_cast<uint16_t>(clientNameMap->size()));
+      for (auto& [id, name] : *clientNameMap) {
+        util::Write64BigEnd(wp, id);
+        *wp++ = static_cast<uint8_t>(name.size());
+        std::memcpy(wp, name.c_str(), name.size());
+
+        wp += name.size();
+      }
+      Unicast(clientID, std::move(snapshotPacket));
+    }
   }
 
+  AddPlayerToMap(clientID, name);
+
+  {  // BROADCAST PLAYER_CONNECTED TO ALL PLAYERS
+    PacketPtr packet = std::make_unique<uint8_t[]>(
+        sHeaderAndId + sizeof(uint8_t) + name.size());
+    uint8_t* wp = packet.get();
+    util::WriteHeader(wp, PACKET::PLAYER_CONNECTED_BROADCAST,
+                      sHeaderAndId + sizeof(uint8_t) + name.size());
+    util::Write64BigEnd(wp, clientID);
+    *wp++ = static_cast<uint8_t>(name.size());
+    std::memcpy(wp, name.c_str(), name.size());
+
+    Broadcast(std::move(packet));
+  }
+}
+
+void ServerNetworkSystem::ChatClientHandler(clientid_t clientID,
+                                            const uint8_t* rp,
+                                            std::size_t packetSize) {
+  std::cout << "CHAT_CLIENT from clientID: " << clientID << "\n";
+  // Broadcast chat to everyone
+  const char* msgStart = reinterpret_cast<const char*>(rp);
+  std::size_t msgSize = packetSize - sPacketHeader;
+  std::shared_ptr<std::string> message =
+      std::make_shared<std::string>(msgStart, msgSize);
+
+  auto iter = clientNameMap->find(clientID);
+
+  if (iter != clientNameMap->end()) {
+    eventDispatcher->Publish(NewChatEvent(clientID, message));
+
+    PacketPtr packet = util::ChatBroadcastPacket(message, clientID);
+    Broadcast(std::move(packet));
+  }
+}
+
+void ServerNetworkSystem::ClientMoveReqHandler(clientid_t clientID,
+                                               const uint8_t* rp,
+                                               std::size_t /*packetSize*/) {
+  uint16_t seq = util::Read16BigEnd(rp);
+  uint8_t inputBit = *rp++;
+
+#ifdef PACKET_DEBUG
+  std::cout << "CLIENT_MOVE_REQ from clientID: " << clientID
+            << " seq=" << seq << " inputBit=" << static_cast<int>(inputBit)
+            << "\n";
+#endif
+
+  EntityID e = world->GetPlayerByClientID(clientID);
+  if (e == INVALID_ENTITY) return;
+
+  if (!registry->HasComponent<InputStateComponent>(e)) {
+    registry->EmplaceComponent<InputStateComponent>(e);
+  }
+  auto& inputState = registry->GetComponent<InputStateComponent>(e);
+  inputState.inputBit = inputBit;
+  // Only process newer inputs to avoid out-of-order execution
+  if (util::seq_gt(seq, inputState.sequence)) {
+    inputState.sequence = seq;
+  }
+}
+
+void ServerNetworkSystem::Update(float deltatime) {
+  // Process incoming packets
   RecvPacket recv;
   while (recvQueue->TryPop(recv)) {
-    uint8_t* p = recv.packet.get();
+    if (recv.packet == nullptr) {
+      // Player Disconnected
+      auto iter = clientNameMap->find(recv.senderClientId);
+      if (iter != clientNameMap->end()) {
+        std::string name = iter->second;
+        clientNameMap->erase(iter);
+        playerSnapShotSize -= sClientID + sizeof(uint8_t) + name.size();
+
+        commandQueue->Enqueue(
+            std::make_unique<PlayerDisconnectedCommand>(recv.senderClientId));
+
+        // Broadcast PLAYER_DISCONNECTED to all players
+        PacketPtr packet = std::make_unique<uint8_t[]>(sHeaderAndId);
+        uint8_t* wp = packet.get();
+        util::WriteHeader(wp, PACKET::PLAYER_DISCONNECTED_BROADCAST,
+                          sHeaderAndId);
+        util::Write64BigEnd(wp, recv.senderClientId);
+
+        Broadcast(std::move(packet));
+      }
+      continue;
+    }
+
+    const uint8_t* rp = recv.packet.get();
     std::size_t packetSize;
     PACKET packetId;
 
-    util::GetHeader(p, packetId, packetSize);
-    clientid_t clientId = recv.senderClientId;
+    util::GetHeader(rp, packetId, packetSize);
+    clientid_t clientID = recv.senderClientId;
 
     switch (packetId) {
       // TODO : add duplicate name check packet
-      case CONNECT_SYN: {
-        const uint8_t nameLen = *p++;
-        if (packetSize <
-            (static_cast<size_t>(p - recv.packet.get()) + nameLen)) {
-          // invalid
-          return;
-        }
-        constexpr size_t cap = NAME_MAX_LEN - 1;
-        size_t copyLen = util::utf8_clamp_to_codepoint(p, nameLen, cap);
-        std::string name(reinterpret_cast<const char*>(p), copyLen);
-
-        // Generate character of connected client
-        commandQueue->Enqueue(std::make_unique<PlayerSpawnCommand>(clientId, false));
-
-        {  // Send CONNECT_ACK for connected client
-          std::size_t totalPacketSize =
-              sPacketHeader + sizeof(clientid_t) + sizeof(uint16_t) +
-              playerSnapShotSize;  // header + playercnt
-
-          std::unique_ptr<uint8_t[]> snapshotPacket =
-              std::make_unique<uint8_t[]>(totalPacketSize);
-
-          uint8_t* p = snapshotPacket.get();
-
-          util::WriteHeader(p, PACKET::CONNECT_ACK, totalPacketSize);
-          util::Write64BigEnd(p, clientId);
-          if (clientNameMap->size() != 0) {
-            util::Write16BigEnd(p, static_cast<uint16_t>(clientNameMap->size()));
-            for (auto& [id, name] : *clientNameMap) {
-              util::Write64BigEnd(p, id);
-              *p++ = static_cast<uint8_t>(name.size());
-              std::memcpy(p, name.c_str(), name.size());
-
-              p += name.size();
-            }
-            Unicast(clientId, std::move(snapshotPacket));
-          }
-        }
-
-        AddPlayerToMap(clientId, name);
-
-        {  // BROADCAST PLAYER_CONNECTED TO ALL PLAYERS
-          PacketPtr packet = std::make_unique<uint8_t[]>(
-              sHeaderAndId + sizeof(uint8_t) + name.size());
-          uint8_t* p = packet.get();
-          util::WriteHeader(p, PACKET::PLAYER_CONNECTED_BROADCAST,
-                            sHeaderAndId + sizeof(uint8_t) + name.size());
-          util::Write64BigEnd(p, clientId);
-          *p++ = static_cast<uint8_t>(name.size());
-          std::memcpy(p, name.c_str(), name.size());
-
-          Broadcast(std::move(packet));
-        }
-
+      case CONNECT_SYN:
+        ConnectSynHandler(recv, clientID, rp, packetSize);
         break;
-      }
 
-      case CHAT_CLIENT: {
-        // Broadcast chat to everyone
-        char* msgStart = reinterpret_cast<char*>(p);
-        std::size_t msgSize = packetSize - sHeaderAndId;
-        std::shared_ptr<std::string> message =
-            std::make_shared<std::string>(msgStart, msgSize);
-
-        auto iter = clientNameMap->find(clientId);
-
-        if (iter != clientNameMap->end()) {
-          eventDispatcher->Publish(NewChatEvent(iter->second, message));
-
-          PacketPtr packet = util::ChatBroadcastPacket(message, clientId);
-          Broadcast(std::move(packet));
-        }
-
+      case CHAT_CLIENT:
+        ChatClientHandler(clientID, rp, packetSize);
         break;
-      }
 
-      case CLIENT_MOVE_REQ: {
-        clientid_t clientId = util::Read64BigEnd(p);
-        uint16_t seq = util::Read16BigEnd(p);
-        uint8_t inputBit = *p++;
-        float dt = util::ReadF32BigEnd(p);
-        auto entity = world->GetEntityByClientID(clientId);
-        if (entity != INVALID_ENTITY) {
-          auto& intent = registry->GetComponent<MoveIntentComponent>(entity);
-          intent.seq = seq;
-          intent.inputBit = inputBit;
-          intent.deltaTime = dt;
-          intent.hasNew = true;
-        }
+      case CLIENT_MOVE_REQ:
+        ClientMoveReqHandler(clientID, rp, packetSize);
         break;
-      }
     }
+  }
+
+  // Periodic snapshot
+  syncTimer += deltatime;
+  if (syncTimer >= (1.f / syncRate)) {
+    syncTimer -= (1.f / syncRate);
+    SendSyncPacket();
+  }
+
+  // Send applied move result to requested client
+  MoveApplied mv;
+  while (pendingMoves->TryPop(mv)) {
+    // Unicast immediate move result
+    const std::size_t payloadSize = sizeof(uint16_t) + sizeof(float) * 2;
+    const std::size_t totalSize = sPacketHeader + payloadSize;
+
+    PacketPtr pkt = std::make_unique<uint8_t[]>(totalSize);
+    uint8_t* p = pkt.get();
+
+    util::WriteHeader(p, PACKET::CLIENT_MOVE_RES, totalSize);
+    util::Write16BigEnd(p, mv.seq);
+    util::WriteF32BigEnd(p, mv.x);
+    util::WriteF32BigEnd(p, mv.y);
+
+    Unicast(mv.clientID, std::move(pkt));
   }
 }
 
-void ServerNetworkSystem::AddPlayerToMap(clientid_t clientId,
+void ServerNetworkSystem::AddPlayerToMap(clientid_t clientID,
                                          std::string name) {
-  clientNameMap->emplace(clientId, name);
+  clientNameMap->emplace(clientID, name);
   playerSnapShotSize += sClientID + sizeof(uint8_t) + name.size();
 }
 
+void ServerNetworkSystem::SendSyncPacket() {
+  struct Entry {
+    clientid_t id;
+    float x;
+    float y;
+    uint8_t facing;
+    uint16_t ack;
+  };
 
-void ServerNetworkSystem::AddSyncPacket() {
-  std::vector<std::tuple<clientid_t, float, float, uint8_t>> entries;
-  for (EntityID e : registry->view<PlayerStateComponent, TransformComponent>()) {
-    auto& pc = registry->GetComponent<PlayerStateComponent>(e);
-    auto& t = registry->GetComponent<TransformComponent>(e);
-    uint8_t facing = 1; // default right
-    entries.emplace_back(pc.clientID, t.position.x, t.position.y, facing);
+  std::vector<Entry> entries;
+
+  for (EntityID player :
+       registry->view<PlayerStateComponent, TransformComponent>()) {
+    const auto& pc = registry->GetComponent<PlayerStateComponent>(player);
+    const auto& t = registry->GetComponent<TransformComponent>(player);
+    const auto& spr = registry->GetComponent<SpriteComponent>(player);
+    uint8_t facing = spr.flip == SDL_FLIP_HORIZONTAL ? 1 : 0;
+
+    entries.push_back(Entry{pc.clientID, t.position.x, t.position.y, facing,
+                            pc.lastProcessedSeq});
   }
-  const std::size_t packetSize = sPacketHeader + sizeof(uint16_t) + entries.size() * (sClientID + sizeof(float)*2 + sizeof(uint8_t));
-  PacketPtr pkt = std::make_unique<uint8_t[]>(packetSize);
-  uint8_t* p = pkt.get();
-  util::WriteHeader(p, PACKET::TRANSFORM_SNAPSHOT, packetSize);
-  util::Write16BigEnd(p, static_cast<uint16_t>(entries.size()));
-  
-  for (auto& [id, x, y, facing] : entries) {
-    util::Write64BigEnd(p, id);
-    util::WriteF32BigEnd(p, x);
-    util::WriteF32BigEnd(p, y);
-    *p++ = facing;
+
+  const std::size_t packetSize =
+      sPacketHeader + sizeof(uint16_t) +
+      entries.size() * (sClientID + sizeof(float) * 2 + sizeof(uint8_t));
+
+  PacketPtr packet = std::make_unique<uint8_t[]>(packetSize);
+  uint8_t* wp = packet.get();
+
+  util::WriteHeader(wp, PACKET::TRANSFORM_SNAPSHOT, packetSize);
+  util::Write16BigEnd(wp, static_cast<uint16_t>(entries.size()));
+
+  for (auto& e : entries) {
+    util::Write64BigEnd(wp, e.id);
+    util::WriteF32BigEnd(wp, e.x);
+    util::WriteF32BigEnd(wp, e.y);
+    *wp++ = e.facing;
   }
-  Broadcast(std::move(pkt));
+  Broadcast(std::move(packet));
 }
 
-void ServerNetworkSystem::Unicast(clientid_t clientId, PacketPtr packet) {
+void ServerNetworkSystem::Unicast(clientid_t clientID, PacketPtr packet) {
   SendRequest request;
   request.type = ESendType::UNICAST;
-  request.targetClientId = clientId;
+  request.targetClientId = clientID;
   request.packet = std::move(packet);
   sendQueue->Push(std::move(request));
   server->StartSend();

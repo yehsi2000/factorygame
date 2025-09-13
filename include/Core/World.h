@@ -117,13 +117,13 @@ class World {
    * @param worldPos The world coordinates of the tile.
    * @return True if the tile is movable, false otherwise.
    */
-  bool DoesTileBlockMovement(Vec2f worldPos);
-  bool DoesTileBlockMovement(Vec2 tileIdx);
+  bool IsTilePassable(Vec2f worldPos);
+  bool IsTilePassable(Vec2 tileIdx);
 
   void GeneratePlayer(clientid_t clientID, Vec2f worldPos = {0.f, 0.f},
                       bool bIsLocalPlayer = false);
   inline EntityID GetLocalPlayer() const { return localPlayer; }
-  inline EntityID GetEntityByClientID(clientid_t clientID) const {
+  inline EntityID GetPlayerByClientID(clientid_t clientID) const {
     auto it = clientPlayerMap.find(clientID);
     if (it != clientPlayerMap.end()) {
       return it->second;

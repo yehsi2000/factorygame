@@ -36,8 +36,7 @@ void InventorySystem::ConsumeItem(const ItemConsumeEvent &e) {
   if (e.amount == 0 || !registry->HasComponent<InventoryComponent>(e.target))
     return;
 
-  InventoryComponent &inv =
-      registry->GetComponent<InventoryComponent>(e.target);
+  auto &inv = registry->GetComponent<InventoryComponent>(e.target);
 
   if (std::find_if(inv.items.begin(), inv.items.end(), [&e](const auto &p) {
         return p.first == e.item;
@@ -50,10 +49,8 @@ void InventorySystem::ConsumeItem(const ItemConsumeEvent &e) {
 void InventorySystem::MoveItem(const ItemMoveEvent &e) {
   if (e.amount <= 0) return;
   if (!registry->HasComponent<InventoryComponent>(e.source)) return;
-  InventoryComponent &source_inv =
-      registry->GetComponent<InventoryComponent>(e.source);
-  InventoryComponent &dest_inv =
-      registry->GetComponent<InventoryComponent>(e.dest);
+  auto &source_inv = registry->GetComponent<InventoryComponent>(e.source);
+  auto &dest_inv = registry->GetComponent<InventoryComponent>(e.dest);
 
   if (std::find_if(source_inv.items.begin(), source_inv.items.end(),
                    [&e](const auto &p) { return p.first == e.item; }) ==

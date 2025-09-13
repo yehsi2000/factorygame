@@ -9,7 +9,6 @@
 #include "Components/BuildingComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/DebugRectComponent.h"
-#include "Components/MoveIntentComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/ResourceNodeComponent.h"
 #include "Components/SpriteComponent.h"
@@ -82,8 +81,8 @@ void World::Update() {
 
 void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool bIsLocal) {
   EntityID player = factory->CreatePlayer(this, pos, clientID, bIsLocal);
-  if (bIsServer) registry->EmplaceComponent<MoveIntentComponent>(player);
-  if (bIsLocal) localPlayer = player;
+  if (bIsLocal) 
+    localPlayer = player;
   clientPlayerMap[clientID] = player;
 }
 
@@ -123,10 +122,10 @@ TileData *World::GetTileAtTileIndex(int tileX, int tileY) {
   return nullptr;
 }
 
-bool World::DoesTileBlockMovement(Vec2f worldPos) {
-  return DoesTileBlockMovement(GetTileIndexFromWorldPosition(worldPos));
+bool World::IsTilePassable(Vec2f worldPos) {
+  return IsTilePassable(GetTileIndexFromWorldPosition(worldPos));
 }
-bool World::DoesTileBlockMovement(Vec2 tileIdx) {
+bool World::IsTilePassable(Vec2 tileIdx) {
   TileData *tile = GetTileAtTileIndex(tileIdx);
   if (tile->type == TileType::Water || tile->type == TileType::Invalid)
     return false;

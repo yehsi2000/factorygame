@@ -1,20 +1,20 @@
 #ifndef CORE_EVENT_
 #define CORE_EVENT_
 
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
 
 #include "Core/Entity.h"
 #include "Core/Item.h"
+#include "Core/Packet.h"
 #include "Core/Type.h"
-
 
 struct Event {
   virtual ~Event() = default;
 };
 
-struct EntityDestroyedEvent : public Event{
+struct EntityDestroyedEvent : public Event {
   EntityDestroyedEvent(EntityID entity) : entity(entity) {}
   EntityID entity;
 };
@@ -54,8 +54,10 @@ struct ItemMoveEvent : public Event {
 };
 
 struct ItemDropInWorldEvent : public Event {
-  ItemDropInWorldEvent(const ItemPayload& payload) : payload(payload) {}
+  ItemDropInWorldEvent(const Vec2f worldPos, ItemPayload payload)
+      : worldPos(worldPos), payload(std::move(payload)) {}
   ItemPayload payload;
+  const Vec2f worldPos;
 };
 
 struct AssemblyAddInputEvent : public Event {
@@ -96,10 +98,23 @@ struct SendChatEvent : public Event {
 };
 
 struct NewChatEvent : public Event {
-  NewChatEvent(std::string name, std::shared_ptr<std::string> msg) : message(msg) {}
+  NewChatEvent(clientid_t id, std::shared_ptr<std::string> msg)
+      : id(id), message(msg) {}
+  clientid_t id;
   std::shared_ptr<std::string> message;
+};
+
+// Emitted on server when an input seq was applied and Transform updated
+struct MoveAppliedEvent : public Event {
+  MoveAppliedEvent(clientid_t clientID, uint16_t seq, float x, float y,
+                   uint8_t facing)
+      : clientID(clientID), seq(seq), x(x), y(y), facing(facing) {}
+  clientid_t clientID;
+  uint16_t seq;
+  float x, y;
+  uint8_t facing;  // 0 left, 1 right
 };
 
 struct QuitEvent : public Event {};
 
-#endif/* CORE_EVENT_ */
+#endif /* CORE_EVENT_ */

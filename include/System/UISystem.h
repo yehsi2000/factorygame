@@ -44,6 +44,7 @@ class UISystem {
   Registry* registry;
   TimerManager* timerManager;
   World* world;
+  InputManager* inputManager;
 
  public:
   UISystem(const SystemContext& context);
@@ -59,17 +60,19 @@ class UISystem {
   void AssemblingMachineUI();
   void AssemblingMachineRecipeSelection(EntityID entity);
   void MiningDrillUI();
-  void PushChat(std::shared_ptr<std::string> str);
+  void PushChat(clientid_t id, std::shared_ptr<std::string> str);
 
   std::unique_ptr<EventHandle> showInventoryHandle;
   std::unique_ptr<EventHandle> showChatHandle;
   std::unique_ptr<EventHandle> newChatHandle;
+  std::unordered_map<clientid_t, std::string>* clientNameMap;
   ItemPayload payload;
   bool bIsShowingInventory = false;
   bool bIsShowingChatInput = false;
   bool bDemoShow = true;
+  bool bIsServer;
   std::shared_ptr<std::string> playerChat;
   std::list<std::string> chatLog;
 };
 
-#endif /* SYSTEM_UISYSTEM_ */
+#endif/* SYSTEM_UISYSTEM_ */

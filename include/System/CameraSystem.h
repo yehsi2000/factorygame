@@ -9,7 +9,7 @@ class CameraSystem {
   World* world;
   InputManager* inputManager;
   EntityID cameraEntity;
-  EntityID playerEntity = INVALID_ENTITY;
+  EntityID localPlayer = INVALID_ENTITY;
 
  public:
   CameraSystem(const SystemContext& context);

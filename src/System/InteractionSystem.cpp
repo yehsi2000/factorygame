@@ -38,19 +38,20 @@ InteractionSystem::InteractionSystem(const SystemContext &context)
 
 void InteractionSystem::OnPlayerEndInteractEvent(
     const PlayerEndInteractEvent &event) {
-  EntityID player = world->GetLocalPlayer();
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
 
-  if (registry->HasComponent<PlayerStateComponent>(player)) {
+  if (registry->HasComponent<PlayerStateComponent>(localPlayer)) {
     auto &playerStateComp =
-        registry->GetComponent<PlayerStateComponent>(player);
+        registry->GetComponent<PlayerStateComponent>(localPlayer);
 
     if (playerStateComp.bIsMining) {
       playerStateComp.bIsMining = false;
 
-      auto &animComp = registry->GetComponent<AnimationComponent>(player);
+      auto &animComp = registry->GetComponent<AnimationComponent>(localPlayer);
 
       util::SetAnimation(AnimationName::PLAYER_IDLE, animComp, true);
-      util::DetachTimer(registry, timerManager, player, TimerId::Mine);
+      util::DetachTimer(registry, timerManager, localPlayer, TimerId::Mine);
     }
   }
 }
@@ -59,8 +60,9 @@ void InteractionSystem::OnPlayerInteractEvent(
     const PlayerInteractEvent &event) {
   if (!registry || !world) return;
 
-  EntityID player = world->GetLocalPlayer();
-  auto& ptrans = registry->GetComponent<TransformComponent>(player);
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
+  auto& ptrans = registry->GetComponent<TransformComponent>(localPlayer);
   if(maxInteractionDistance < util::dist(ptrans.position, event.target)){
     return;
   }
@@ -76,14 +78,14 @@ void InteractionSystem::OnPlayerInteractEvent(
     targetEntity = tile->oreEntity;
   }
 
-  if (!registry->HasComponent<PlayerStateComponent>(player)) return;
+  if (!registry->HasComponent<PlayerStateComponent>(localPlayer)) return;
 
   if (registry->HasComponent<ResourceNodeComponent>(targetEntity)) {
-    ResourceNodeInteractionHandler(player, targetEntity);
+    ResourceNodeInteractionHandler(localPlayer, targetEntity);
   } else if (registry->HasComponent<AssemblingMachineComponent>(targetEntity)) {
-    AssemblyMachineInteractionHandler(player, targetEntity);
+    AssemblyMachineInteractionHandler(localPlayer, targetEntity);
   } else if (registry->HasComponent<MiningDrillComponent>(targetEntity)) {
-    MiningDrillInteractionHandler(player, targetEntity);
+    MiningDrillInteractionHandler(localPlayer, targetEntity);
   }
 }
 

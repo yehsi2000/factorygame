@@ -101,12 +101,6 @@ class WindowsServerImpl : public ServerImpl {
     int res = WSASend(client->socket, &(client->pSendOverlapped->dataBuf), 1,
                       &(client->pSendOverlapped->bytesSent), 0,
                       (LPOVERLAPPED)client->pSendOverlapped.get(), nullptr);
-
-    std::cout << "sent bytes : ";
-    for (int i = 0; i < client->pSendOverlapped->dataBuf.len; ++i) {
-      std::cout << std::hex << client->pSendOverlapped->messageBuffer[i];
-    }
-    std::cout << std::endl;
     if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
       std::cerr << "WSASend failed:" << WSAGetLastError() << std::endl;
       client->Release();
@@ -134,11 +128,11 @@ class WindowsServerImpl : public ServerImpl {
 
         // send every request inside queue
         while (sendQueue->TryPop(request)) {
-          uint8_t *p = request.packet.get();
+          const uint8_t *rp = request.packet.get();
 
           std::size_t packetSize;
           PACKET packetId;
-          util::GetHeader(p, packetId, packetSize);
+          util::GetHeader(rp, packetId, packetSize);
 
           sendBuffer.resize(packetSize);
           std::memcpy(sendBuffer.data(), request.packet.get(), packetSize);
@@ -196,6 +190,11 @@ class WindowsServerImpl : public ServerImpl {
                     << std::endl;
         }
 
+        RecvPacket disconnectPacket;
+        disconnectPacket.senderClientId = completionKey->clientID;
+        disconnectPacket.packet = nullptr;
+        recvQueue->Push(std::move(disconnectPacket));
+
         AcquireSRWLockExclusive(&clientMapSRW);
         socketToInfoMap.erase(completionKey->socket);
         idToInfoMap.erase(completionKey->clientID);
@@ -207,12 +206,7 @@ class WindowsServerImpl : public ServerImpl {
 
       // Received Actual Packet
       if (pSocketOverlapped->operationType == IO_OPERATION::RECEIVE) {
-        std::cout << "Bytes received: " << recvByteCnt << std::endl;
-        std::cout << "received bytes : ";
-        for (int i = 0; i < recvByteCnt; ++i) {
-          std::cout << std::hex << pSocketOverlapped->messageBuffer[i];
-        }
-        std::cout << std::endl;
+        // std::cout << "Bytes received: " << recvByteCnt << std::endl;
 
         RecvPacket recvPacket;
         recvPacket.senderClientId = completionKey->clientID;
@@ -246,8 +240,8 @@ class WindowsServerImpl : public ServerImpl {
           std::cerr << "Client and overlap object mismatch!" << std::endl;
         }
 
-        std::cout << "Bytes sent: " << pSocketOverlapped->bytesSent
-                  << std::endl;
+        // std::cout << "Bytes sent: " << pSocketOverlapped->bytesSent
+        //           << std::endl;
 
         completionKey->Release();
       }

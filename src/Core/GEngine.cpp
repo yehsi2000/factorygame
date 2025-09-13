@@ -47,10 +47,8 @@ void GEngine::PopState() {
 }
 
 void GEngine::ChangeState(std::unique_ptr<IGameState> state) {
-  if (!gameStates.empty()) {
-    PopState();
-  }
-  PushState(std::move(state));  // Use the new PushState to add the new state
+  pendingState = std::move(state);
+  changeStateRequested = true;
 }
 
 void GEngine::Run() {
@@ -63,7 +61,8 @@ void GEngine::Run() {
 
   startTime = steady_clock::now();
   curTime = prevTime = startTime;
-  ChangeState(std::make_unique<MainMenuState>());
+  // Push the initial state directly instead of using the deferred ChangeState
+  PushState(std::make_unique<MainMenuState>());
 
   while (bIsRunning) {
     curTime = steady_clock::now();
@@ -92,6 +91,15 @@ void GEngine::Run() {
 
     if (!gameStates.empty()) {
       gameStates.back()->Update(deltaTime);
+    }
+
+    // Process deferred state changes at a safe point in the loop
+    if (changeStateRequested) {
+      if (!gameStates.empty()) {
+        PopState();
+      }
+      PushState(std::move(pendingState));
+      changeStateRequested = false;
     }
 
     ImGui::Render();
