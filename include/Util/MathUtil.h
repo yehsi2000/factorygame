@@ -22,6 +22,11 @@ T clamp(T value, T min, T max) {
   return value;
 }
 
+template <typename T>
+T Lerp(T a, T b, float t) {
+  return a + (b - a) * t;
+}
+
 double dist(Vec2f a, Vec2f b);
 
 double dist(Vec2 a, Vec2 b);

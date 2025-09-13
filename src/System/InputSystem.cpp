@@ -1,6 +1,6 @@
 #include "System/InputSystem.h"
 
-#include <optional>
+#include <cassert>
 
 #include "Common.h"
 #include "Components/AnimationComponent.h"
@@ -77,7 +77,8 @@ void InputSystem::Update() {
 }
 
 void InputSystem::HandleInputAction(InputAction action, InputType type) {
-  EntityID player = world->GetPlayer();
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
 
   switch (action) {
     // Player started interacting
@@ -85,12 +86,12 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
       Vec2f targetPos;
       if (type == InputType::MOUSE) {
         const Vec2f campos = util::GetCameraPosition(registry);
-        const Vec2f mousepos = inputManager->GetMousePosition();
+        const Vec2 mousepos = inputManager->GetMousePosition();
         targetPos = util::ScreenToWorld(mousepos, campos,
                                         inputManager->GetScreenSize());
       } else if (type == InputType::KEYBOARD) {
         auto &playerTransform =
-            registry->GetComponent<TransformComponent>(player);
+            registry->GetComponent<TransformComponent>(localPlayer);
         targetPos = playerTransform.position;
       }
       eventDispatcher->Publish(PlayerInteractEvent(targetPos));

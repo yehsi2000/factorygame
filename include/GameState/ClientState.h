@@ -1,19 +1,19 @@
 ﻿#ifndef GAMESTATE_CLIENTSTATE_
 #define GAMESTATE_CLIENTSTATE_
 
-#include <memory>
-#include <tuple>
-#include <thread>
-#include <vector>
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
+#include <memory>
+#include <thread>
+#include <tuple>
+#include <vector>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"
-#include "Core/SystemContext.h"
-#include "GameState/IGameState.h"
-#include "Core/ThreadSafeQueue.h"
 #include "Core/Packet.h"
+#include "Core/SystemContext.h"
+#include "Core/ThreadSafeQueue.h"
+#include "GameState/IGameState.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
 
@@ -53,12 +53,12 @@ class UISystem;
 constexpr std::size_t MAX_BUFFER = 1024;
 
 class ClientState : public IGameState {
+  GEngine *gEngine;
   SDL_Window *gWindow;
   SDL_Renderer *gRenderer;
   TTF_Font *gFont;
   AssetManager *assetManager;
   WorldAssetManager *worldAssetManager;
-  GEngine* gEngine;
 
   std::unique_ptr<Registry> registry;
   std::unique_ptr<TimerManager> timerManager;
@@ -66,10 +66,22 @@ class ClientState : public IGameState {
   std::unique_ptr<CommandQueue> commandQueue;
   std::unique_ptr<EntityFactory> entityFactory;
   std::unique_ptr<World> world;
+  std::unique_ptr<Socket> connectionSocket;
+
+  std::unique_ptr<ThreadSafeQueue<PacketPtr>> recvQueue;
+  std::unique_ptr<ThreadSafeQueue<PacketPtr>> sendQueue;
+
+  std::unordered_map<clientid_t, std::string> clientNameMap;
 
   SystemContext systemContext;
   std::unique_ptr<EventHandle> GameEndEventHandle;
   EntityID player;
+
+  std::vector<uint8_t> messageBuffer;
+  std::thread messageThread;
+  std::size_t clientID;
+  bool bIsReceiving;
+  bool bIsQuit;
 
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<AssemblingMachineSystem> assemblingMachineSystem;
@@ -87,17 +99,6 @@ class ClientState : public IGameState {
   std::unique_ptr<TimerExpireSystem> timerExpireSystem;
   std::unique_ptr<InteractionSystem> interactionSystem;
   std::unique_ptr<UISystem> uiSystem;
-  
-  std::unique_ptr<Socket> connectionSocket;
-  std::unique_ptr<ThreadSafeQueue<PacketPtr>> packetQueue;
-  std::unique_ptr<ThreadSafeQueue<PacketPtr>> sendQueue; // Now queues PacketPtr directly for client
-
-  uint64_t clientID;
-  std::vector<uint8_t> messageBuffer;
-  std::thread messageThread;
-  bool bIsReceiving;
-  
-  Vec2 screenSize;
 
  public:
   ClientState();
@@ -122,6 +123,5 @@ class ClientState : public IGameState {
   void RegisterComponent();
   void InitCoreSystem();
 };
-
 
 #endif/* GAMESTATE_CLIENTSTATE_ */

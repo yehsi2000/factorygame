@@ -1,6 +1,6 @@
 #include "Core/InputManager.h"
 
-#include <cstring>  // For memcpy
+#include <cstring>
 
 #include "Core/InputManager.h"
 #include "SDL.h"
@@ -12,7 +12,7 @@ InputManager::InputManager(SDL_Window* window) : window(window), io(ImGui::GetIO
   SDL_GetKeyboardState(&numKeys);
   prevKeyState.resize(numKeys);
 
-  memcpy(prevKeyState.data(), currentKeyState, numKeys);
+  std::memcpy(prevKeyState.data(), currentKeyState, numKeys);
 }
 
 InputManager::~InputManager() = default;

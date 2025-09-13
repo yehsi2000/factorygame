@@ -4,7 +4,6 @@ project(FactoryGame)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_BUILD_TYPE Debug)
 set(SDL2TTF_VENDORED ON)
 
 # --- Static/Shared Build Configuration ---
@@ -77,11 +76,18 @@ target_link_libraries(FactoryGameLib PUBLIC
 )
 
 if(WIN32)
-    target_link_libraries(FactoryGameLib PRIVATE ws2_32.lib kernel32.lib)
+    target_link_libraries(FactoryGameLib PRIVATE ws2_32.lib kernel32.lib)  
 endif()
 
 # --- Main Executable ---
 add_executable(FactoryGame src/main.cpp)
+
+if(WIN32)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set_target_properties(FactoryGame PROPERTIES WIN32_EXECUTABLE ON)
+    endif()
+endif()
+
 target_link_libraries(FactoryGame PRIVATE FactoryGameLib)
 
 # Copy assets to build directory

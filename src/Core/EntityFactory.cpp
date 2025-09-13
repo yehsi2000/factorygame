@@ -4,9 +4,11 @@
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/BuildingComponent.h"
 #include "Components/InventoryComponent.h"
+#include "Components/LocalPlayerComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
+#include "Components/NetPredictionComponent.h"
 #include "Components/PlayerStateComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
@@ -16,6 +18,7 @@
 #include "Core/World.h"
 #include "SDL.h"
 #include "Util/AnimUtil.h"
+
 
 EntityFactory::EntityFactory(Registry *registry, AssetManager *assetManager)
     : registry(registry), assetManager(assetManager) {}
@@ -149,7 +152,8 @@ EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   return entity;
 }
 
-EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos) {
+EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
+                                     clientid_t clientID, bool bIsLocalPlayer) {
   if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
 
   EntityID player = registry->CreateEntity();
@@ -164,7 +168,7 @@ EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos) {
   SDL_Texture *playerMiningDownSpritesheet = assetManager->getTexture(
       "assets/img/character/Miner_MiningDownAnimation.png");
 
-  registry->EmplaceComponent<SpriteComponent>(
+  registry->AddComponent<SpriteComponent>(
       player, SpriteComponent{playerIdleSpritesheet,
                               {0, 0, 16, 16},
                               {-TILE_PIXEL_SIZE / 2, -TILE_PIXEL_SIZE / 2,
@@ -186,18 +190,29 @@ EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos) {
 
   registry->AddComponent<AnimationComponent>(player, std::move(anim));
 
-  registry->EmplaceComponent<MovementComponent>(
-      player, MovementComponent{.speed = 300.f});
+  registry->EmplaceComponent<MovementComponent>(player, 300.f);
 
-  registry->EmplaceComponent<PlayerStateComponent>(
-      player, PlayerStateComponent{.bIsMining = false,
-                                   .interactingEntity = INVALID_ENTITY});
+  PlayerStateComponent playerState;
+  playerState.bIsMining = false;
+  playerState.interactingEntity = INVALID_ENTITY;
+  playerState.clientID = clientID;
+  playerState.lastProcessedSeq = 0;
+  playerState.lastSeqSentToClient = 0;
+  registry->AddComponent<PlayerStateComponent>(player, std::move(playerState));
+
+  if (bIsLocalPlayer) {
+    registry->EmplaceComponent<LocalPlayerComponent>(player, clientID);
+    registry->EmplaceComponent<NetPredictionComponent>(player);
+  }
 
   registry->EmplaceComponent<MovableComponent>(player);
 
-  registry->EmplaceComponent<InventoryComponent>(
-      player, InventoryComponent{.row = 4, .column = 4});
-
+  // HACK : Starting Item for testing lots of entity
+  registry->AddComponent<InventoryComponent>(
+      player, InventoryComponent{.row = 4,
+                                 .column = 4,
+                                 .items = {{ItemID::AssemblingMachine, 100},
+                                           {ItemID::MiningDrill, 100}}});
   return player;
 }
 

@@ -25,13 +25,12 @@ class ResourceMineCommand : public Command {
     if (!registry || !eventDispatcher || !world) return;
 
     if (registry->HasComponent<ResourceNodeComponent>(target)) {
-      ResourceNodeComponent &resource =
-          registry->GetComponent<ResourceNodeComponent>(target);
-          
+      auto &resource = registry->GetComponent<ResourceNodeComponent>(target);
+
       if (resource.LeftResource == 0) return;
 
       if (registry->HasComponent<InventoryComponent>(instigator)) {
-        InventoryComponent &inventory =
+        auto &inventory =
             registry->GetComponent<InventoryComponent>(instigator);
 
         if (inventory.items.size() <= inventory.column * inventory.row)

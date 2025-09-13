@@ -23,6 +23,9 @@ class GEngine {
   std::unique_ptr<InputManager> inputManager;
 
   bool bIsRunning = true;
+  // For deferred state changes
+  std::unique_ptr<IGameState> pendingState = nullptr;
+  bool changeStateRequested = false;
 
   GEngine(const GEngine &) = delete;
   GEngine &operator=(const GEngine &) = delete;
@@ -49,6 +52,7 @@ class GEngine {
   }
   inline InputManager *GetInputManager() { return inputManager.get(); }
   inline void Stop() { bIsRunning = false; }
+  inline bool IsChangeRequested() { return changeStateRequested; }
 };
 
 #endif/* CORE_GENGINE_ */

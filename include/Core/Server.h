@@ -19,7 +19,7 @@ public:
     Server(Server&&) noexcept;
     Server& operator=(Server&&) noexcept;
 
-    bool Init(ThreadSafeQueue<PacketPtr>* packQ, ThreadSafeQueue<SendRequest>* sendQ);
+    bool Init(ThreadSafeQueue<RecvPacket>* recvQ, ThreadSafeQueue<SendRequest>* sendQ);
     void StartSend();
     void Start();
     void Stop();
@@ -29,4 +29,4 @@ private:
     Server& operator=(const Server&) = delete;
 };
 
-#endif // CORE_SERVER_
+#endif/* CORE_SERVER_ */

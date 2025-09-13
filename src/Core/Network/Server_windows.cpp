@@ -12,9 +12,10 @@
 #include <process.h>
 #include <windows.h>
 
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
-#include <functional>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -22,6 +23,7 @@
 
 #include "Core/Packet.h"
 #include "Core/ThreadSafeQueue.h"
+#include "Util/PacketUtil.h"
 
 namespace {
 constexpr DWORD MAX_BUFFER = 1024;
@@ -50,9 +52,11 @@ struct ClientInfo {
   std::unique_ptr<SOCKET_OVERLAPPED> pRecvOverlapped;
 
   DWORD refCount;
+  clientid_t clientID;
 
-  ClientInfo(SOCKET s)
+  ClientInfo(SOCKET s, clientid_t id)
       : socket(s),
+        clientID(id),
         refCount(1),
         pSendOverlapped(nullptr),
         pRecvOverlapped(nullptr) {}
@@ -76,11 +80,32 @@ class WindowsServerImpl : public ServerImpl {
   SOCKET listenSocket;
   SRWLOCK clientMapSRW;
   std::vector<HANDLE> threadPool;
-  std::unordered_map<SOCKET, ClientInfo *> clientPtrMap;
-  ThreadSafeQueue<PacketPtr> *packetQueue;
+  std::atomic<clientid_t> nextClientID{1};
+  std::unordered_map<SOCKET, ClientInfo *> socketToInfoMap;
+  std::unordered_map<clientid_t, ClientInfo *> idToInfoMap;
+  ThreadSafeQueue<RecvPacket> *recvQueue;
   ThreadSafeQueue<SendRequest> *sendQueue;
-  std::vector<char> sendBuffer;
   bool bIsRunning;
+
+  static void PacketSendHelper(ClientInfo *client, char *sendbuffer,
+                               std::size_t packet_size) {
+    ZeroMemory(&(client->pSendOverlapped.get()->overlapped),
+               sizeof(WSAOVERLAPPED));
+    std::memcpy(client->pSendOverlapped->messageBuffer, sendbuffer,
+                packet_size);
+    client->pSendOverlapped->dataBuf.len = packet_size;
+    client->pSendOverlapped->operationType = IO_OPERATION::SEND;
+
+    client->AddRef();
+
+    int res = WSASend(client->socket, &(client->pSendOverlapped->dataBuf), 1,
+                      &(client->pSendOverlapped->bytesSent), 0,
+                      (LPOVERLAPPED)client->pSendOverlapped.get(), nullptr);
+    if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+      std::cerr << "WSASend failed:" << WSAGetLastError() << std::endl;
+      client->Release();
+    }
+  }
 
   void WorkerThread() {
     DWORD recvByteCnt{0};
@@ -92,84 +117,61 @@ class WindowsServerImpl : public ServerImpl {
                                            (ULONG_PTR *)&completionKey,
                                            &pOverlapped, INFINITE);
 
+      // Shutting down thread
       if ((ULONG_PTR)completionKey == SHUT_DOWN_KEY) {
-        break;
+        return;
       }
 
       else if ((ULONG_PTR)completionKey == WAKE_UP_KEY) {
         SendRequest request;
-        // 큐에 쌓인 요청을 모두 처리
+        std::vector<char> sendBuffer;
+
+        // send every request inside queue
         while (sendQueue->TryPop(request)) {
-          PacketHeader *packetHeader =
-              reinterpret_cast<PacketHeader *>(request.packet.get());
+          const uint8_t *rp = request.packet.get();
 
-          sendBuffer.clear();
-          sendBuffer.resize(packetHeader->packet_size);
-          memcpy(sendBuffer.data(), request.packet.get(),
-                 packetHeader->packet_size);
+          std::size_t packetSize;
+          PACKET packetId;
+          util::GetHeader(rp, packetId, packetSize);
 
+          sendBuffer.resize(packetSize);
+          std::memcpy(sendBuffer.data(), request.packet.get(), packetSize);
+
+          // Process Unicast
           if (request.type == ESendType::UNICAST) {
+            // minimize critical section
             AcquireSRWLockShared(&clientMapSRW);
-
-            auto it = clientPtrMap.find(request.targetClientId);
-
-            if (it != clientPtrMap.end()) {
+            auto it = idToInfoMap.find(request.targetClientId);
+            if (it != idToInfoMap.end()) {
               ClientInfo *client = it->second;
-
-              ZeroMemory(&client->pSendOverlapped.get()->overlapped, sizeof(WSAOVERLAPPED));
-              memcpy(client->pSendOverlapped->messageBuffer, sendBuffer.data(),
-                     packetHeader->packet_size);
-              client->pSendOverlapped->dataBuf.len = packetHeader->packet_size;
-              client->pSendOverlapped->operationType = IO_OPERATION::SEND;
-
-              client->AddRef();
-
-              res =
-                  WSASend(client->socket, &client->pSendOverlapped->dataBuf, 1,
-                          &client->pSendOverlapped->bytesSent, 0,
-                          (LPOVERLAPPED)client->pSendOverlapped.get(), nullptr);
-
-              if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-                std::cerr << "WSASend failed:" << WSAGetLastError()
-                          << std::endl;
-                client->Release();
-              }
+              ReleaseSRWLockShared(&clientMapSRW);
+              PacketSendHelper(client, sendBuffer.data(), packetSize);
+            } else {
+              // instantly release lock if not found
+              ReleaseSRWLockShared(&clientMapSRW);
             }
+          }
 
-            ReleaseSRWLockShared(&clientMapSRW);
-          } else if (request.type == ESendType::BROADCAST) {
+          // Process Broadcast
+          else if (request.type == ESendType::BROADCAST) {
+            std::vector<ClientInfo *> clientsToSend;
+            clientsToSend.reserve(socketToInfoMap.size());
+
+            // minimize critical section
             AcquireSRWLockShared(&clientMapSRW);
-
-            for (auto it = clientPtrMap.begin(); it != clientPtrMap.end();
+            for (auto it = socketToInfoMap.begin(); it != socketToInfoMap.end();
                  ++it) {
               if (it->second == nullptr) continue;
-
-              ClientInfo *client = it->second;
-
-
-              ZeroMemory(&client->pSendOverlapped.get()->overlapped, sizeof(WSAOVERLAPPED));
-              memcpy(client->pSendOverlapped->messageBuffer, sendBuffer.data(),
-                     packetHeader->packet_size);
-              client->pSendOverlapped->dataBuf.len = packetHeader->packet_size;
-              client->pSendOverlapped->operationType = IO_OPERATION::SEND;
-
-              client->AddRef();
-
-              res =
-                  WSASend(client->socket, &client->pSendOverlapped->dataBuf, 1,
-                          &client->pSendOverlapped->bytesSent, 0,
-                          (LPOVERLAPPED)client->pSendOverlapped.get(), nullptr);
-
-              if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-                std::cerr << "WSASend failed:" << WSAGetLastError()
-                          << std::endl;
-                client->Release();
-              }
+              clientsToSend.push_back(it->second);
             }
-
             ReleaseSRWLockShared(&clientMapSRW);
+
+            for (auto client : clientsToSend) {
+              PacketSendHelper(client, sendBuffer.data(), packetSize);
+            }
           }
         }
+        // Sending Job Done - Back to waiting threadpool
         continue;
       }
 
@@ -177,6 +179,7 @@ class WindowsServerImpl : public ServerImpl {
       SOCKET_OVERLAPPED *pSocketOverlapped =
           CONTAINING_RECORD(pOverlapped, SOCKET_OVERLAPPED, overlapped);
 
+      // Socket failed - disconnect client
       if (res == 0 || recvByteCnt == 0) {
         if (res == 0) {
           std::cerr << "GetQueuedCompletionStatus failed for socket "
@@ -187,52 +190,60 @@ class WindowsServerImpl : public ServerImpl {
                     << std::endl;
         }
 
+        RecvPacket disconnectPacket;
+        disconnectPacket.senderClientId = completionKey->clientID;
+        disconnectPacket.packet = nullptr;
+        recvQueue->Push(std::move(disconnectPacket));
+
         AcquireSRWLockExclusive(&clientMapSRW);
-        clientPtrMap.erase(completionKey->socket);
+        socketToInfoMap.erase(completionKey->socket);
+        idToInfoMap.erase(completionKey->clientID);
         ReleaseSRWLockExclusive(&clientMapSRW);
 
-        completionKey->Release();  // 그 후에 Release 호출
+        completionKey->Release();  // disconnected so release
         continue;
       }
 
-      if (recvByteCnt == 0) {
-        std::cerr << "Client disconnected:" << GetLastError() << std::endl;
-        completionKey->Release();
-        continue;
-      } else {
-        if (pSocketOverlapped->operationType == IO_OPERATION::RECEIVE) {
-          std::cout << "Bytes received: " << recvByteCnt << std::endl;
+      // Received Actual Packet
+      if (pSocketOverlapped->operationType == IO_OPERATION::RECEIVE) {
+        // std::cout << "Bytes received: " << recvByteCnt << std::endl;
 
-          auto packetBuffer = std::make_unique<uint8_t[]>(recvByteCnt);
-          memcpy(packetBuffer.get(), pSocketOverlapped->messageBuffer,
-                 recvByteCnt);
-          packetQueue->Push(std::move(packetBuffer));
+        RecvPacket recvPacket;
+        recvPacket.senderClientId = completionKey->clientID;
+        recvPacket.packet = std::make_unique<uint8_t[]>(recvByteCnt);
+        std::memcpy(recvPacket.packet.get(), pSocketOverlapped->messageBuffer,
+                    recvByteCnt);
 
-          ZeroMemory(&pSocketOverlapped->overlapped, sizeof(WSAOVERLAPPED));
-          pSocketOverlapped->dataBuf.len = MAX_BUFFER;
-          pSocketOverlapped->dataBuf.buf = pSocketOverlapped->messageBuffer;
-          pSocketOverlapped->bytesRecv = 0;
-          pSocketOverlapped->operationType = IO_OPERATION::RECEIVE;
+        recvQueue->Push(std::move(recvPacket));
 
-          ZeroMemory(pSocketOverlapped->messageBuffer, MAX_BUFFER);
+        ZeroMemory(&pSocketOverlapped->overlapped, sizeof(WSAOVERLAPPED));
+        pSocketOverlapped->dataBuf.len = MAX_BUFFER;
+        pSocketOverlapped->dataBuf.buf = pSocketOverlapped->messageBuffer;
+        pSocketOverlapped->bytesRecv = 0;
+        pSocketOverlapped->operationType = IO_OPERATION::RECEIVE;
 
-          completionKey->AddRef();
+        ZeroMemory(pSocketOverlapped->messageBuffer, MAX_BUFFER);
 
-          res = WSARecv(completionKey->socket, &pSocketOverlapped->dataBuf, 1,
-                        &recvByteCnt, &dwFlags, &pSocketOverlapped->overlapped,
-                        nullptr);
+        completionKey->AddRef();
 
-          if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-            std::cerr << "WSARecv failed:" << WSAGetLastError() << std::endl;
-          }
-        } else {
-          // IO_OPERATION SEND
-          if (completionKey->pSendOverlapped.get() == pSocketOverlapped) {
-            std::cout << "Bytes sent: " << pSocketOverlapped->bytesSent
-                      << std::endl;
-          }
-          completionKey->Release();
+        res = WSARecv(completionKey->socket, &pSocketOverlapped->dataBuf, 1,
+                      &recvByteCnt, &dwFlags, &pSocketOverlapped->overlapped,
+                      nullptr);
+
+        if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+          std::cerr << "WSARecv failed : " << WSAGetLastError() << std::endl;
         }
+      }
+      // Received nothing, just awaken by WSASend of myself
+      else {
+        if (completionKey->pSendOverlapped.get() != pSocketOverlapped) {
+          std::cerr << "Client and overlap object mismatch!" << std::endl;
+        }
+
+        // std::cout << "Bytes sent: " << pSocketOverlapped->bytesSent
+        //           << std::endl;
+
+        completionKey->Release();
       }
     }
   }
@@ -271,7 +282,7 @@ class WindowsServerImpl : public ServerImpl {
   WindowsServerImpl() : iocpHandle(NULL) {}
   ~WindowsServerImpl() override { Stop(); }
 
-  bool Init(ThreadSafeQueue<PacketPtr> *packQ,
+  bool Init(ThreadSafeQueue<RecvPacket> *recvQ,
             ThreadSafeQueue<SendRequest> *sendQ) override {
     WSADATA wsaData;
     InitializeSRWLock(&clientMapSRW);
@@ -282,7 +293,7 @@ class WindowsServerImpl : public ServerImpl {
       return false;
     }
 
-    packetQueue = packQ;
+    recvQueue = recvQ;
     sendQueue = sendQ;
 
     listenSocket =
@@ -356,10 +367,11 @@ class WindowsServerImpl : public ServerImpl {
       }
       std::cout << "Client connected." << std::endl;
 
-      ClientInfo *pClientInfo = new ClientInfo(clientSocket);
+      ClientInfo *pClientInfo = new ClientInfo(clientSocket, nextClientID++);
 
       AcquireSRWLockExclusive(&clientMapSRW);
-      clientPtrMap[clientSocket] = pClientInfo;
+      socketToInfoMap[clientSocket] = pClientInfo;
+      idToInfoMap[pClientInfo->clientID] = pClientInfo;
       ReleaseSRWLockExclusive(&clientMapSRW);
 
       pClientInfo->pRecvOverlapped =
@@ -378,12 +390,11 @@ class WindowsServerImpl : public ServerImpl {
                         &pClientInfo->pRecvOverlapped->overlapped, nullptr);
 
       if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-        std::cerr << "WSARecv failed:" << WSAGetLastError() << std::endl;
+        std::cerr << "WSARecv failed : " << WSAGetLastError() << std::endl;
         pClientInfo->Release();
         continue;
       }
     }
-    
   }
 
   void StartSend() override {
@@ -401,17 +412,19 @@ class WindowsServerImpl : public ServerImpl {
     WaitForMultipleObjects(static_cast<DWORD>(threadPool.size()),
                            threadPool.data(), TRUE, INFINITE);
 
-    for (std::size_t i = 0; i < threadPool.size(); ++i) CloseHandle(threadPool[i]);
+    for (std::size_t i = 0; i < threadPool.size(); ++i)
+      CloseHandle(threadPool[i]);
 
     CloseHandle(iocpHandle);
 
     AcquireSRWLockExclusive(&clientMapSRW);
-    for (auto const &[sock, clientInfo] : clientPtrMap) {
+    for (auto const &[sock, clientInfo] : socketToInfoMap) {
       closesocket(sock);
     }
     ReleaseSRWLockExclusive(&clientMapSRW);
 
-    clientPtrMap.clear();
+    socketToInfoMap.clear();
+    idToInfoMap.clear();
     WSACleanup();
     std::cout << "IOCP server stopped." << std::endl;
   }

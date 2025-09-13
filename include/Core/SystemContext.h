@@ -3,6 +3,8 @@
 #include "Core/Packet.h"
 #include "Core/ThreadSafeQueue.h"
 #include <cstdint>
+#include <unordered_map>
+#include <string>
 
 // Forward declarations
 class AssetManager;
@@ -27,10 +29,13 @@ struct SystemContext {
   InputManager* inputManager = nullptr;
   EntityFactory* entityFactory = nullptr;
   TimerManager* timerManager = nullptr;
-  ThreadSafeQueue<PacketPtr>* packetQueue = nullptr; // For incoming packets (both client and server)
+  ThreadSafeQueue<RecvPacket>* serverRecvQueue = nullptr; // For incoming packets (both client and server)
   ThreadSafeQueue<SendRequest>* serverSendQueue = nullptr; // For server outgoing packets (needs SendRequest)
+  ThreadSafeQueue<PacketPtr>* clientRecvQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
   ThreadSafeQueue<PacketPtr>* clientSendQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
+  ThreadSafeQueue<MoveApplied>* pendingMoves = nullptr;
+  std::unordered_map<clientid_t, std::string>* clientNameMap = nullptr;
   Server* server = nullptr;
   Socket* socket = nullptr;
-  uint64_t clientID = 0;
+  bool bIsServer; // 0 for server
 };

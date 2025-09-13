@@ -11,58 +11,37 @@
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/MiningDrillComponent.h"
+#include "Components/PlayerStateComponent.h"
 #include "Core/AssetManager.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
+#include "Core/InputManager.h"
 #include "Core/Item.h"
 #include "Core/Recipe.h"
 #include "Core/Registry.h"
 #include "Core/World.h"
-#include "System/AssemblingMachineSystem.h"
+#include "Util/CameraUtil.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui_stdlib.h"
 
-
 #define TEXTLATER
-
-constexpr float ICONSPRITE_WIDTHF = static_cast<float>(ICONSPRITE_WIDTH);
-constexpr float ICONSPRITE_HEIGHTF = static_cast<float>(ICONSPRITE_HEIGHT);
-
-constexpr float uB0 = 0 / ICONSPRITE_WIDTHF;
-constexpr float vB0 = 0.f;
-constexpr float uB1 = ICONSIZE_BIG / ICONSPRITE_WIDTHF;
-constexpr float vB1 = ICONSIZE_BIG / ICONSPRITE_HEIGHTF;
-
-constexpr float uM0 = ICONSIZE_BIG / ICONSPRITE_WIDTHF;
-constexpr float vM0 = 0.f;
-constexpr float uM1 = ICONSIZE_MID_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vM1 = ICONSIZE_MID / ICONSPRITE_HEIGHTF;
-
-constexpr float uS0 = ICONSIZE_MID_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vS0 = 0.f;
-constexpr float uS1 = ICONSIZE_SMALL_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vS1 = ICONSIZE_SMALL / ICONSPRITE_HEIGHTF;
-
-constexpr float uT0 = ICONSIZE_SMALL_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vT0 = 0.f;
-constexpr float uT1 = ICONSIZE_TINY_XSTART / ICONSPRITE_WIDTHF;
-constexpr float vT1 = ICONSIZE_TINY / ICONSPRITE_HEIGHTF;
-
-constexpr float invNodeSize = 64.f;
 
 UISystem::UISystem(const SystemContext &context)
     : assetManager(context.assetManager),
       eventDispatcher(context.eventDispatcher),
       registry(context.registry),
-      world(context.world) {
+      world(context.world),
+      inputManager(context.inputManager),
+      clientNameMap(context.clientNameMap),
+      bIsServer(context.bIsServer) {
   showInventoryHandle = eventDispatcher->Subscribe<ToggleInventoryEvent>(
       [this](ToggleInventoryEvent e) {
         bIsShowingInventory = !bIsShowingInventory;
       });
   newChatHandle = eventDispatcher->Subscribe<NewChatEvent>(
-      [this](NewChatEvent e) { PushChat(std::move(e.message)); });
+      [this](NewChatEvent e) { PushChat(e.id, e.message); });
   showChatHandle = eventDispatcher->Subscribe<ToggleChatInputEvent>(
       [this](ToggleChatInputEvent e) {
         if (!bIsShowingChatInput) {
@@ -75,8 +54,13 @@ UISystem::UISystem(const SystemContext &context)
   playerChat = std::make_shared<std::string>("");
 }
 
-void UISystem::PushChat(std::shared_ptr<std::string> str) {
-  chatLog.push_back(*str.get());
+void UISystem::PushChat(clientid_t id, std::shared_ptr<std::string> str) {
+  std::string chat;
+  chat.reserve(str->size() + clientNameMap->at(id).size() + 2);
+  chat += clientNameMap->at(id);
+  chat += ": ";
+  chat += *str;
+  chatLog.push_back(chat.c_str());
   if (chatLog.size() > 10) chatLog.pop_front();
 }
 
@@ -90,7 +74,6 @@ void UISystem::Update() {
   if (bIsShowingChatInput) {
     ChatInput();
   }
-  // SDL_StopTextInput();
   AssemblingMachineUI();
   MiningDrillUI();
 }
@@ -114,8 +97,13 @@ void UISystem::ChatInput() {
     if (ImGui::IsKeyPressed(ImGuiKey_Enter, false)) {
       bIsShowingChatInput = false;
       eventDispatcher->Publish(SendChatEvent(playerChat));
-      PushChat(playerChat);
-      playerChat->clear();
+      EntityID localPlayer = world->GetLocalPlayer();
+      if (localPlayer != INVALID_ENTITY) {
+        clientid_t myID =
+            registry->GetComponent<PlayerStateComponent>(localPlayer).clientID;
+        PushChat(myID, playerChat);
+        playerChat->clear();
+      }
       SDL_StopTextInput();
     }
   }
@@ -169,9 +157,24 @@ void UISystem::ItemDropBackground() {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("DND_ITEM")) {
       IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
-      ItemPayload *item_payload = static_cast<ItemPayload *>(payload->Data);
+      Vec2f mouseWorldPos = util::ScreenToWorld(
+          inputManager->GetMousePosition(), util::GetCameraPosition(registry),
+          inputManager->GetScreenSize());
 
-      eventDispatcher->Publish(ItemDropInWorldEvent{*item_payload});
+      ItemPayload item_payload = *static_cast<ItemPayload *>(payload->Data);
+
+      // TODO : Add multiple item drop feature with key modifier or something
+      // currently drop single item when dragged.
+      item_payload.amount = 1;
+
+      if (bIsServer) {
+        eventDispatcher->Publish(
+            ItemDropInWorldEvent{mouseWorldPos, std::move(item_payload)});
+      } else {
+        // TODO : send request to server to drop item
+        // eventDispatcher->Publish(ClientRequestItemDropEvent{
+        //     mouseWorldPos, std::move(item_payload)});
+      }
     }
     ImGui::EndDragDropTarget();
   }
@@ -182,8 +185,9 @@ void UISystem::ItemDropBackground() {
 }
 
 void UISystem::Inventory() {
-  InventoryComponent &invComp =
-      registry->GetComponent<InventoryComponent>(world->GetPlayer());
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
+  auto &invComp = registry->GetComponent<InventoryComponent>(localPlayer);
   const ItemDatabase &itemdb = ItemDatabase::instance();
 
   int row = invComp.row;
@@ -214,20 +218,20 @@ void UISystem::Inventory() {
 
             ItemPayload *payload_ptr =
                 static_cast<ItemPayload *>(payload->Data);
-            if (payload_ptr->owner != world->GetPlayer()) {
+            if (payload_ptr->owner != localPlayer) {
               if (registry->HasComponent<InventoryComponent>(
                       payload_ptr->owner)) {
-                eventDispatcher->Publish(
-                    ItemMoveEvent(payload_ptr->owner, world->GetPlayer(),
-                                  payload_ptr->id, payload_ptr->amount));
+                eventDispatcher->Publish(ItemMoveEvent(payload_ptr->owner,
+                                                       localPlayer, payload_ptr->id,
+                                                       payload_ptr->amount));
               } else if (registry->HasComponent<AssemblingMachineComponent>(
                              payload_ptr->owner)) {
                 eventDispatcher->Publish(AssemblyTakeOutputEvent(
-                    payload_ptr->owner, world->GetPlayer(), payload_ptr->id,
+                    payload_ptr->owner, localPlayer, payload_ptr->id,
                     payload_ptr->amount));
               } else {
-                eventDispatcher->Publish(ItemAddEvent(
-                    world->GetPlayer(), payload_ptr->id, payload_ptr->amount));
+                eventDispatcher->Publish(
+                    ItemAddEvent(localPlayer, payload_ptr->id, payload_ptr->amount));
               }
             }
           }
@@ -258,7 +262,7 @@ void UISystem::Inventory() {
 
       // Handle dragging start
       if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-        payload = ItemPayload{idx, world->GetPlayer(), invItemId, invItemAmt};
+        payload = ItemPayload{-1, localPlayer, invItemId, invItemAmt};
         ImGui::SetDragDropPayload("DND_ITEM", &payload, sizeof(ItemPayload));
         ImGui::Image(iconTexture, iconSize, ImVec2{uB0, vB0}, ImVec2{uB1, vB1});
 
@@ -273,20 +277,20 @@ void UISystem::Inventory() {
 
           ItemPayload *payload_ptr = static_cast<ItemPayload *>(payload->Data);
 
-          if (payload_ptr->owner != world->GetPlayer()) {
+          if (payload_ptr->owner != localPlayer) {
             if (registry->HasComponent<InventoryComponent>(
                     payload_ptr->owner)) {
-              eventDispatcher->Publish(
-                  ItemMoveEvent(payload_ptr->owner, world->GetPlayer(),
-                                payload_ptr->id, payload_ptr->amount));
+              eventDispatcher->Publish(ItemMoveEvent(payload_ptr->owner, localPlayer,
+                                                     payload_ptr->id,
+                                                     payload_ptr->amount));
             } else if (registry->HasComponent<AssemblingMachineComponent>(
                            payload_ptr->owner)) {
               eventDispatcher->Publish(AssemblyTakeOutputEvent(
-                  payload_ptr->owner, world->GetPlayer(), payload_ptr->id,
+                  payload_ptr->owner, localPlayer, payload_ptr->id,
                   payload_ptr->amount));
             } else {
-              eventDispatcher->Publish(ItemAddEvent(
-                  world->GetPlayer(), payload_ptr->id, payload_ptr->amount));
+              eventDispatcher->Publish(
+                  ItemAddEvent(localPlayer, payload_ptr->id, payload_ptr->amount));
             }
           } else {
             if (payload_ptr->itemIdx < invComp.items.size()) {
@@ -431,7 +435,7 @@ void UISystem::AssemblingMachineUI() {
 
           // Show crafting progress
           if (assemblingComp.state == AssemblingMachineState::Crafting) {
-            // Would need to get progress from timer system
+            // TODO : Add progress bar with timer component
             ImGui::Separator();
             ImGui::Text("Crafting... (Animation: %s)",
                         assemblingComp.bIsAnimating ? "ON" : "OFF");
@@ -472,8 +476,6 @@ void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
 
       if (ImGui::Button((const char *)recipeData.name.c_str(),
                         ImVec2(200, 0))) {
-        // Set the recipe using AssemblingMachineSystem
-        // For now, set it directly - should use system method
         assemblingComp.currentRecipe = recipeId;
         assemblingComp.bIsShowingRecipeSelection = false;
         assemblingComp.state = AssemblingMachineState::Idle;
@@ -511,11 +513,10 @@ void UISystem::MiningDrillUI() {
                            ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Mining Drill");
 
-        MiningDrillComponent &drillcomp =
+        auto &drillcomp =
             registry->GetComponent<MiningDrillComponent>(drillEntity);
 
-        InventoryComponent &invcomp =
-            registry->GetComponent<InventoryComponent>(drillEntity);
+        auto &invcomp = registry->GetComponent<InventoryComponent>(drillEntity);
 
         if (invcomp.items.size() == 0) {
           ImGui::BeginDisabled();

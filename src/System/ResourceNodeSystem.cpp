@@ -12,9 +12,9 @@ void ResourceNodeSystem::Update() {
   // Show Resource Amount
   for (EntityID entity : registry->view<ResourceNodeComponent>()) {
     if (registry->HasComponent<TextComponent>(entity)) {
-      const ResourceNodeComponent &resource =
+      const auto &resource =
           registry->GetComponent<ResourceNodeComponent>(entity);
-      TextComponent &textComp = registry->GetComponent<TextComponent>(entity);
+      auto &textComp = registry->GetComponent<TextComponent>(entity);
       if (strtoll(textComp.text, NULL, 10) != resource.LeftResource) {
         snprintf(textComp.text, sizeof(textComp.text), "%lld",
                  static_cast<unsigned long long>(resource.LeftResource));

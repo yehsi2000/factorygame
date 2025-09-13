@@ -1,18 +1,18 @@
 ﻿#ifndef GAMESTATE_SERVERSTATE_
 #define GAMESTATE_SERVERSTATE_
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <tuple>
 #include <vector>
-#include <cstdint>
-#include <cstddef>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"
-#include "Core/SystemContext.h"
-#include "GameState/IGameState.h"
-#include "Core/ThreadSafeQueue.h"
 #include "Core/Packet.h"
+#include "Core/SystemContext.h"
+#include "Core/ThreadSafeQueue.h"
+#include "GameState/IGameState.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
 
@@ -55,7 +55,7 @@ class ServerState : public IGameState {
   TTF_Font *gFont;
   AssetManager *assetManager;
   WorldAssetManager *worldAssetManager;
-  GEngine* gEngine;
+  GEngine *gEngine;
 
   std::unique_ptr<Registry> registry;
   std::unique_ptr<TimerManager> timerManager;
@@ -64,9 +64,12 @@ class ServerState : public IGameState {
   std::unique_ptr<EntityFactory> entityFactory;
   std::unique_ptr<World> world;
   std::unique_ptr<Server> server;
-  std::unique_ptr<ThreadSafeQueue<PacketPtr>> packetQueue;
-  std::unique_ptr<ThreadSafeQueue<SendRequest>> serverSendQueue; // Renamed for clarity
 
+  std::unique_ptr<ThreadSafeQueue<RecvPacket>> recvQueue;
+  std::unique_ptr<ThreadSafeQueue<SendRequest>> sendQueue;
+  std::unique_ptr<ThreadSafeQueue<MoveApplied>> pendingMoves;
+
+  std::unordered_map<clientid_t, std::string> clientNameMap;
 
   SystemContext systemContext;
   std::unique_ptr<EventHandle> GameEndEventHandle;
@@ -88,9 +91,8 @@ class ServerState : public IGameState {
   std::unique_ptr<TimerExpireSystem> timerExpireSystem;
   std::unique_ptr<InteractionSystem> interactionSystem;
   std::unique_ptr<UISystem> uiSystem;
-  
 
-  Vec2 screenSize;
+  bool bIsQuit = false;
 
  public:
   ServerState();
@@ -109,10 +111,9 @@ class ServerState : public IGameState {
     static constexpr std::size_t size = sizeof...(Types);
   };
 
-
  private:
   void RegisterComponent();
   void InitCoreSystem();
 };
 
-#endif/* GAMESTATE_SERVERSTATE_ */
+#endif /* GAMESTATE_SERVERSTATE_ */

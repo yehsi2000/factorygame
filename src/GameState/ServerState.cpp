@@ -10,15 +10,18 @@
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/BuildingComponent.h"
+#include "Components/InputStateComponent.h"
 #include "Components/BuildingPreviewComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/ChunkComponent.h"
 #include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/InventoryComponent.h"
+#include "Components/LocalPlayerComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Components/MovableComponent.h"
 #include "Components/MovementComponent.h"
+#include "Components/NetPredictionComponent.h"
 #include "Components/PlayerStateComponent.h"
 #include "Components/RefineryComponent.h"
 #include "Components/ResourceNodeComponent.h"
@@ -32,9 +35,9 @@
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
+#include "Core/Packet.h"
 #include "Core/Registry.h"
 #include "Core/Server.h"
-#include "Core/Packet.h"
 #include "Core/ThreadSafeQueue.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
@@ -51,10 +54,10 @@
 #include "System/ItemDragSystem.h"
 #include "System/MiningDrillSystem.h"
 #include "System/MovementSystem.h"
-#include "System/ServerNetworkSystem.h"
 #include "System/RefinerySystem.h"
 #include "System/RenderSystem.h"
 #include "System/ResourceNodeSystem.h"
+#include "System/ServerNetworkSystem.h"
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
@@ -63,22 +66,26 @@
 ServerState::ServerState() {}
 
 void ServerState::Init(GEngine* engine) {
+  gEngine = engine;
   gWindow = engine->GetWindow();
   gRenderer = engine->GetRenderer();
   gFont = engine->GetFont();
   assetManager = engine->GetAssetManager();
   worldAssetManager = engine->GetWorldAssetManager();
 
-  
   timerManager = std::make_unique<TimerManager>();
   eventDispatcher = std::make_unique<EventDispatcher>();
   registry = std::make_unique<Registry>(eventDispatcher.get());
   commandQueue = std::make_unique<CommandQueue>();
-  packetQueue = std::make_unique<ThreadSafeQueue<PacketPtr>>();
-  serverSendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>(); // Initialize as SendRequest queue
-  server = std::make_unique<Server>(); // ServerImpl needs SendRequest queue
-  server->Init(packetQueue.get(), serverSendQueue.get());
+  recvQueue = std::make_unique<ThreadSafeQueue<RecvPacket>>();
+  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
+
+  pendingMoves = std::make_unique<ThreadSafeQueue<MoveApplied>>();
+  server = std::make_unique<Server>();  // ServerImpl needs SendRequest queue
+  server->Init(recvQueue.get(), sendQueue.get());
   server->Start();
+  std::string serverName = "Server";
+  clientNameMap[0] = serverName;
 
   entityFactory = std::make_unique<EntityFactory>(registry.get(), assetManager);
   assert(timerManager && "Fail to initialize GEngine : Invalid timer manager");
@@ -90,7 +97,7 @@ void ServerState::Init(GEngine* engine) {
 
   world = std::make_unique<World>(registry.get(), worldAssetManager,
                                   entityFactory.get(), eventDispatcher.get(),
-                                  gFont);
+                                  gFont, true);
 
   systemContext.assetManager = assetManager;
   systemContext.worldAssetManager = worldAssetManager;
@@ -101,19 +108,21 @@ void ServerState::Init(GEngine* engine) {
   systemContext.inputManager = engine->GetInputManager();
   systemContext.entityFactory = entityFactory.get();
   systemContext.timerManager = timerManager.get();
-  systemContext.packetQueue = packetQueue.get();
-  systemContext.serverSendQueue = serverSendQueue.get(); // Pass to server-specific send queue
+  systemContext.serverRecvQueue = recvQueue.get();
+  systemContext.pendingMoves = pendingMoves.get();
+  systemContext.serverSendQueue =
+      sendQueue.get();  // Pass to server-specific send queue
   systemContext.server = server.get();
+  systemContext.clientNameMap = &clientNameMap;
+  systemContext.bIsServer = true;
 
   InitCoreSystem();
 
-  world->GeneratePlayer();
-  EntityID player = world->GetPlayer();
+  eventDispatcher->Subscribe<QuitEvent>(
+      [this](QuitEvent e) { bIsQuit = true; });
 
-  // Default item
-  eventDispatcher->Publish(
-      ItemAddEvent(player, ItemID::AssemblingMachine, 100));
-  eventDispatcher->Publish(ItemAddEvent(player, ItemID::MiningDrill, 100));
+  // TODO : Move Server player generation to be handled by menu ui
+  world->GeneratePlayer(0, {0.f, 0.f}, true);
 }
 
 void ServerState::RegisterComponent() {
@@ -123,8 +132,9 @@ void ServerState::RegisterComponent() {
       typeArray<AnimationComponent, AssemblingMachineComponent,
                 BuildingComponent, BuildingPreviewComponent, CameraComponent,
                 ChunkComponent, DebugRectComponent, InactiveComponent,
-                InventoryComponent, MiningDrillComponent, MovableComponent,
-                MovementComponent, PlayerStateComponent, RefineryComponent,
+                InventoryComponent, InputStateComponent, MiningDrillComponent, MovableComponent,
+                MovementComponent, NetPredictionComponent,
+                LocalPlayerComponent, PlayerStateComponent, RefineryComponent,
                 ResourceNodeComponent, SpriteComponent, TimerComponent,
                 TimerExpiredTag, TransformComponent, TextComponent>;
 
@@ -157,12 +167,15 @@ void ServerState::InitCoreSystem() {
       std::make_unique<RenderSystem>(systemContext, gRenderer, gFont);
 }
 
-void ServerState::Cleanup() {
-  GameEndEventHandle.reset();
-}
+void ServerState::Cleanup() {}
 
 void ServerState::Update(float deltaTime) {
-  SDL_GetWindowSize(gWindow, &screenSize.x, &screenSize.y);
+  if (bIsQuit) {
+    if (!gEngine->IsChangeRequested())
+      gEngine->ChangeState(std::make_unique<MainMenuState>());
+    return;  // The state is now being destroyed, so we should not continue.
+  }
+
   inputSystem->Update();
   // Process all pending commands.
   while (!commandQueue->IsEmpty()) {
