@@ -5,6 +5,12 @@
 #include <cstddef>
 #include <cstdint>
 
+/**
+ * @brief Interface for the socket implementation.
+ * @details Defines the contract for platform-specific socket implementations.
+ * This allows the Socket class to use the PIMPL idiom, separating the public
+ * interface from the underlying implementation details.
+ */
 class SocketImpl {
 public:
     virtual ~SocketImpl() = default;

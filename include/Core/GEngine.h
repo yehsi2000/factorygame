@@ -13,6 +13,13 @@ class AssetManager;
 class WorldAssetManager;
 class InputManager;
 
+/**
+ * @brief The main game engine class.
+ * @details Orchestrates the entire game, including the main loop, state
+ * management, and core service initialization. It owns the primary SDL window
+ * and renderer, as well as managers for assets and input. The engine drives
+ * the active game state, handling transitions and updates.
+ */
 class GEngine {
   SDL_Window *gWindow;
   SDL_Renderer *gRenderer;

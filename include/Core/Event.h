@@ -10,6 +10,13 @@
 #include "Core/Packet.h"
 #include "Core/Type.h"
 
+/**
+ * @brief The base struct for all events in the game.
+ * @details Events are used for immediate, synchronous communication between
+ * different systems. When an event is published, it is dispatched to all
+ * subscribed listeners in the same frame. This is suitable for decoupled
+ * communication where an immediate response is required.
+ */
 struct Event {
   virtual ~Event() = default;
 };

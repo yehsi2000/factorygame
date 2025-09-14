@@ -9,6 +9,13 @@
 
 class ServerImpl;
 
+/**
+ * @brief Manages the server-side network communication.
+ * @details This class provides a high-level interface for server operations,
+ * abstracting the platform-specific implementation details. It handles the
+ * lifecycle of the server, including initialization, starting, and stopping
+ * the network threads.
+ */
 class Server {
     std::unique_ptr<ServerImpl> pimpl;
 

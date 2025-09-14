@@ -8,6 +8,12 @@
 
 #include "Core/Entity.h"
 
+/**
+ * @brief Interface for component arrays.
+ * @details Provides a common interface for type-erased storage of components.
+ * This allows the Registry to manage component arrays of different types
+ * without knowing their specific template arguments.
+ */
 class IComponentArray {
  public:
   virtual ~IComponentArray() = default;
@@ -19,6 +25,14 @@ class IComponentArray {
 
 // TODO : in case of bottleneck -> refactor to entt-style sparse map
 // (using pagenation, tombstone, reverse iteration)
+/**
+ * @brief A cache-friendly container for a single type of component.
+ * @details Stores components of a specific type in a contiguous array for fast
+ * iteration. It uses a map to link entity IDs to their component's index in
+ * the array, allowing for efficient addition, removal, and access of
+ * components.
+ * @tparam T The type of component to store.
+ */
 template <typename T>
 class ComponentArray : public IComponentArray {
  private:

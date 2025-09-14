@@ -6,7 +6,9 @@
 
 #include "Core/Entity.h"
 
-
+/**
+ * @brief Defines all possible item types in the game.
+ */
 enum class ItemID {
   None = 0,
 
@@ -25,8 +27,14 @@ enum class ItemID {
   MaxItemID
 };
 
+/**
+ * @brief Categorizes items for easier filtering and management.
+ */
 enum class ItemCategory { Ore, Ingot, Buildable, Invalid };
 
+/**
+ * @brief Defines the types of ores available for mining.
+ */
 enum class OreType {
   Iron = 0,
   Copper,
@@ -35,6 +43,11 @@ enum class OreType {
   MaxOreType
 };
 
+/**
+ * @brief Contains static data for a specific item type.
+ * @details This struct holds information common to all instances of an item,
+ * such as its name, description, icon, and stack size.
+ */
 struct ItemData {
   ItemCategory category;
   std::u8string name;
@@ -44,6 +57,9 @@ struct ItemData {
   int maxStackSize = 50;
 };
 
+/**
+ * @brief A singleton utility to map ore types to their corresponding item IDs.
+ */
 class OreToItemMapper {
  public:
   static const OreToItemMapper& instance() {
@@ -71,6 +87,12 @@ class OreToItemMapper {
   std::unordered_map<OreType, ItemID> mapping;
 };
 
+/**
+ * @brief A singleton database for all item data.
+ * @details Provides a centralized, read-only repository of ItemData for all
+ * items in the game. This ensures that item information is consistent and
+ * easily accessible from anywhere in the codebase.
+ */
 class ItemDatabase {
  public:
   static const ItemDatabase& instance() {
@@ -122,6 +144,12 @@ class ItemDatabase {
   }
 };
 
+/**
+ * @brief Represents a stack of items being transferred or manipulated.
+ * @details This struct is used to pass item information between systems,
+ * particularly for UI interactions like dragging and dropping. It contains the
+ * item's ID and quantity, as well as context about its source.
+ */
 struct ItemPayload {
   int itemIdx;
   EntityID owner;

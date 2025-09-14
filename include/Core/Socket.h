@@ -8,6 +8,13 @@
 
 class SocketImpl;
 
+/**
+ * @brief Manages the client-side network communication.
+ * @details This class provides a high-level interface for client socket
+ * operations, abstracting the platform-specific implementation details. It
+ * handles the lifecycle of the socket, including initialization, connection,
+ * and data transfer.
+ */
 class Socket {
     std::unique_ptr<SocketImpl> pimpl;
 

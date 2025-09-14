@@ -11,8 +11,6 @@ struct PlayerStateComponent {
   bool bIsMining;
   EntityID interactingEntity;
   clientid_t clientID;
-  uint16_t lastProcessedSeq;
-  uint16_t lastSeqSentToClient;  // last acked seq sent to client
 };
 
 #endif /* COMPONENTS_PLAYERSTATECOMPONENT_ */

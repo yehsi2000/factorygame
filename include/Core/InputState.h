@@ -7,6 +7,13 @@ enum class MouseButton {
     MIDDLE
 };
 
+/**
+ * @brief A snapshot of the state of all input devices at a single point in
+ * time.
+ * @details This struct holds the current state of the mouse buttons, position,
+ * and movement, as well as keyboard-derived axis inputs. It is used by the
+ * InputManager to track input changes between frames.
+ */
 struct InputState {
     // Mouse button state
     bool bIsLeftMouseDown = false;

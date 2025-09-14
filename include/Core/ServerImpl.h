@@ -5,6 +5,13 @@
 #include "Core/Packet.h"
 #include "Core/ThreadSafeQueue.h"
 
+/**
+ * @brief Interface for the server implementation.
+ * @details Defines the contract for platform-specific server implementations.
+ * This allows the Server class to use the PIMPL idiom, separating the public
+ * interface from the underlying implementation details and improving
+- * compilation times.
+ */
 class ServerImpl {
 public:
     virtual ~ServerImpl() = default;

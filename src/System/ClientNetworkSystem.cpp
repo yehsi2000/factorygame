@@ -115,7 +115,7 @@ namespace {
   }
 }
 
-// Push all snapshots (including local) into buffers; do not write Transform here
+// Push all snapshots (including local) into buffers. Do not write Transform here
 void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp, std::size_t /*packetSize*/) {
   const uint16_t count = util::Read16BigEnd(rp);
   const double now = NowSeconds();
@@ -196,13 +196,13 @@ static void ApplyPrediction(NetPredictionComponent& pred,
     float stepX = nx * move.speed * deltaTime;
     float stepY = ny * move.speed * deltaTime;
 
-    // Optional: lightweight client collision to reduce obvious tunneling
+    // lightweight client collision to reduce obvious tunneling
     Vec2f tryPos{pred.predictedX + stepX, pred.predictedY + stepY};
     if (world->IsTilePassable(tryPos)) {
       pred.predictedX = tryPos.x;
       pred.predictedY = tryPos.y;
     } else {
-      // Axis-separated fallback
+      // axis-separated fallback
       Vec2f tryX{pred.predictedX + stepX, pred.predictedY};
       if (world->IsTilePassable(tryX)) pred.predictedX = tryX.x;
       Vec2f tryY{pred.predictedX, pred.predictedY + stepY};
@@ -213,7 +213,6 @@ static void ApplyPrediction(NetPredictionComponent& pred,
 
 void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
                                                std::size_t packetSize) {
-  // Corrected read order: seq, then x, then y
   uint16_t lastAckedSeq = util::Read16BigEnd(rp);
   float serverX = util::ReadF32BigEnd(rp);
   float serverY = util::ReadF32BigEnd(rp);
@@ -285,10 +284,10 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   // Apply prediction for this tick
   ApplyPrediction(pred, move, world, inputBit, deltaTime);
 
-  // Every tick, we generate a sequence number and an input command.
+  // Every tick, generate a sequence number and an input command.
   inputSequenceNumber++;
 
-  // Store this input and the result for reconciliation
+  // Store input and the result for reconciliation
   pendingInputQueue.push_back({inputSequenceNumber, inputBit, pred.predictedX,
                              pred.predictedY, deltaTime});
 
@@ -315,17 +314,17 @@ void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
 
   // When a reconciliation happens, pred.predictedX/Y will jump, and this
   // will cause the visual transform to smoothly catch up over a few frames.
-  const float kCatchUpSpeed = 20.0f;  // Adjust for more/less smoothing
+  const float kCatchUpSpeed = 20.0f;  // Adjustable constant for smoothing
   trans.position.x =
       util::Lerp(trans.position.x, pred.predictedX, kCatchUpSpeed * deltaTime);
   trans.position.y =
       util::Lerp(trans.position.y, pred.predictedY, kCatchUpSpeed * deltaTime);
 }
 
-// Remote interpolation (unchanged, uses buffer)
+// Remote interpolation for non-local players
 void ClientNetworkSystem::ApplyRemoteInterpolation() {
   const double now = NowSeconds();
-  constexpr double kDelay = 0.10; // 100 ms
+  constexpr double kDelay = 0.10; // 100 ms, also adjustable constant
 
   for (EntityID e : registry->view<InterpBufferComponent, TransformComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing

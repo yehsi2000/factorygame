@@ -236,7 +236,6 @@ void ServerNetworkSystem::SendSyncPacket() {
     float x;
     float y;
     uint8_t facing;
-    uint16_t ack;
   };
 
   std::vector<Entry> entries;
@@ -248,8 +247,7 @@ void ServerNetworkSystem::SendSyncPacket() {
     const auto& spr = registry->GetComponent<SpriteComponent>(player);
     uint8_t facing = spr.flip == SDL_FLIP_HORIZONTAL ? 1 : 0;
 
-    entries.push_back(Entry{pc.clientID, t.position.x, t.position.y, facing,
-                            pc.lastProcessedSeq});
+    entries.push_back(Entry{pc.clientID, t.position.x, t.position.y, facing});
   }
 
   const std::size_t packetSize =

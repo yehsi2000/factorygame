@@ -5,6 +5,11 @@
 
 struct Vec2f;
 
+/**
+ * @brief A 2D vector of integers.
+ * @details Used for representing coordinates and dimensions in discrete space,
+ * such as tile indices and screen positions.
+ */
 struct Vec2 {
   int x, y;
   constexpr Vec2(int _x = 0, int _y = 0) : x(_x), y(_y) {}
@@ -31,6 +36,11 @@ constexpr Vec2 operator/(const Vec2 a, const int b) {
     return a;
 }
 
+/**
+ * @brief A 2D vector of floats.
+ * @details Used for representing coordinates and velocities in continuous
+ * space, such as world positions and entity movements.
+ */
 struct Vec2f {
   float x, y;
   constexpr Vec2f(float _x = 0.f, float _y = 0.f) : x(_x), y(_y) {}

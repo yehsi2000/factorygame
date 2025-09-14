@@ -15,4 +15,4 @@ struct TransformComponent {
         };
 };
 
-#endif /* COMPONENTS_TRANSFORMCOMPONENT_ */
+#endif/* COMPONENTS_TRANSFORMCOMPONENT_ */

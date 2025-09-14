@@ -7,6 +7,14 @@
 struct SDL_Window;
 struct ImGuiIO;
 
+/**
+ * @brief Manages all user input from keyboard, mouse, and other devices.
+ * @details This class abstracts the underlying SDL input events into a clean
+ * query-based interface. It tracks the current and previous state of keys and
+ * mouse buttons, allowing for the detection of presses, releases, and held
+ * states. It also provides access to mouse position, movement delta, and axis
+ * inputs.
+ */
 class InputManager {
 public:
     InputManager(SDL_Window* window);

@@ -5,6 +5,14 @@
 #include <mutex>
 #include <queue>
 
+/**
+ * @brief A generic, thread-safe queue for concurrent data access.
+ * @details This class wraps a standard std::queue and protects it with a mutex
+ * to allow safe pushing and popping of elements from multiple threads. It uses
+ * a condition variable to provide a blocking `WaitAndPop` method, which
+ * efficiently waits for an item to become available without busy-waiting.
+ * @tparam T The type of elements to be stored in the queue.
+ */
 template <typename T>
 class ThreadSafeQueue {
  public:

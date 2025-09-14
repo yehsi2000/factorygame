@@ -9,6 +9,13 @@ class Registry;
 class World;
 class AssetManager;
 
+/**
+ * @brief A factory for creating pre-configured entities.
+ * @details Encapsulates the logic for constructing complex entities with a
+ * specific set of components. This class simplifies the process of spawning
+ * common game objects like players, machines, and resources, ensuring they are
+ * initialized correctly.
+ */
 class EntityFactory {
   Registry* registry;
   AssetManager* assetManager;

@@ -7,6 +7,9 @@
 
 #include "Core/Item.h"
 
+/**
+ * @brief Defines all possible crafting recipes in the game.
+ */
 enum class RecipeID {
   None = 0,
   IronPlate,
@@ -17,11 +20,19 @@ enum class RecipeID {
   MaxRecipeID
 };
 
+/**
+ * @brief Represents a single ingredient required for a recipe.
+ */
 struct RecipeIngredient {
   ItemID itemId;
   int amount;
 };
 
+/**
+ * @brief Contains the static data for a specific crafting recipe.
+ * @details This struct defines everything needed to craft an item, including
+ * its ingredients, output, and the time it takes to complete.
+ */
 struct RecipeData {
   RecipeID id;
   std::u8string name;
@@ -32,6 +43,12 @@ struct RecipeData {
   float craftingTime;  // in seconds
 };
 
+/**
+ * @brief A singleton database for all recipe data.
+ * @details Provides a centralized, read-only repository of RecipeData for all
+ * crafting recipes in the game. This ensures that recipe information is
+ * consistent and easily accessible.
+ */
 class RecipeDatabase {
  public:
   static const RecipeDatabase& instance() {

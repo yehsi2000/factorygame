@@ -12,38 +12,72 @@ constexpr float syncRate = 30.f;
 constexpr float syncDelta = 1.f / syncRate;
 
 #pragma pack(push, 1)
+/**
+ * @brief The header for all network packets.
+ * @details Contains the packet's type identifier and its total size. This
+ * information is used to route and deserialize the packet on the receiving
+ * end.
+ */
 struct PacketHeader {
   uint16_t packet_id;
   uint16_t packet_size;
 };
 
+/**
+ * @brief The base struct for all network packets.
+ * @details All specific packet types should inherit from this struct to ensure
+ * they include the standard packet header.
+ */
 struct Packet {
   PacketHeader header;
 };
 #pragma pack(pop)
 
+/**
+ * @brief Specifies the destination for an outgoing packet.
+ */
 enum class ESendType {
   UNICAST,
   BROADCAST,
 };
 
+/**
+ * @brief A request to send a packet over the network.
+ * @details This struct is used by the server to manage outgoing packets. It
+ * includes the packet data, its destination type, and the target client ID if
+
+ * it's a unicast message.
+ */
 struct SendRequest {
   ESendType type;
   clientid_t targetClientId;  // positive int for UNICAST (0 for BROADCAST)
   PacketPtr packet;
 };
 
+/**
+ * @brief A packet received from the network.
+ * @details This struct is used to store incoming packets. It includes the
+ * packet data and the ID of the client who sent it.
+ */
 struct RecvPacket {
   clientid_t senderClientId;
   PacketPtr packet;
 };
 
+/**
+ * @brief Represents a server-validated player movement.
+ * @details This struct is used to communicate the result of a processed move
+ * request back to the relevant systems.
+ */
 struct MoveApplied {
   clientid_t clientID;
   uint16_t seq;
   float x, y;
 };
 
+/**
+ * @brief Defines the unique identifiers for each packet type.
+ */
 enum PACKET {
   /**
    * CONNECT_SYN
@@ -145,6 +179,9 @@ constexpr std::size_t sPacketHeader = sizeof(PacketHeader);
 constexpr std::size_t sClientID = sizeof(clientid_t);
 constexpr std::size_t sHeaderAndId = sPacketHeader + sClientID;
 
+/**
+ * @brief Bitmask for player input states.
+ */
 enum class EPlayerInput : uint8_t {
   UP = 1 << 0,     // 0000 0001
   DOWN = 1 << 1,   // 0000 0010
