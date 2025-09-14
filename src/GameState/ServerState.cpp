@@ -64,6 +64,7 @@
 #include "imgui_impl_sdlrenderer2.h"
 
 ServerState::ServerState() {}
+ServerState::~ServerState() = default;
 
 void ServerState::Init(GEngine* engine) {
   gEngine = engine;

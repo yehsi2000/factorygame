@@ -102,6 +102,7 @@ class ClientState : public IGameState {
 
  public:
   ClientState();
+  ~ClientState();
   virtual void Init(GEngine *engine) override;
   bool TryConnect();
   virtual void Cleanup() override;

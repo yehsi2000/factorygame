@@ -96,6 +96,7 @@ class ServerState : public IGameState {
 
  public:
   ServerState();
+  ~ServerState();
   virtual void Init(GEngine *engine) override;
   virtual void Cleanup() override;
   virtual void Update(float deltaTime) override;

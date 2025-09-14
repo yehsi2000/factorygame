@@ -57,8 +57,8 @@ class ClientNetworkSystem {
   void SendMoveRequest(float deltaTime);
 
   // For client-side prediction and server reconciliation
-  std::deque<InputCommand> m_pendingInputs;
-  uint16_t m_inputSequenceNumber = 0;
+  std::deque<InputCommand> pendingInputQueue;
+  uint16_t inputSequenceNumber = 0;
 };
 
 #endif/* SYSTEM_CLIENTNETWORKSYSTEM_ */

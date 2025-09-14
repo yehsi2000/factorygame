@@ -225,8 +225,8 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
   const auto& move = registry->GetComponent<MovementComponent>(me);
 
   // Remove acknowledged inputs from the pending list.
-  auto it = m_pendingInputs.begin();
-  while (it != m_pendingInputs.end()) {
+  auto it = pendingInputQueue.begin();
+  while (it != pendingInputQueue.end()) {
     if (util::seq_leq(it->sequence, lastAckedSeq)) {
       // This input is acknowledged. Check for misprediction.
       if (it->sequence == lastAckedSeq) {
@@ -237,7 +237,7 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
           pred.predictedY = serverY;
 
           // Replay: Re-apply all inputs that came after the acknowledged one.
-          for (auto replay_it = std::next(it); replay_it != m_pendingInputs.end();
+          for (auto replay_it = std::next(it); replay_it != pendingInputQueue.end();
                ++replay_it) {
             ApplyPrediction(pred, move, world, replay_it->inputBit,
                             replay_it->deltaTime);
@@ -247,7 +247,7 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
           }
         }
       }
-      it = m_pendingInputs.erase(it);
+      it = pendingInputQueue.erase(it);
     } else {
       ++it;
     }
@@ -286,10 +286,10 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   ApplyPrediction(pred, move, world, inputBit, deltaTime);
 
   // Every tick, we generate a sequence number and an input command.
-  m_inputSequenceNumber++;
+  inputSequenceNumber++;
 
   // Store this input and the result for reconciliation
-  m_pendingInputs.push_back({m_inputSequenceNumber, inputBit, pred.predictedX,
+  pendingInputQueue.push_back({inputSequenceNumber, inputBit, pred.predictedX,
                              pred.predictedY, deltaTime});
 
   // Send the input to the server
@@ -299,7 +299,7 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   PacketPtr pkt = std::make_unique<uint8_t[]>(packetSize);
   uint8_t* p = pkt.get();
   util::WriteHeader(p, PACKET::CLIENT_MOVE_REQ, packetSize);
-  util::Write16BigEnd(p, m_inputSequenceNumber);
+  util::Write16BigEnd(p, inputSequenceNumber);
   *p++ = inputBit;
   sendQueue->Push(std::move(pkt));
 }

@@ -67,9 +67,9 @@ void UISystem::PushChat(clientid_t id, std::shared_ptr<std::string> str) {
 void UISystem::Update() {
   ItemDropBackground();
   ChatWindow();
-  if (bDemoShow) {
-    ImGui::ShowDemoWindow(&bDemoShow);
-  }
+  // if (bDemoShow) {
+  //   ImGui::ShowDemoWindow(&bDemoShow);
+  // }
   if (bIsShowingInventory) Inventory();
   if (bIsShowingChatInput) {
     ChatInput();

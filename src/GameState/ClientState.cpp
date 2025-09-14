@@ -65,6 +65,7 @@
 
 
 ClientState::ClientState() : gEngine(nullptr), bIsQuit(false) {}
+ClientState::~ClientState() = default;
 
 void ClientState::Init(GEngine* engine) {
   gEngine = engine;
