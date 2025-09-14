@@ -370,6 +370,16 @@ void ClientNetworkSystem::ApplyRemoteInterpolation() {
     float x, y;
     uint8_t f;
     if (!SampleBufferAt(buf, now - kDelay, x, y, f)) continue;
+    if (registry->HasComponent<AnimationComponent>(e)) {
+      auto& anim = registry->GetComponent<AnimationComponent>(e);
+      auto& psc = registry->GetComponent<PlayerStateComponent>(e);
+      if (trans.position.x == x && trans.position.y == y) {
+        if (!psc.bIsMining)
+          util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
+      } else {
+        util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);
+      }
+    }
     trans.position.x = x;
     trans.position.y = y;
 

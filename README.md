@@ -179,7 +179,7 @@ class ComponentArray {
 
 ### 실시간 멀티플레이어 동기화 시스템
 
-[![server-client-preview](./assets/docs/server-client-preview.gif)](https://www.youtube.com/watch?v=m0AGeYyDPow)
+[![server-client-preview](./assets/docs/server-client-preview.gif)](https://www.youtube.com/watch?v=DAUPmR57i-o)
 <클릭하여 큰 화면으로 볼 수 있습니다>
 
 **클라이언트-서버 아키텍처 - 이동 예측 및 조정:**
