@@ -1,6 +1,5 @@
 #ifndef CORE_PACKET_
 #define CORE_PACKET_
-#pragma pack(push, 1)
 
 #include <cstdint>
 #include <memory>
@@ -12,6 +11,7 @@ using clientid_t = uint64_t;
 constexpr float syncRate = 30.f;
 constexpr float syncDelta = 1.f / syncRate;
 
+#pragma pack(push, 1)
 struct PacketHeader {
   uint16_t packet_id;
   uint16_t packet_size;
@@ -20,6 +20,7 @@ struct PacketHeader {
 struct Packet {
   PacketHeader header;
 };
+#pragma pack(pop)
 
 enum class ESendType {
   UNICAST,
@@ -151,5 +152,4 @@ enum class EPlayerInput : uint8_t {
   RIGHT = 1 << 3,  // 0000 1000
 };
 
-#pragma pack(pop)
 #endif/* CORE_PACKET_ */

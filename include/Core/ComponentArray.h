@@ -39,7 +39,7 @@ class ComponentArray : public IComponentArray {
     std::size_t newIndex = componentArray.size();
     entityToIndexMap[entity] = newIndex;
     indexToEntityMap[newIndex] = entity;
-    componentArray.push_back(std::move(component));
+    componentArray.emplace_back(std::move(component));
   }
 
   void RemoveData(EntityID entity) {
@@ -48,7 +48,7 @@ class ComponentArray : public IComponentArray {
 
     std::size_t indexOfRemovedEntity = entityToIndexMap[entity];
     std::size_t indexOfLastElement = componentArray.size() - 1;
-    componentArray[indexOfRemovedEntity] = componentArray[indexOfLastElement];
+    componentArray[indexOfRemovedEntity] = std::move(componentArray[indexOfLastElement]);
 
     EntityID entityOfLastElement = indexToEntityMap[indexOfLastElement];
     entityToIndexMap[entityOfLastElement] = indexOfRemovedEntity;
@@ -66,7 +66,7 @@ class ComponentArray : public IComponentArray {
     std::size_t newIndex = componentArray.size();
     entityToIndexMap[entity] = newIndex;
     indexToEntityMap[newIndex] = entity;
-    componentArray.push_back(T{std::forward<Args>(args)...});
+    componentArray.emplace_back(std::forward<Args>(args)...);
   }
 
   T &GetData(EntityID entity) {

@@ -14,7 +14,7 @@
 #define DRAW_DEBUG_RECTS
 
 int main(int argc, char *argv[]) {
-  if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1) || (TTF_Init() == -1)) {
+  if ((SDL_Init(SDL_INIT_VIDEO) == -1) || (TTF_Init() == -1)) {
     std::cout << "Could not initialize SDL:" << SDL_GetError() << ".\n";
     exit(-1);
   }
