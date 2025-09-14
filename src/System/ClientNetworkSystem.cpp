@@ -25,8 +25,8 @@
 #include "Core/InputManager.h"
 #include "Core/Packet.h"
 #include "Core/Socket.h"
-#include "Util/MathUtil.h"
 #include "Util/AnimUtil.h"
+#include "Util/MathUtil.h"
 #include "Util/PacketUtil.h"
 
 ClientNetworkSystem::ClientNetworkSystem(const SystemContext& context)
@@ -109,14 +109,16 @@ void ClientNetworkSystem::ChatBroadcastHandler(const uint8_t* rp,
 }
 
 namespace {
-  inline double NowSeconds() {
-    using clock = std::chrono::steady_clock;
-    return std::chrono::duration<double>(clock::now().time_since_epoch()).count();
-  }
+inline double NowSeconds() {
+  using clock = std::chrono::steady_clock;
+  return std::chrono::duration<double>(clock::now().time_since_epoch()).count();
 }
+}  // namespace
 
-// Push all snapshots (including local) into buffers. Do not write Transform here
-void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp, std::size_t /*packetSize*/) {
+// Push all snapshots (including local) into buffers. Do not write Transform
+// here
+void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
+                                                   std::size_t /*packetSize*/) {
   const uint16_t count = util::Read16BigEnd(rp);
   const double now = NowSeconds();
 
@@ -134,17 +136,20 @@ void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp, std::size_
     }
     auto& buf = registry->GetComponent<InterpBufferComponent>(e);
 
-    const uint8_t writeIdx = static_cast<uint8_t>((buf.tail + buf.count) % InterpBufferComponent::N);
-    buf.samples[writeIdx] = { now, posX, posY, facing };
+    const uint8_t writeIdx =
+        static_cast<uint8_t>((buf.tail + buf.count) % InterpBufferComponent::N);
+    buf.samples[writeIdx] = {now, posX, posY, facing};
     if (buf.count < InterpBufferComponent::N) {
       ++buf.count;
     } else {
-      buf.tail = static_cast<uint8_t>((buf.tail + 1) % InterpBufferComponent::N);
+      buf.tail =
+          static_cast<uint8_t>((buf.tail + 1) % InterpBufferComponent::N);
     }
   }
 }
 
-static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT, float& outX, float& outY, uint8_t& outFacing) {
+static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
+                           float& outX, float& outY, uint8_t& outFacing) {
   if (buf.count == 0) return false;
 
   // Find s0 (<= target) and s1 (>= target)
@@ -156,7 +161,8 @@ static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT, flo
     const auto& s = buf.samples[(buf.tail + i) % InterpBufferComponent::N];
     if (s.t >= targetT) {
       s1 = s;
-      if (i > 0) s0 = buf.samples[(buf.tail + i - 1) % InterpBufferComponent::N];
+      if (i > 0)
+        s0 = buf.samples[(buf.tail + i - 1) % InterpBufferComponent::N];
       found = true;
       break;
     }
@@ -164,13 +170,18 @@ static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT, flo
   }
 
   if (!found) {
-    const auto& newest = buf.samples[(buf.tail + buf.count - 1) % InterpBufferComponent::N];
-    outX = newest.x; outY = newest.y; outFacing = newest.facing;
+    const auto& newest =
+        buf.samples[(buf.tail + buf.count - 1) % InterpBufferComponent::N];
+    outX = newest.x;
+    outY = newest.y;
+    outFacing = newest.facing;
     return true;
   }
 
   if (s1.t <= s0.t + 1e-6) {
-    outX = s1.x; outY = s1.y; outFacing = s1.facing;
+    outX = s1.x;
+    outY = s1.y;
+    outFacing = s1.facing;
     return true;
   }
 
@@ -236,8 +247,8 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
           pred.predictedY = serverY;
 
           // Replay: Re-apply all inputs that came after the acknowledged one.
-          for (auto replay_it = std::next(it); replay_it != pendingInputQueue.end();
-               ++replay_it) {
+          for (auto replay_it = std::next(it);
+               replay_it != pendingInputQueue.end(); ++replay_it) {
             ApplyPrediction(pred, move, world, replay_it->inputBit,
                             replay_it->deltaTime);
             // Update the history with the new re-predicted position.
@@ -255,25 +266,47 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
 
 // Local prediction writes to NetPredictionComponent.predicted*, not Transform
 void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
-  EntityID me = world->GetLocalPlayer();
-  if (me == INVALID_ENTITY) return;
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
 
   int ix = inputManager->GetXAxis();
   int iy = inputManager->GetYAxis();
 
   uint8_t inputBit{0};
-  if (ix > 0)      inputBit |= static_cast<uint8_t>(EPlayerInput::RIGHT);
-  else if (ix < 0) inputBit |= static_cast<uint8_t>(EPlayerInput::LEFT);
-  if (iy > 0)      inputBit |= static_cast<uint8_t>(EPlayerInput::UP);
-  else if (iy < 0) inputBit |= static_cast<uint8_t>(EPlayerInput::DOWN);
+  if (ix > 0)
+    inputBit |= static_cast<uint8_t>(EPlayerInput::RIGHT);
+  else if (ix < 0)
+    inputBit |= static_cast<uint8_t>(EPlayerInput::LEFT);
+  if (iy > 0)
+    inputBit |= static_cast<uint8_t>(EPlayerInput::UP);
+  else if (iy < 0)
+    inputBit |= static_cast<uint8_t>(EPlayerInput::DOWN);
+
+  if (registry->HasComponent<AnimationComponent>(localPlayer)) {
+    auto& anim = registry->GetComponent<AnimationComponent>(localPlayer);
+    auto& psc = registry->GetComponent<PlayerStateComponent>(localPlayer);
+    if (ix == 0 && iy == 0) {
+      if (!psc.bIsMining)
+        util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
+    } else {
+      util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);
+    }
+  }
+  if (registry->HasComponent<SpriteComponent>(localPlayer)) {
+    auto& spr = registry->GetComponent<SpriteComponent>(localPlayer);
+    if (ix > 0)
+      spr.flip = SDL_FLIP_NONE;
+    else if (ix < 0)
+      spr.flip = SDL_FLIP_HORIZONTAL;
+  }
 
   // Predict locally (write into NetPredictionComponent)
-  auto& pred  = registry->GetComponent<NetPredictionComponent>(me);
-  const auto& move = registry->GetComponent<MovementComponent>(me);
+  auto& pred = registry->GetComponent<NetPredictionComponent>(localPlayer);
+  const auto& move = registry->GetComponent<MovementComponent>(localPlayer);
 
   if (!pred.initialized) {
     // Initialize predicted to current transform on first use
-    const auto& tr = registry->GetComponent<TransformComponent>(me);
+    const auto& tr = registry->GetComponent<TransformComponent>(localPlayer);
     pred.predictedX = tr.position.x;
     pred.predictedY = tr.position.y;
     pred.offsetX = 0.f;
@@ -289,7 +322,7 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
 
   // Store input and the result for reconciliation
   pendingInputQueue.push_back({inputSequenceNumber, inputBit, pred.predictedX,
-                             pred.predictedY, deltaTime});
+                               pred.predictedY, deltaTime});
 
   // Send the input to the server
   const std::size_t payloadSize = sizeof(uint16_t) + sizeof(uint8_t);
@@ -303,7 +336,8 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   sendQueue->Push(std::move(pkt));
 }
 
-// Smoothly interpolates the visual transform to the corrected predicted position.
+// Smoothly interpolates the visual transform to the corrected predicted
+// position.
 void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
   EntityID localPlayer = world->GetLocalPlayer();
   if (localPlayer == INVALID_ENTITY) return;
@@ -324,15 +358,17 @@ void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
 // Remote interpolation for non-local players
 void ClientNetworkSystem::ApplyRemoteInterpolation() {
   const double now = NowSeconds();
-  constexpr double kDelay = 0.10; // 100 ms, also adjustable constant
+  constexpr double kDelay = 0.10;  // 100 ms, also adjustable constant
 
-  for (EntityID e : registry->view<InterpBufferComponent, TransformComponent>()) {
+  for (EntityID e :
+       registry->view<InterpBufferComponent, TransformComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing
     if (registry->HasComponent<LocalPlayerComponent>(e)) continue;
 
     auto& buf = registry->GetComponent<InterpBufferComponent>(e);
     auto& trans = registry->GetComponent<TransformComponent>(e);
-    float x, y; uint8_t f;
+    float x, y;
+    uint8_t f;
     if (!SampleBufferAt(buf, now - kDelay, x, y, f)) continue;
     trans.position.x = x;
     trans.position.y = y;
@@ -353,10 +389,18 @@ void ClientNetworkSystem::Update(float deltaTime) {
     PACKET packetId;
     util::GetHeader(rp, packetId, packetSize);
     switch (packetId) {
-      case CONNECT_ACK:        ConnectAckHandler(rp, packetSize); break;
-      case CHAT_BROADCAST:     ChatBroadcastHandler(rp, packetSize); break;
-      case TRANSFORM_SNAPSHOT: TransformSnapshotHandler(rp, packetSize); break;
-      case CLIENT_MOVE_RES:    ClientMoveResHandler(rp, packetSize); break;
+      case CONNECT_ACK:
+        ConnectAckHandler(rp, packetSize);
+        break;
+      case CHAT_BROADCAST:
+        ChatBroadcastHandler(rp, packetSize);
+        break;
+      case TRANSFORM_SNAPSHOT:
+        TransformSnapshotHandler(rp, packetSize);
+        break;
+      case CLIENT_MOVE_RES:
+        ClientMoveResHandler(rp, packetSize);
+        break;
       case PLAYER_DISCONNECTED_BROADCAST: {
         clientid_t disconnectedId = util::Read64BigEnd(rp);
         std::cout << "PLAYER_DISCONNECTED_BROADCAST from server, id: "
@@ -370,7 +414,8 @@ void ClientNetworkSystem::Update(float deltaTime) {
         }
         break;
       }
-      default: break;
+      default:
+        break;
     }
   }
 
