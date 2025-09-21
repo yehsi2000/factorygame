@@ -72,9 +72,11 @@ void ItemDragSystem::UpdatePreviewEntity() {
     return;
   }
 
-  Vec2f mouseWorldPos = util::ScreenToWorld(inputManager->GetMousePosition(),
-                                            util::GetCameraPosition(registry),
-                                            inputManager->GetScreenSize());
+  float zoom = util::GetCameraZoom(registry);
+  Vec2f mouseWorldPos =
+      util::ScreenToWorld(inputManager->GetMousePosition(),
+                          util::GetCameraPosition(registry),
+                          inputManager->GetScreenSize(), zoom);
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(mouseWorldPos);
 

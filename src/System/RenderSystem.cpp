@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cmath>
 
 #include "Components/BuildingPreviewComponent.h"
 #include "Components/ChunkComponent.h"
@@ -85,9 +86,11 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
     }
 
     if (chunk.chunkTexture) {
-      SDL_Rect destRect = {static_cast<int>(screenPos.x),
-                           static_cast<int>(screenPos.y), chunkTextureSize.x,
-                           chunkTextureSize.y};
+      SDL_Rect destRect;
+      destRect.x = static_cast<int>(floorf(screenPos.x));
+      destRect.y = static_cast<int>(floorf(screenPos.y));
+      destRect.w = static_cast<int>(ceilf(screenPos.x + chunkTextureSize.x)) - destRect.x;
+      destRect.h = static_cast<int>(ceilf(screenPos.y + chunkTextureSize.y)) - destRect.y;
       SDL_RenderCopy(renderer, chunk.chunkTexture, nullptr, &destRect);
     }
   }
@@ -155,7 +158,7 @@ bool RenderSystem::IsOffScreen(Vec2f screenPos, Vec2 screenSize,
 void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<DebugRectComponent>(entity)) continue;
-
+    // TODO :remove render invalid text 
     auto &text = registry->GetComponent<TextComponent>(entity);
     const auto &transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =
@@ -172,6 +175,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       // Special case for inactive entities, render "inactive" text
       // This part is not cached as it's a temporary state overlay
+      #ifdef DEBUG_TEXT
       SDL_Surface *textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
       SDL_Texture *textTexture =
@@ -187,6 +191,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
 
       SDL_FreeSurface(textSurface);
       SDL_DestroyTexture(textTexture);
+      #endif
       continue;
     }
 
@@ -221,6 +226,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
 void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
                                           float zoom) {
   // Render all building previews
+  // TODO :scrollout preview placement wrong
   auto previewView =
       registry->view<BuildingPreviewComponent, TransformComponent>();
 
@@ -243,10 +249,12 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
         Vec2f screenPos =
             util::WorldToScreen(tileWorldPos, cameraPos, screenSize, zoom);
 
-        SDL_Rect tileRect = {static_cast<int>(screenPos.x * zoom),
-                             static_cast<int>(screenPos.y * zoom),
-                             static_cast<int>(TILE_PIXEL_SIZE * zoom),
-                             static_cast<int>(TILE_PIXEL_SIZE * zoom)};
+        SDL_Rect tileRect;
+        const float tilePixelSizeZoomed = TILE_PIXEL_SIZE * zoom;
+        tileRect.x = static_cast<int>(floorf(screenPos.x));
+        tileRect.y = static_cast<int>(floorf(screenPos.y));
+        tileRect.w = static_cast<int>(ceilf(screenPos.x + tilePixelSizeZoomed)) - tileRect.x;
+        tileRect.h = static_cast<int>(ceilf(screenPos.y + tilePixelSizeZoomed)) - tileRect.y;
 
         // Set color based on validity - use more visible alpha values
         if (world->HasNoOcuupyingEntity(tileindex + Vec2{dx, dy}, 1, 1)) {

@@ -66,7 +66,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   // Check if player is moving (disable drag if moving)
   bool bIsPlayerMoving = false;
   bIsPlayerMoving = abs(inputManager->GetXAxis()) > 0.1f ||
-                   abs(inputManager->GetYAxis()) > 0.1f;
+                    abs(inputManager->GetYAxis()) > 0.1f;
 
   // Start dragging
   if (inputManager->WasMouseButtonPressed(MouseButton::RIGHT) &&
@@ -78,7 +78,8 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   if (inputManager->GetMouseWheelScroll() != 0) {
-    camera.zoom += ((inputManager->GetMouseWheelScroll()) * 0.05f);
+    camera.zoom =
+        (1 + ((inputManager->GetMouseWheelScroll()) * 0.05f)) * camera.zoom;
     // inputManager->mouseWheel = {0, 0};
   }
 

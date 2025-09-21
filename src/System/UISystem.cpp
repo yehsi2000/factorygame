@@ -12,6 +12,7 @@
 #include "Components/InventoryComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Components/PlayerStateComponent.h"
+#include "Components/InactiveComponent.h"
 #include "Core/AssetManager.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
@@ -157,9 +158,11 @@ void UISystem::ItemDropBackground() {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("DND_ITEM")) {
       IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
+
+      float zoom = util::GetCameraZoom(registry);
       Vec2f mouseWorldPos = util::ScreenToWorld(
           inputManager->GetMousePosition(), util::GetCameraPosition(registry),
-          inputManager->GetScreenSize());
+          inputManager->GetScreenSize(), zoom);
 
       ItemPayload item_payload = *static_cast<ItemPayload *>(payload->Data);
 
@@ -327,6 +330,7 @@ void UISystem::Inventory() {
 void UISystem::AssemblingMachineUI() {
   // Find all assembling machines that should show UI
   for (auto machineEntity : registry->view<AssemblingMachineComponent>()) {
+    if(registry->HasComponent<InactiveComponent>(machineEntity)) continue;
     auto &assemblingComp =
         registry->GetComponent<AssemblingMachineComponent>(machineEntity);
     if (assemblingComp.bIsShowingUI) {
@@ -458,7 +462,7 @@ void UISystem::AssemblingMachineUI() {
 void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
   auto &assemblingComp =
       registry->GetComponent<AssemblingMachineComponent>(entity);
-
+  if(registry->HasComponent<InactiveComponent>(entity)) return;
   std::string windowName = "Select Recipe##" + std::to_string(entity);
   bool showSelection = assemblingComp.bIsShowingRecipeSelection;
 
@@ -504,6 +508,7 @@ void UISystem::MiningDrillUI() {
   const ItemDatabase &itemdb = ItemDatabase::instance();
   ImVec2 outputSlotSize(60, 60);
   for (auto drillEntity : registry->view<MiningDrillComponent>()) {
+    if(registry->HasComponent<InactiveComponent>(drillEntity)) continue;
     auto &drillComp = registry->GetComponent<MiningDrillComponent>(drillEntity);
     if (drillComp.bIsShowingUI) {
       std::string windowName = "Mining Drill##" + std::to_string(drillEntity);
