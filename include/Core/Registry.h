@@ -2,11 +2,14 @@
 #define CORE_REGISTRY_
 
 #include <algorithm>
-#include <iostream>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <queue>
+#include <iostream>
 #include <memory>
+#include <mutex>
+#include <queue>
+#include <shared_mutex>
 
 #include "Core/ComponentArray.h"
 #include "Core/Event.h"
@@ -23,39 +26,57 @@ constexpr int MAX_ENTITIES = 1000000;
 class Registry {
  private:
   std::queue<EntityID> availableEntities{};
+  std::shared_mutex compArrayMutex;
 
   uint32_t livingEntityCount = 0;
-  std::size_t COMPONENT_ID = 0;
+  std::atomic<std::size_t> typeCounter = 0;
 
   std::vector<std::unique_ptr<IComponentArray>> componentArrays{};
-  EventDispatcher* eventDispatcher;
+  EventDispatcher *eventDispatcher;
 
   template <typename T>
   std::size_t GetComponentTypeID() {
-    const static std::size_t typeID = COMPONENT_ID++;
+    const static std::size_t typeID = typeCounter++;
     return typeID;
   }
 
   template <typename T>
   ComponentArray<T> *GetComponentArray() {
     std::size_t compTypeId = GetComponentTypeID<T>();
-    if (componentArrays.size() <= compTypeId) {
-      std::cerr << "Assertion failed: Component type '" << typeid(T).name()
-                << "' not registered before use." << std::endl;
-      std::abort();
-    }
-    return static_cast<ComponentArray<T> *>(componentArrays[compTypeId].get());
-  }
 
-  template <typename T>
-  std::size_t GetComponentArraySize() {
-    std::size_t compTypeId = GetComponentTypeID<T>();
-    if (componentArrays.size() <= compTypeId) return 0;
-    return componentArrays[compTypeId]->GetSize();
+    {
+      std::shared_lock<std::shared_mutex> readLock(compArrayMutex);
+      if (compTypeId < componentArrays.size() &&
+          componentArrays[compTypeId] != nullptr) {
+        return static_cast<ComponentArray<T> *>(
+            componentArrays[compTypeId].get());
+      }
+    }
+
+    {
+      std::unique_lock<std::shared_mutex> writeLock(compArrayMutex);
+
+      if (compTypeId < componentArrays.size() &&
+          componentArrays[compTypeId] != nullptr) {
+        return static_cast<ComponentArray<T> *>(
+            componentArrays[compTypeId].get());
+      }
+
+      if (componentArrays.size() <= compTypeId) {
+        componentArrays.resize(compTypeId + 1);
+      }
+
+      if (componentArrays[compTypeId] == nullptr) {
+        componentArrays[compTypeId] = std::make_unique<ComponentArray<T>>();
+      }
+
+      return static_cast<ComponentArray<T> *>(
+          componentArrays[compTypeId].get());
+    }
   }
 
  public:
-  Registry(EventDispatcher* dispatcher) : eventDispatcher(dispatcher) {
+  Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {
     for (EntityID entity = 1; entity < MAX_ENTITIES; ++entity) {
       availableEntities.push(entity);
     }
@@ -86,26 +107,13 @@ class Registry {
 
     eventDispatcher->Publish(EntityDestroyedEvent(entity));
 
-    for (auto& compArray : componentArrays) {
+    for (auto &compArray : componentArrays) {
+      if (compArray == nullptr) continue;
       compArray->EntityDestroyed(entity);
     }
 
     availableEntities.push(entity);
     livingEntityCount--;
-  }
-
-  /**
-   * @brief Registers a new component type with the registry.
-   * @details This must be called once for each component type before it can be
-   *          added to entities.
-   * @tparam T The component type to register.
-   */
-  template <typename T>
-  void RegisterComponent() {
-    std::size_t compTypeId = GetComponentTypeID<T>();
-    if (componentArrays.size() <= compTypeId) {
-      componentArrays.push_back(std::make_unique<ComponentArray<T>>());
-    }
   }
 
   /**
@@ -161,11 +169,12 @@ class Registry {
   template <typename T>
   bool HasComponent(EntityID entity) {
     std::size_t compTypeId = GetComponentTypeID<T>();
-    if (componentArrays.size() <= compTypeId)
-      return false;
-    else 
-      return componentArrays[compTypeId]->HasEntity(entity);
-    
+
+    if (componentArrays.size() <= compTypeId) return false;
+
+    if (componentArrays[compTypeId] == nullptr) return false;
+
+    return componentArrays[compTypeId]->HasEntity(entity);
   }
 
   /**
@@ -218,4 +227,4 @@ class Registry {
   }
 };
 
-#endif/* CORE_REGISTRY_ */
+#endif /* CORE_REGISTRY_ */

@@ -90,8 +90,6 @@ void ClientState::Init(GEngine* engine) {
          "Fail to initialize GEngine : Invalid eventDispatcher");
   assert(commandQueue && "Fail to initialize GEngine : Invalid command queue");
 
-  RegisterComponent();
-
   world = std::make_unique<World>(registry.get(), worldAssetManager,
                                   entityFactory.get(), eventDispatcher.get(),
                                   gFont, false);
@@ -158,26 +156,6 @@ void ClientState::SocketReceiveWorker() {
   }
   std::cout << "Receive thread ending.\n";
   eventDispatcher->Publish(QuitEvent{});
-}
-
-void ClientState::RegisterComponent() {
-  // Register all component type inside typeArray to regsitry
-  // powered by Lambda TMP Magic™
-  using ComponentTypes =
-      typeArray<AnimationComponent, AssemblingMachineComponent,
-                BuildingComponent, BuildingPreviewComponent, CameraComponent,
-                ChunkComponent, DebugRectComponent, InactiveComponent,
-                InventoryComponent,InterpBufferComponent, InputStateComponent, MiningDrillComponent, MovableComponent,
-                MovementComponent, NetPredictionComponent, LocalPlayerComponent,
-                PlayerStateComponent, RefineryComponent, ResourceNodeComponent,
-                SpriteComponent, TimerComponent, TimerExpiredTag,
-                TransformComponent, TextComponent>;
-
-  [reg = registry.get()]<std::size_t... Is>(std::index_sequence<Is...>) {
-    ((reg->RegisterComponent<
-         std::tuple_element_t<Is, typename ComponentTypes::typesTuple>>()),
-     ...);
-  }(std::make_index_sequence<ComponentTypes::size>{});
 }
 
 void ClientState::InitCoreSystem() {

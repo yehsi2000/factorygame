@@ -64,8 +64,7 @@ void ClientNetworkSystem::Init(std::u8string playerName) {
   connectionSocket->Send(packet.get(), packetSize);
 }
 
-void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp,
-                                            std::size_t packetSize) {
+void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp) {
   myClientID = util::Read64BigEnd(rp);
 
   uint16_t playerCnt = util::Read16BigEnd(rp);
@@ -74,9 +73,9 @@ void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp,
     clientid_t id = util::Read64BigEnd(rp);
 
     const uint8_t nameLen = *rp++;
-    constexpr size_t cap = NAME_MAX_LEN - 1;
 
-    size_t copyLen = util::utf8_clamp_to_codepoint(rp, nameLen, cap);
+    size_t copyLen =
+        util::utf8_clamp_to_codepoint(rp, nameLen, NAME_MAX_LEN - 1);
     std::string name(reinterpret_cast<const char*>(rp), copyLen);
 
     std::cout << std::format("Player {}: {}", id, name) << std::endl;
@@ -108,19 +107,11 @@ void ClientNetworkSystem::ChatBroadcastHandler(const uint8_t* rp,
   }
 }
 
-namespace {
-inline double NowSeconds() {
-  using clock = std::chrono::steady_clock;
-  return std::chrono::duration<double>(clock::now().time_since_epoch()).count();
-}
-}  // namespace
-
 // Push all snapshots (including local) into buffers. Do not write Transform
 // here
 void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
-                                                   std::size_t /*packetSize*/) {
+                                                   double now) {
   const uint16_t count = util::Read16BigEnd(rp);
-  const double now = NowSeconds();
 
   for (uint16_t i = 0; i < count; ++i) {
     clientid_t id = util::Read64BigEnd(rp);
@@ -146,6 +137,91 @@ void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
           static_cast<uint8_t>((buf.tail + 1) % InterpBufferComponent::N);
     }
   }
+}
+
+void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp) {
+  uint16_t lastAckedSeq = util::Read16BigEnd(rp);
+  float serverX = util::ReadF32BigEnd(rp);
+  float serverY = util::ReadF32BigEnd(rp);
+
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
+
+  auto& predcomp = registry->GetComponent<NetPredictionComponent>(localPlayer);
+  const auto& movecomp = registry->GetComponent<MovementComponent>(localPlayer);
+
+  // compare with client prediction
+  pendingInputQueue.for_each([&](const InputCommand& cmd) {
+    if (cmd.sequence == lastAckedSeq) {
+      float error = std::hypot(cmd.predX - serverX, cmd.predY - serverY);
+      if (error > 0.1f) {
+        predcomp.predictedX = serverX;
+        predcomp.predictedY = serverY;
+        
+        // reapply every input after lastAckedSeq
+        pendingInputQueue.for_each([&](InputCommand& subsequent_cmd) {
+          if (util::seq_gt(subsequent_cmd.sequence, lastAckedSeq)) {
+            ApplyMovePrediction(predcomp, movecomp, subsequent_cmd.inputBit,
+                                subsequent_cmd.deltaTime);
+            subsequent_cmd.predX = predcomp.predictedX;
+            subsequent_cmd.predY = predcomp.predictedY;
+          }
+        });
+      }
+      return;
+    }
+  });
+
+  pendingInputQueue.pop_front_while([&](const InputCommand& cmd) {
+    return util::seq_leq(cmd.sequence, lastAckedSeq);
+  });
+}
+
+void ClientNetworkSystem::ApplyMovePrediction(NetPredictionComponent& pred,
+                                              const MovementComponent& move,
+                                              uint8_t inputBit,
+                                              float deltaTime) {
+  int ix = 0, iy = 0;
+  if (inputBit & static_cast<uint8_t>(EPlayerInput::RIGHT)) ix++;
+  if (inputBit & static_cast<uint8_t>(EPlayerInput::LEFT)) ix--;
+  if (inputBit & static_cast<uint8_t>(EPlayerInput::UP)) iy++;
+  if (inputBit & static_cast<uint8_t>(EPlayerInput::DOWN)) iy--;
+
+  if (ix != 0 || iy != 0) {
+    float len = std::hypot(ix, iy);
+    float nx = ix / len, ny = iy / len;
+    float stepX = nx * move.speed * deltaTime;
+    float stepY = ny * move.speed * deltaTime;
+
+    // lightweight client collision to reduce obvious tunneling
+    Vec2f tryPos{pred.predictedX + stepX, pred.predictedY + stepY};
+    if (world->IsTilePassable(tryPos)) {
+      pred.predictedX = tryPos.x;
+      pred.predictedY = tryPos.y;
+    } else {
+      // axis-separated fallback
+      Vec2f tryX{pred.predictedX + stepX, pred.predictedY};
+      if (world->IsTilePassable(tryX)) pred.predictedX = tryX.x;
+      Vec2f tryY{pred.predictedX, pred.predictedY + stepY};
+      if (world->IsTilePassable(tryY)) pred.predictedY = tryY.y;
+    }
+  }
+}
+
+// Smoothly interpolates the visual transform to the corrected predicted
+// position.
+void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
+  EntityID localPlayer = world->GetLocalPlayer();
+  if (localPlayer == INVALID_ENTITY) return;
+  if (!registry->HasComponent<NetPredictionComponent>(localPlayer)) return;
+
+  auto& pred = registry->GetComponent<NetPredictionComponent>(localPlayer);
+  auto& trans = registry->GetComponent<TransformComponent>(localPlayer);
+
+  trans.position.x =
+      util::Lerp(trans.position.x, pred.predictedX, kCatchUpSpeed * deltaTime);
+  trans.position.y =
+      util::Lerp(trans.position.y, pred.predictedY, kCatchUpSpeed * deltaTime);
 }
 
 static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
@@ -192,75 +268,105 @@ static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
   return true;
 }
 
-static void ApplyPrediction(NetPredictionComponent& pred,
-                            const MovementComponent& move, World* world,
-                            uint8_t inputBit, float deltaTime) {
-  int ix = 0, iy = 0;
-  if (inputBit & static_cast<uint8_t>(EPlayerInput::RIGHT)) ix++;
-  if (inputBit & static_cast<uint8_t>(EPlayerInput::LEFT)) ix--;
-  if (inputBit & static_cast<uint8_t>(EPlayerInput::UP)) iy++;
-  if (inputBit & static_cast<uint8_t>(EPlayerInput::DOWN)) iy--;
+// Remote interpolation for non-local players
+void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
+  const double renderTimestamp = now - kInterpolationDelay;
 
-  if (ix != 0 || iy != 0) {
-    float len = std::sqrt(static_cast<float>(ix * ix + iy * iy));
-    float nx = ix / len, ny = iy / len;
-    float stepX = nx * move.speed * deltaTime;
-    float stepY = ny * move.speed * deltaTime;
+  for (EntityID e : registry->view<InterpBufferComponent, TransformComponent,
+                                   AnimationComponent, SpriteComponent>()) {
+    // Skip local here; handled by ApplyLocalSmoothing
+    if (registry->HasComponent<LocalPlayerComponent>(e)) continue;
 
-    // lightweight client collision to reduce obvious tunneling
-    Vec2f tryPos{pred.predictedX + stepX, pred.predictedY + stepY};
-    if (world->IsTilePassable(tryPos)) {
-      pred.predictedX = tryPos.x;
-      pred.predictedY = tryPos.y;
+    auto& buf = registry->GetComponent<InterpBufferComponent>(e);
+    auto& trans = registry->GetComponent<TransformComponent>(e);
+    float x, y;
+    uint8_t f;
+    if (!SampleBufferAt(buf, renderTimestamp, x, y, f)) continue;
+
+    auto& anim = registry->GetComponent<AnimationComponent>(e);
+    auto& psc = registry->GetComponent<PlayerStateComponent>(e);
+    if (trans.position.x == x && trans.position.y == y) {
+      if (!psc.bIsMining)
+        util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
     } else {
-      // axis-separated fallback
-      Vec2f tryX{pred.predictedX + stepX, pred.predictedY};
-      if (world->IsTilePassable(tryX)) pred.predictedX = tryX.x;
-      Vec2f tryY{pred.predictedX, pred.predictedY + stepY};
-      if (world->IsTilePassable(tryY)) pred.predictedY = tryY.y;
+      util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);
     }
+
+    trans.position.x = x;
+    trans.position.y = y;
+
+    auto& spr = registry->GetComponent<SpriteComponent>(e);
+    spr.flip = (f == 1) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
   }
 }
 
-void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp,
-                                               std::size_t packetSize) {
-  uint16_t lastAckedSeq = util::Read16BigEnd(rp);
-  float serverX = util::ReadF32BigEnd(rp);
-  float serverY = util::ReadF32BigEnd(rp);
+void ClientNetworkSystem::Update(float deltaTime) {
+  // 1) Drain incoming first
+  using clock = std::chrono::steady_clock;
+  const double now =
+      std::chrono::duration<double>(clock::now().time_since_epoch()).count();
 
-  EntityID me = world->GetLocalPlayer();
-  if (me == INVALID_ENTITY) return;
+  PacketPtr packet;
+  while (recvQueue->TryPop(packet)) {
+    const uint8_t* rp = packet.get();
+    std::size_t packetSize;
+    PACKET packetId;
+    util::GetHeader(rp, packetId, packetSize);
 
-  auto& pred = registry->GetComponent<NetPredictionComponent>(me);
-  const auto& move = registry->GetComponent<MovementComponent>(me);
+    switch (packetId) {
+      case CONNECT_ACK:
+        ConnectAckHandler(rp);
+        break;
 
-  // Remove acknowledged inputs from the pending list.
-  auto it = pendingInputQueue.begin();
-  while (it != pendingInputQueue.end()) {
-    if (util::seq_leq(it->sequence, lastAckedSeq)) {
-      // This input is acknowledged. Check for misprediction.
-      if (it->sequence == lastAckedSeq) {
-        float error = std::hypot(it->predX - serverX, it->predY - serverY);
-        if (error > 0.1f) {  // Misprediction detected!
-          // Rewind: Set the base of our prediction to the server's state.
-          pred.predictedX = serverX;
-          pred.predictedY = serverY;
+      case CHAT_BROADCAST:
+        ChatBroadcastHandler(rp, packetSize);
+        break;
 
-          // Replay: Re-apply all inputs that came after the acknowledged one.
-          for (auto replay_it = std::next(it);
-               replay_it != pendingInputQueue.end(); ++replay_it) {
-            ApplyPrediction(pred, move, world, replay_it->inputBit,
-                            replay_it->deltaTime);
-            // Update the history with the new re-predicted position.
-            replay_it->predX = pred.predictedX;
-            replay_it->predY = pred.predictedY;
-          }
+      case TRANSFORM_SNAPSHOT:
+        TransformSnapshotHandler(rp, now);
+        break;
+
+      case CLIENT_MOVE_RES:
+        ClientMoveResHandler(rp);
+        break;
+
+      case PLAYER_DISCONNECTED_BROADCAST: {
+        clientid_t disconnectedId = util::Read64BigEnd(rp);
+        std::cout << "PLAYER_DISCONNECTED_BROADCAST from server, id: "
+                  << disconnectedId << std::endl;
+
+        auto iter = clientNameMap->find(disconnectedId);
+        if (iter != clientNameMap->end()) {
+          clientNameMap->erase(iter);
+          commandQueue->Enqueue(
+              std::make_unique<PlayerDisconnectedCommand>(disconnectedId));
         }
+        break;
       }
-      it = pendingInputQueue.erase(it);
-    } else {
-      ++it;
+
+      default:
+        break;
     }
+  }
+
+  // 2) Apply smoothing
+  ApplyRemoteInterpolation(now);
+  ApplyLocalSmoothing(deltaTime);
+
+  // 3) Fixed-rate send + local prediction
+  moveReqTimer += deltaTime;
+  while (moveReqTimer >= syncDelta) {
+    SendMoveRequest(syncDelta);
+    moveReqTimer -= syncDelta;
+  }
+
+  // 4) Flush outgoing
+  while (sendQueue->TryPop(packet)) {
+    const uint8_t* rp = packet.get();
+    std::size_t packetSize;
+    PACKET packetId;
+    util::GetHeader(rp, packetId, packetSize);
+    connectionSocket->Send(packet.get(), packetSize);
   }
 }
 
@@ -315,7 +421,7 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   }
 
   // Apply prediction for this tick
-  ApplyPrediction(pred, move, world, inputBit, deltaTime);
+  ApplyMovePrediction(pred, move, inputBit, deltaTime);
 
   // Every tick, generate a sequence number and an input command.
   inputSequenceNumber++;
@@ -334,120 +440,6 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   util::Write16BigEnd(p, inputSequenceNumber);
   *p++ = inputBit;
   sendQueue->Push(std::move(pkt));
-}
-
-// Smoothly interpolates the visual transform to the corrected predicted
-// position.
-void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
-  if (!registry->HasComponent<NetPredictionComponent>(localPlayer)) return;
-
-  auto& pred = registry->GetComponent<NetPredictionComponent>(localPlayer);
-  auto& trans = registry->GetComponent<TransformComponent>(localPlayer);
-
-  // When a reconciliation happens, pred.predictedX/Y will jump, and this
-  // will cause the visual transform to smoothly catch up over a few frames.
-  const float kCatchUpSpeed = 20.0f;  // Adjustable constant for smoothing
-  trans.position.x =
-      util::Lerp(trans.position.x, pred.predictedX, kCatchUpSpeed * deltaTime);
-  trans.position.y =
-      util::Lerp(trans.position.y, pred.predictedY, kCatchUpSpeed * deltaTime);
-}
-
-// Remote interpolation for non-local players
-void ClientNetworkSystem::ApplyRemoteInterpolation() {
-  const double now = NowSeconds();
-  constexpr double kDelay = 0.10;  // 100 ms, also adjustable constant
-
-  for (EntityID e :
-       registry->view<InterpBufferComponent, TransformComponent>()) {
-    // Skip local here; handled by ApplyLocalSmoothing
-    if (registry->HasComponent<LocalPlayerComponent>(e)) continue;
-
-    auto& buf = registry->GetComponent<InterpBufferComponent>(e);
-    auto& trans = registry->GetComponent<TransformComponent>(e);
-    float x, y;
-    uint8_t f;
-    if (!SampleBufferAt(buf, now - kDelay, x, y, f)) continue;
-    if (registry->HasComponent<AnimationComponent>(e)) {
-      auto& anim = registry->GetComponent<AnimationComponent>(e);
-      auto& psc = registry->GetComponent<PlayerStateComponent>(e);
-      if (trans.position.x == x && trans.position.y == y) {
-        if (!psc.bIsMining)
-          util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
-      } else {
-        util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);
-      }
-    }
-    trans.position.x = x;
-    trans.position.y = y;
-
-    if (registry->HasComponent<SpriteComponent>(e)) {
-      auto& spr = registry->GetComponent<SpriteComponent>(e);
-      spr.flip = (f == 1) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
-    }
-  }
-}
-
-void ClientNetworkSystem::Update(float deltaTime) {
-  // 1) Drain incoming first
-  PacketPtr packet;
-  while (recvQueue->TryPop(packet)) {
-    const uint8_t* rp = packet.get();
-    std::size_t packetSize;
-    PACKET packetId;
-    util::GetHeader(rp, packetId, packetSize);
-    switch (packetId) {
-      case CONNECT_ACK:
-        ConnectAckHandler(rp, packetSize);
-        break;
-      case CHAT_BROADCAST:
-        ChatBroadcastHandler(rp, packetSize);
-        break;
-      case TRANSFORM_SNAPSHOT:
-        TransformSnapshotHandler(rp, packetSize);
-        break;
-      case CLIENT_MOVE_RES:
-        ClientMoveResHandler(rp, packetSize);
-        break;
-      case PLAYER_DISCONNECTED_BROADCAST: {
-        clientid_t disconnectedId = util::Read64BigEnd(rp);
-        std::cout << "PLAYER_DISCONNECTED_BROADCAST from server, id: "
-                  << disconnectedId << std::endl;
-
-        auto iter = clientNameMap->find(disconnectedId);
-        if (iter != clientNameMap->end()) {
-          clientNameMap->erase(iter);
-          commandQueue->Enqueue(
-              std::make_unique<PlayerDisconnectedCommand>(disconnectedId));
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
-  // 2) Apply smoothing
-  ApplyRemoteInterpolation();
-  ApplyLocalSmoothing(deltaTime);
-
-  // 3) Fixed-rate send + local prediction
-  moveReqTimer += deltaTime;
-  while (moveReqTimer >= syncDelta) {
-    SendMoveRequest(syncDelta);
-    moveReqTimer -= syncDelta;
-  }
-
-  // 4) Flush outgoing
-  while (sendQueue->TryPop(packet)) {
-    const uint8_t* rp = packet.get();
-    std::size_t packetSize;
-    PACKET packetId;
-    util::GetHeader(rp, packetId, packetSize);
-    connectionSocket->Send(packet.get(), packetSize);
-  }
 }
 
 void ClientNetworkSystem::SendMessage(std::shared_ptr<std::string> message) {

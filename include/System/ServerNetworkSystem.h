@@ -1,5 +1,5 @@
-﻿#ifndef SYSTEM_NETWORKSYSTEM_
-#define SYSTEM_NETWORKSYSTEM_
+﻿#ifndef SYSTEM_SERVERNETWORKSYSTEM_
+#define SYSTEM_SERVERNETWORKSYSTEM_
 
 #include <cstdint>
 #include <memory>
@@ -43,7 +43,7 @@ class ServerNetworkSystem {
   void ConnectSynHandler(const RecvPacket& recv, clientid_t clientID, const uint8_t* rp,
                          std::size_t packetSize);
   void ChatClientHandler(clientid_t clientID, const uint8_t* rp, std::size_t packetSize);
-  void ClientMoveReqHandler(clientid_t clientID, const uint8_t* rp, std::size_t packetSize);
+  void ClientMoveReqHandler(clientid_t clientID, const uint8_t* rp);
 };
 
-#endif /* SYSTEM_NETWORKSYSTEM_ */
+#endif/* SYSTEM_SERVERNETWORKSYSTEM_ */

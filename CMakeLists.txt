@@ -16,6 +16,7 @@ endif()
 
 if(MSVC)
     set(MSVC_WARNINGS "/wd4819") # Disable specific warning
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 find_package(Boost REQUIRED)

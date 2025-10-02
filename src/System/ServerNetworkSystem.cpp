@@ -19,7 +19,6 @@
 #include "Core/ThreadSafeQueue.h"
 #include "Util/PacketUtil.h"
 
-
 ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
     : assetManager(context.assetManager),
       eventDispatcher(context.eventDispatcher),
@@ -123,25 +122,24 @@ void ServerNetworkSystem::ChatClientHandler(clientid_t clientID,
 }
 
 void ServerNetworkSystem::ClientMoveReqHandler(clientid_t clientID,
-                                               const uint8_t* rp,
-                                               std::size_t /*packetSize*/) {
+                                               const uint8_t* rp) {
   uint16_t seq = util::Read16BigEnd(rp);
   uint8_t inputBit = *rp++;
 
 #ifdef PACKET_DEBUG
-  std::cout << "CLIENT_MOVE_REQ from clientID: " << clientID
-            << " seq=" << seq << " inputBit=" << static_cast<int>(inputBit)
-            << "\n";
+  std::cout << "CLIENT_MOVE_REQ from clientID: " << clientID << " seq=" << seq
+            << " inputBit=" << static_cast<int>(inputBit) << "\n";
 #endif
 
   EntityID e = world->GetPlayerByClientID(clientID);
   if (e == INVALID_ENTITY) return;
 
-  if (!registry->HasComponent<InputStateComponent>(e)) {
+  if (!registry->HasComponent<InputStateComponent>(e))
     registry->EmplaceComponent<InputStateComponent>(e);
-  }
+
   auto& inputState = registry->GetComponent<InputStateComponent>(e);
   inputState.inputBit = inputBit;
+
   // Only process newer inputs to avoid out-of-order execution
   if (util::seq_gt(seq, inputState.sequence)) {
     inputState.sequence = seq;
@@ -193,7 +191,7 @@ void ServerNetworkSystem::Update(float deltatime) {
         break;
 
       case CLIENT_MOVE_REQ:
-        ClientMoveReqHandler(clientID, rp, packetSize);
+        ClientMoveReqHandler(clientID, rp);
         break;
     }
   }
@@ -286,4 +284,5 @@ void ServerNetworkSystem::Broadcast(PacketPtr packet) {
   sendQueue->Push(std::move(request));
   server->StartSend();
 }
+
 ServerNetworkSystem::~ServerNetworkSystem() = default;

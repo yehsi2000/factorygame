@@ -76,7 +76,7 @@ void GEngine::Run() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       ImGui_ImplSDL2_ProcessEvent(&event);  // ImGui gets first look
-      inputManager->ProcessEvent(event);  // Our manager gets the event
+      inputManager->ProcessEvent(event);    // Our manager gets the event
     }
 
     if (inputManager->IsQuit()) {
@@ -89,10 +89,6 @@ void GEngine::Run() {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    if (!gameStates.empty()) {
-      gameStates.back()->Update(deltaTime);
-    }
-
     // Process deferred state changes at a safe point in the loop
     if (changeStateRequested) {
       if (!gameStates.empty()) {
@@ -100,6 +96,10 @@ void GEngine::Run() {
       }
       PushState(std::move(pendingState));
       changeStateRequested = false;
+    }
+
+    if (!gameStates.empty()) {
+      gameStates.back()->Update(deltaTime);
     }
 
     ImGui::Render();

@@ -121,7 +121,6 @@ class ClientState : public IGameState {
 
  private:
   void SocketReceiveWorker();
-  void RegisterComponent();
   void InitCoreSystem();
 };
 

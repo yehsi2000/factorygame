@@ -33,12 +33,6 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  TTF_Font *font = TTF_OpenFont("C:\\Windows\\Fonts\\NotoSansKR-VF.ttf", 16);
-  if (font == NULL) {
-    printf("Could not open font! (%s)\n", TTF_GetError());
-    return -1;
-  }
-
   SDL_StopTextInput();
 
   // Imgui init
@@ -48,7 +42,19 @@ int main(int argc, char *argv[]) {
   io.ConfigFlags |=
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.Fonts->FontLoaderFlags = ImGuiFreeTypeBuilderFlags_Bold;
-  io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\NotoSansKR-VF.ttf");
+
+  TTF_Font *font = TTF_OpenFont("assets\\fonts\\NotoSansKR-VF.ttf", 16);
+  if (font == NULL) {
+    TTF_Font *font = TTF_OpenFont("C:\\Windows\\Fonts\\Gulim.ttc", 16);
+    if (font == NULL) {
+      printf("Could not open font! (%s)\n", TTF_GetError());
+      return -1;
+    } else {
+      io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Gulim.ttc");
+    }
+  } else {
+    io.Fonts->AddFontFromFileTTF("assets\\fonts\\NotoSansKR-VF.ttf");
+  }
 
   ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer2_Init(renderer);

@@ -113,7 +113,6 @@ class ServerState : public IGameState {
   };
 
  private:
-  void RegisterComponent();
   void InitCoreSystem();
 };
 
