@@ -10,3 +10,6 @@
 	path = vendored/SDL
 	url = https://github.com/libsdl-org/SDL.git
 	branch = SDL2
+[submodule "vendored/xenium"]
+	path = vendored/xenium
+	url = https://github.com/mpoeter/xenium.git

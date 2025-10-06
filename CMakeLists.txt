@@ -52,6 +52,7 @@ target_include_directories(FactoryGameLib PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_image/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_ttf"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_ttf/external/freetype/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vendored/xenium"
     ${Boost_INCLUDE_DIRS}
 )
 

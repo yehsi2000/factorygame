@@ -1,11 +1,10 @@
 ﻿#include "GameState/ClientState.h"
 
 #include <cassert>
-#include <chrono>
 #include <cstdint>
 #include <cstring>
-#include <tuple>
 #include <utility>
+#include <optional>
 
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
@@ -165,12 +164,13 @@ void ClientState::SocketReceiveWorker() {
 void ClientState::SocketSendWorker() {
   try {
     while (bIsSending) {
-      PacketPtr packet = sendQueue->WaitAndPop();
-      const uint8_t* rp = packet.get();
+      std::optional<PacketPtr> packet = sendQueue->WaitAndPop();
+      if(!packet.has_value()) return;
+      const uint8_t* rp = packet.value().get();
       std::size_t packetSize;
       PACKET packetId;
       util::GetHeader(rp, packetId, packetSize);
-      connectionSocket->Send(packet.get(), packetSize);
+      connectionSocket->Send(packet.value().get(), packetSize);
     }
   } catch (const std::runtime_error& e) {
     std::cout << "Send thread ending due to queue shutdown: " << e.what()

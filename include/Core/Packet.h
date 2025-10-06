@@ -7,6 +7,7 @@
 using PacketPtr = std::unique_ptr<uint8_t[]>;
 using clientid_t = uint64_t;
 
+
 // run sync between server-client "syncRate" times per second
 constexpr float syncRate = 30.f;
 constexpr float syncDelta = 1.f / syncRate;

@@ -1,62 +1,67 @@
 #ifndef CORE_PACKETQUEUE_
 #define CORE_PACKETQUEUE_
 
-#include <condition_variable>
-#include <mutex>
 #include <atomic>
-#include <queue>
+#include <optional>
+#include <semaphore>
+#include <xenium/ramalhete_queue.hpp>
+#include <xenium/reclamation/generic_epoch_based.hpp>
 
 /**
  * @brief A generic, thread-safe queue for concurrent data access.
- * @details This class wraps a standard std::queue and protects it with a mutex
- * to allow safe pushing and popping of elements from multiple threads. It uses
- * a condition variable to provide a blocking `WaitAndPop` method, which
- * efficiently waits for an item to become available without busy-waiting.
+ * @details This class wraps a lockless ramalhete_queue and which provides much
+ * faster access than mutex-based queue. It uses semaphore to provide a blocking
+ * `WaitAndPop` method, which efficiently waits for an item to become available
+ * without busy-waiting.
  * @tparam T The type of elements to be stored in the queue.
  */
 template <typename T>
 class ThreadSafeQueue {
  public:
+  ThreadSafeQueue() : sem(0) {}
+  ~ThreadSafeQueue() = default;
+  ThreadSafeQueue(const ThreadSafeQueue&) = delete;
+  ThreadSafeQueue& operator=(const ThreadSafeQueue&) = delete;
+
   void Push(T value) {
-    std::lock_guard<std::mutex> lock(queueMutex);
-    safeQueue.push(std::move(value));
-    queueCV.notify_one();
+    queue.push(std::make_unique<T>(std::move(value)));
+    sem.release();
+    return;
   }
 
   // Blocking Pop
-  T WaitAndPop() {
-    std::unique_lock<std::mutex> lock(queueMutex);
-    queueCV.wait(lock, [this] { return !safeQueue.empty() || isDone;});
-    
-    if(isDone && safeQueue.empty()){
-      throw std::runtime_error("Queue Shutting Down");
+  std::optional<T> WaitAndPop() {
+    sem.acquire();
+    if (isDone) {
+      sem.release();
+      return std::nullopt;
     }
-
-    T value = std::move(safeQueue.front());
-    safeQueue.pop();
-    return value;
+    std::unique_ptr<T> valueptr;
+    while (!queue.try_pop(valueptr));
+    return std::move(*valueptr);
   }
 
   // Non-Blocking Pop
   bool TryPop(T& value) {
-    std::lock_guard<std::mutex> lock(queueMutex);
-
-    if (safeQueue.empty()) return false;
-
-    value = std::move(safeQueue.front());
-    safeQueue.pop();
-    return true;
+    std::unique_ptr<T> valueptr;
+    if (queue.try_pop(valueptr)) {
+      value = std::move(*valueptr);
+      return true;
+    }
+    return false;
   }
 
   void Shutdown() {
     isDone = true;
-    queueCV.notify_all();
+    sem.release();
   }
 
  private:
-  std::queue<T> safeQueue;
-  std::mutex queueMutex;
-  std::condition_variable queueCV;
+  xenium::ramalhete_queue<
+      std::unique_ptr<T>,
+      xenium::policy::reclaimer<xenium::reclamation::epoch_based<>>>
+      queue;
+  std::counting_semaphore<> sem;
   std::atomic<bool> isDone;
 };
 
