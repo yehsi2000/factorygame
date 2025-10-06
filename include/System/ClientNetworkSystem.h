@@ -2,13 +2,13 @@
 #define SYSTEM_CLIENTNETWORKSYSTEM_
 
 #include <cstdint>
-#include <deque>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#include "Core/SystemContext.h"
 #include "Core/RingBuffer.h"
+#include "Core/SystemContext.h"
+
 
 class EventHandle;
 class NetPredictionComponent;
@@ -33,6 +33,7 @@ class ClientNetworkSystem {
   ThreadSafeQueue<PacketPtr>* sendQueue;  // Now queues PacketPtr directly
   World* world;
   Socket* connectionSocket;
+
   uint64_t myClientID;
   std::unordered_map<clientid_t, std::string>* clientNameMap;
   float moveReqTimer;
@@ -47,13 +48,15 @@ class ClientNetworkSystem {
  private:
   std::unique_ptr<EventHandle> sendChatHandle;
   void ConnectAckHandler(const uint8_t* rp);
+  void PlayerConnectHandler(const uint8_t* rp);
   void ChatBroadcastHandler(const uint8_t* rp, std::size_t packetSize);
   void TransformSnapshotHandler(const uint8_t* rp, double now);
-  void ClientMoveResHandler(const uint8_t* rp);  // Server reconciliation
+  void ClientMoveResHandler(const uint8_t* rp);
+  
 
   void ApplyMovePrediction(NetPredictionComponent& pred,
-                       const MovementComponent& move, uint8_t inputBit,
-                       float deltaTime);
+                           const MovementComponent& move, uint8_t inputBit,
+                           float deltaTime);
   void ApplyRemoteInterpolation(double now);
   void ApplyLocalSmoothing(float deltaTime);
 

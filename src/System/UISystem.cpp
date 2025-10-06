@@ -68,9 +68,6 @@ void UISystem::PushChat(clientid_t id, std::shared_ptr<std::string> str) {
 void UISystem::Update() {
   ItemDropBackground();
   ChatWindow();
-  // if (bDemoShow) {
-  //   ImGui::ShowDemoWindow(&bDemoShow);
-  // }
   if (bIsShowingInventory) Inventory();
   if (bIsShowingChatInput) {
     ChatInput();
@@ -330,7 +327,10 @@ void UISystem::Inventory() {
 void UISystem::AssemblingMachineUI() {
   // Find all assembling machines that should show UI
   for (auto machineEntity : registry->view<AssemblingMachineComponent>()) {
-    if(registry->HasComponent<InactiveComponent>(machineEntity)) continue;
+    if(registry->HasComponent<InactiveComponent>(machineEntity)) {
+      registry->GetComponent<AssemblingMachineComponent>(machineEntity).bIsShowingUI=false;
+      continue;
+    }
     auto &assemblingComp =
         registry->GetComponent<AssemblingMachineComponent>(machineEntity);
     if (assemblingComp.bIsShowingUI) {
@@ -508,7 +508,10 @@ void UISystem::MiningDrillUI() {
   const ItemDatabase &itemdb = ItemDatabase::instance();
   ImVec2 outputSlotSize(60, 60);
   for (auto drillEntity : registry->view<MiningDrillComponent>()) {
-    if(registry->HasComponent<InactiveComponent>(drillEntity)) continue;
+    if(registry->HasComponent<InactiveComponent>(drillEntity)) {
+      registry->GetComponent<MiningDrillComponent>(drillEntity).bIsShowingUI=false;
+      continue;
+    }
     auto &drillComp = registry->GetComponent<MiningDrillComponent>(drillEntity);
     if (drillComp.bIsShowingUI) {
       std::string windowName = "Mining Drill##" + std::to_string(drillEntity);

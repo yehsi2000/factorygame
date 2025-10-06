@@ -1,15 +1,14 @@
 #include "GameState/MainMenuState.h"
 
 #include "Core/GEngine.h"
-#include "GameState/ServerState.h"
 #include "GameState/ClientState.h"
+#include "GameState/ServerState.h"
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
-
 
 void MainMenuState::Init(GEngine* engine) {
   gEngine = engine;
@@ -31,7 +30,7 @@ void MainMenuState::Update(float deltaTime) {
 
   ImGui::Begin("Main Menu", nullptr, window_flags);
 
-  ImGui::SetCursorPosY(viewport->WorkSize.y/2 - 75.0f);
+  ImGui::SetCursorPosY(viewport->WorkSize.y / 2 - 75.0f);
   float windowWidth = ImGui::GetWindowSize().x;
   float buttonWidth = 200.0f;
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
@@ -45,11 +44,18 @@ void MainMenuState::Update(float deltaTime) {
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
   if (ImGui::Button("Connect To Server", ImVec2(buttonWidth, 50))) {
     ImGui::End();
+    SDL_StopTextInput();
     std::unique_ptr<ClientState> clientState = std::make_unique<ClientState>();
-    if(clientState->TryConnect())
+    if (clientState->TryConnect(clientIPInput))
       gEngine->ChangeState(std::unique_ptr<IGameState>(std::move(clientState)));
     return;
   }
+
+  ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
+  ImGui::SetNextItemWidth(buttonWidth);
+  ImGui::InputText("##ChatInputText", clientIPInput, sizeof(clientIPInput));
+
+  SDL_StartTextInput();
 
   ImGui::SetCursorPosX((windowWidth - buttonWidth) * 0.5f);
   if (ImGui::Button("Quit", ImVec2(buttonWidth, 50))) {

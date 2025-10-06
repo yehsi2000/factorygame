@@ -119,6 +119,13 @@ TileData *World::GetTileAtTileIndex(int tileX, int tileY) {
     return it->second.GetTile(localCoords.x, localCoords.y);
   }
 
+  it = chunkCache.find({chunkX, chunkY});
+  if (it != chunkCache.end()) {
+    Vec2 localCoords = it->second.GetLocalTileIndex(tileX, tileY);
+    return it->second.GetTile(localCoords.x, localCoords.y);
+  }
+//TODO: 내가 들어오고 그다음 들어온 사람이 안보임
+// TODO : 같이 움직일 때 튕김
   return nullptr;
 }
 
@@ -220,7 +227,7 @@ void World::LoadChunk(int chunkX, int chunkY) {
       for (int x = 0; x < CHUNK_WIDTH; ++x) {
         TileData *tile = chunk.GetTile(x, y);
         if (tile) {
-          if (tile->occupyingEntity != INVALID_ENTITY)
+          if (tile->occupyingEntity != INVALID_ENTITY && registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
             registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
           if (tile->oreEntity != INVALID_ENTITY)
             registry->RemoveComponent<InactiveComponent>(tile->oreEntity);
@@ -245,7 +252,7 @@ void World::UnloadChunk(Chunk &chunk) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       TileData *tile = chunk.GetTile(x, y);
       if (tile) {
-        if (tile->occupyingEntity != INVALID_ENTITY)
+        if (tile->occupyingEntity != INVALID_ENTITY && !registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
           registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
         if (tile->oreEntity != INVALID_ENTITY)
           registry->EmplaceComponent<InactiveComponent>(tile->oreEntity);

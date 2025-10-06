@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <memory>
 
@@ -72,17 +73,16 @@ void ServerNetworkSystem::ConnectSynHandler(const RecvPacket& recv,
 
     util::WriteHeader(wp, PACKET::CONNECT_ACK, totalPacketSize);
     util::Write64BigEnd(wp, clientID);
-    if (clientNameMap->size() != 0) {
-      util::Write16BigEnd(wp, static_cast<uint16_t>(clientNameMap->size()));
-      for (auto& [id, name] : *clientNameMap) {
-        util::Write64BigEnd(wp, id);
-        *wp++ = static_cast<uint8_t>(name.size());
-        std::memcpy(wp, name.c_str(), name.size());
 
-        wp += name.size();
-      }
-      Unicast(clientID, std::move(snapshotPacket));
+    util::Write16BigEnd(wp, static_cast<uint16_t>(clientNameMap->size()));
+    for (auto& [id, name] : *clientNameMap) {
+      util::Write64BigEnd(wp, id);
+      *wp++ = static_cast<uint8_t>(name.size());
+      std::memcpy(wp, name.c_str(), name.size());
+
+      wp += name.size();
     }
+    Unicast(clientID, std::move(snapshotPacket));
   }
 
   AddPlayerToMap(clientID, name);
@@ -104,7 +104,9 @@ void ServerNetworkSystem::ConnectSynHandler(const RecvPacket& recv,
 void ServerNetworkSystem::ChatClientHandler(clientid_t clientID,
                                             const uint8_t* rp,
                                             std::size_t packetSize) {
+#ifdef PACKET_DEBUG
   std::cout << "CHAT_CLIENT from clientID: " << clientID << "\n";
+#endif
   // Broadcast chat to everyone
   const char* msgStart = reinterpret_cast<const char*>(rp);
   std::size_t msgSize = packetSize - sPacketHeader;
@@ -150,6 +152,10 @@ void ServerNetworkSystem::Update(float deltatime) {
   // Process incoming packets
   RecvPacket recv;
   while (recvQueue->TryPop(recv)) {
+#ifdef PACKET_DEBUG
+    std::cout << "sender: " << recv.senderClientId
+              << " packet : " << recv.packet << std::endl;
+#endif
     if (recv.packet == nullptr) {
       // Player Disconnected
       auto iter = clientNameMap->find(recv.senderClientId);

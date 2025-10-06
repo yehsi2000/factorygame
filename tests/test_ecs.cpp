@@ -9,8 +9,6 @@
 bool test_entity_creation() {
   EventDispatcher eventDispatcher;
   Registry registry(&eventDispatcher);
-  registry.RegisterComponent<TransformComponent>();
-  registry.RegisterComponent<MovementComponent>();
 
   // Test entity creation
   auto entity = registry.CreateEntity();
@@ -33,8 +31,6 @@ bool test_entity_creation() {
 bool test_component_access() {
   EventDispatcher eventDispatcher;
   Registry registry(&eventDispatcher);
-  registry.RegisterComponent<TransformComponent>();
-  registry.RegisterComponent<MovementComponent>();
 
   auto entity = registry.CreateEntity();
   Vec2f testPos{100.0f, 200.0f};
@@ -63,8 +59,6 @@ bool test_component_access() {
 bool test_entity_view() {
   EventDispatcher eventDispatcher;
   Registry registry(&eventDispatcher);
-  registry.RegisterComponent<TransformComponent>();
-  registry.RegisterComponent<MovementComponent>();
 
   // Create entities with different component combinations
   auto entity1 = registry.CreateEntity();

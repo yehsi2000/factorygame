@@ -23,6 +23,7 @@ class MainMenuState : public IGameState {
   SDL_Window* gWindow;
   SDL_Renderer* gRenderer;
   TTF_Font* gFont;
+  char clientIPInput[61];
 };
 
 #endif /* GAMESTATE_MAINMENUSTATE_ */

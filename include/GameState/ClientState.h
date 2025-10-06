@@ -78,9 +78,11 @@ class ClientState : public IGameState {
   EntityID player;
 
   std::vector<uint8_t> messageBuffer;
-  std::thread messageThread;
+  std::thread recvThread;
+  std::thread sendThread;
   std::size_t clientID;
-  bool bIsReceiving;
+  std::atomic<bool> bIsReceiving;
+  std::atomic<bool> bIsSending;
   bool bIsQuit;
 
   std::unique_ptr<AnimationSystem> animationSystem;
@@ -104,7 +106,7 @@ class ClientState : public IGameState {
   ClientState();
   ~ClientState();
   virtual void Init(GEngine *engine) override;
-  bool TryConnect();
+  bool TryConnect(std::string ip = std::string("127.0.0.1"));
   virtual void Cleanup() override;
   virtual void Update(float deltaTime) override;
 
@@ -121,6 +123,7 @@ class ClientState : public IGameState {
 
  private:
   void SocketReceiveWorker();
+  void SocketSendWorker();
   void InitCoreSystem();
 };
 

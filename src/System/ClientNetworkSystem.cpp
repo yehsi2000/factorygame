@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -91,6 +92,22 @@ void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp) {
   }
 }
 
+void ClientNetworkSystem::PlayerConnectHandler(const uint8_t* rp) {
+  clientid_t connectedClient = util::Read64BigEnd(rp);
+  if (myClientID == INVALID_ENTITY || connectedClient == myClientID) return;
+
+  uint8_t nameLen = *rp++;
+  size_t copyLen = util::utf8_clamp_to_codepoint(rp, nameLen, NAME_MAX_LEN - 1);
+  std::string name(reinterpret_cast<const char*>(rp), copyLen);
+
+  std::cout << std::format("Player {}: {} joined the game", connectedClient,
+                           name)
+            << std::endl;
+  clientNameMap->emplace(connectedClient, name);
+  commandQueue->Enqueue(
+      std::make_unique<PlayerSpawnCommand>(connectedClient, false));
+}
+
 void ClientNetworkSystem::ChatBroadcastHandler(const uint8_t* rp,
                                                std::size_t packetSize) {
   std::cout << "CHAT_BROADCAST from server" << std::endl;
@@ -157,7 +174,7 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp) {
       if (error > 0.1f) {
         predcomp.predictedX = serverX;
         predcomp.predictedY = serverY;
-        
+
         // reapply every input after lastAckedSeq
         pendingInputQueue.for_each([&](InputCommand& subsequent_cmd) {
           if (util::seq_gt(subsequent_cmd.sequence, lastAckedSeq)) {
@@ -227,6 +244,7 @@ void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
 static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
                            float& outX, float& outY, uint8_t& outFacing) {
   if (buf.count == 0) return false;
+  // FIXME : movement flicker
 
   // Find s0 (<= target) and s1 (>= target)
   InterpBufferComponent::Sample s0 = buf.samples[buf.tail];
@@ -272,6 +290,8 @@ static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
 void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
   const double renderTimestamp = now - kInterpolationDelay;
 
+  bool did_log_interp = false;
+
   for (EntityID e : registry->view<InterpBufferComponent, TransformComponent,
                                    AnimationComponent, SpriteComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing
@@ -283,9 +303,23 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
     uint8_t f;
     if (!SampleBufferAt(buf, renderTimestamp, x, y, f)) continue;
 
+    // if (!did_log_interp && buf.count > 0) {
+    //   const auto& newest =
+    //       buf.samples[(buf.tail + buf.count - 1) % InterpBufferComponent::N];
+    //   const auto& oldest = buf.samples[buf.tail];
+    //   std::cout << std::format(
+    //       "[Interp] now={:.3f} renderT={:.3f} | buf_count={} "
+    //       "oldest_t={:.3f} newest_t={:.3f} | old_pos=({:.2f}, {:.2f}) "
+    //       "new_pos=({:.2f}, {:.2f})\n",
+    //       now, renderTimestamp, buf.count, oldest.t, newest.t,
+    //       trans.position.x, trans.position.y, x, y);
+    //   did_log_interp = true;
+    // }
+
     auto& anim = registry->GetComponent<AnimationComponent>(e);
     auto& psc = registry->GetComponent<PlayerStateComponent>(e);
-    if (trans.position.x == x && trans.position.y == y) {
+    if (std::abs(trans.position.x - x) < 0.01f &&
+        std::abs(trans.position.y - y) < 0.01f) {
       if (!psc.bIsMining)
         util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
     } else {
@@ -301,7 +335,6 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
 }
 
 void ClientNetworkSystem::Update(float deltaTime) {
-  // 1) Drain incoming first
   using clock = std::chrono::steady_clock;
   const double now =
       std::chrono::duration<double>(clock::now().time_since_epoch()).count();
@@ -312,6 +345,11 @@ void ClientNetworkSystem::Update(float deltaTime) {
     std::size_t packetSize;
     PACKET packetId;
     util::GetHeader(rp, packetId, packetSize);
+#ifdef PACKET_DEBUG
+    std::cout << std::format("packetId : {} - size : {}",
+                             static_cast<int>(packetId), packetSize)
+              << std::endl;
+#endif
 
     switch (packetId) {
       case CONNECT_ACK:
@@ -328,6 +366,10 @@ void ClientNetworkSystem::Update(float deltaTime) {
 
       case CLIENT_MOVE_RES:
         ClientMoveResHandler(rp);
+        break;
+        
+      case PLAYER_CONNECTED_BROADCAST:
+        PlayerConnectHandler(rp);
         break;
 
       case PLAYER_DISCONNECTED_BROADCAST: {
@@ -349,24 +391,13 @@ void ClientNetworkSystem::Update(float deltaTime) {
     }
   }
 
-  // 2) Apply smoothing
   ApplyRemoteInterpolation(now);
   ApplyLocalSmoothing(deltaTime);
 
-  // 3) Fixed-rate send + local prediction
   moveReqTimer += deltaTime;
   while (moveReqTimer >= syncDelta) {
     SendMoveRequest(syncDelta);
     moveReqTimer -= syncDelta;
-  }
-
-  // 4) Flush outgoing
-  while (sendQueue->TryPop(packet)) {
-    const uint8_t* rp = packet.get();
-    std::size_t packetSize;
-    PACKET packetId;
-    util::GetHeader(rp, packetId, packetSize);
-    connectionSocket->Send(packet.get(), packetSize);
   }
 }
 

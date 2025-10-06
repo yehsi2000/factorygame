@@ -2,6 +2,7 @@
 #define CORE_RINGBUFFER_
 
 #include <array>
+#include <stdexcept>
 #include <cstddef>
 
 template <typename T, size_t Size>

@@ -16,6 +16,7 @@
 #include "Components/DebugRectComponent.h"
 #include "Components/InactiveComponent.h"
 #include "Components/InputStateComponent.h"
+#include "Components/InterpBufferComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/LocalPlayerComponent.h"
 #include "Components/MiningDrillComponent.h"
@@ -25,7 +26,6 @@
 #include "Components/PlayerStateComponent.h"
 #include "Components/RefineryComponent.h"
 #include "Components/ResourceNodeComponent.h"
-#include "Components/InterpBufferComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TimerComponent.h"
@@ -61,8 +61,8 @@
 #include "System/TimerExpireSystem.h"
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
+#include "Util/PacketUtil.h"
 #include "imgui_impl_sdlrenderer2.h"
-
 
 ClientState::ClientState() : gEngine(nullptr), bIsQuit(false) {}
 ClientState::~ClientState() = default;
@@ -118,16 +118,17 @@ void ClientState::Init(GEngine* engine) {
   // TODO : move message buffer and receiving thread to network system
   messageBuffer = std::vector<uint8_t>(MAX_BUFFER);
 
-  bIsReceiving = true;
-  messageThread = std::thread([this] { SocketReceiveWorker(); });
+  bIsReceiving = bIsSending = true;
+  recvThread = std::thread([this] { SocketReceiveWorker(); });
+  sendThread = std::thread([this] { SocketSendWorker(); });
   networkSystem->Init(u8"Client");
 }
 
-bool ClientState::TryConnect() {
+bool ClientState::TryConnect(std::string ip) {
   connectionSocket = std::make_unique<Socket>();
   connectionSocket->Init();
 
-  int res = connectionSocket->Connect("127.0.0.1", 27015);
+  int res = connectionSocket->Connect(std::move(ip), 27015);
   // TODO : send duplicate name check packet and return if duplicate name exists
 
   if (res == 0) return false;
@@ -143,10 +144,12 @@ void ClientState::SocketReceiveWorker() {
       // connection closed
       std::cout << "Connection closed by server.\n";
       bIsReceiving = false;
+      bIsSending = false;
       break;
     } else if (res < 0) {
       // error
       bIsReceiving = false;
+      bIsSending = false;
       break;
     }
 
@@ -155,7 +158,25 @@ void ClientState::SocketReceiveWorker() {
     recvQueue->Push(std::move(packet));
   }
   std::cout << "Receive thread ending.\n";
+  sendQueue->Shutdown();
   eventDispatcher->Publish(QuitEvent{});
+}
+
+void ClientState::SocketSendWorker() {
+  try {
+    while (bIsSending) {
+      PacketPtr packet = sendQueue->WaitAndPop();
+      const uint8_t* rp = packet.get();
+      std::size_t packetSize;
+      PACKET packetId;
+      util::GetHeader(rp, packetId, packetSize);
+      connectionSocket->Send(packet.get(), packetSize);
+    }
+  } catch (const std::runtime_error& e) {
+    std::cout << "Send thread ending due to queue shutdown: " << e.what()
+              << std::endl;
+  }
+  std::cout << "Send thread ending.\n";
 }
 
 void ClientState::InitCoreSystem() {
@@ -181,8 +202,10 @@ void ClientState::InitCoreSystem() {
 }
 
 void ClientState::Cleanup() {
+  bIsSending = false;
   bIsReceiving = false;
-  messageThread.join();
+  if (sendThread.joinable()) sendThread.join();
+  if (recvThread.joinable()) recvThread.join();
 }
 
 void ClientState::Update(float deltaTime) {

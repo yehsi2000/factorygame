@@ -37,7 +37,7 @@ bool Socket::Init() {
 }
 
 uint64_t Socket::Connect(std::string ip, int port) {
-  if (pimpl) return pimpl->Connect(ip, port);
+  if (pimpl) return pimpl->Connect(std::move(ip), port);
   return 0;
 }
 

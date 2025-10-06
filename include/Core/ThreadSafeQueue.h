@@ -3,6 +3,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 #include <queue>
 
 /**
@@ -25,7 +26,12 @@ class ThreadSafeQueue {
   // Blocking Pop
   T WaitAndPop() {
     std::unique_lock<std::mutex> lock(queueMutex);
-    queueCV.wait(lock, [this] { return !safeQueue.empty(); });
+    queueCV.wait(lock, [this] { return !safeQueue.empty() || isDone;});
+    
+    if(isDone && safeQueue.empty()){
+      throw std::runtime_error("Queue Shutting Down");
+    }
+
     T value = std::move(safeQueue.front());
     safeQueue.pop();
     return value;
@@ -42,10 +48,16 @@ class ThreadSafeQueue {
     return true;
   }
 
+  void Shutdown() {
+    isDone = true;
+    queueCV.notify_all();
+  }
+
  private:
   std::queue<T> safeQueue;
   std::mutex queueMutex;
   std::condition_variable queueCV;
+  std::atomic<bool> isDone;
 };
 
 #endif /* CORE_PACKETQUEUE_ */
