@@ -26,7 +26,7 @@ public:
     Server(Server&&) noexcept;
     Server& operator=(Server&&) noexcept;
 
-    bool Init(ThreadSafeQueue<RecvPacket>* recvQ, ThreadSafeQueue<SendRequest>* sendQ);
+    bool Init(ThreadSafeQueue<RecvPacketPtr>* recvQ, ThreadSafeQueue<SendRequestPtr>* sendQ);
     void StartSend();
     void Start();
     void Stop();

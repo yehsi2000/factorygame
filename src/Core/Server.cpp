@@ -26,7 +26,7 @@ Server::~Server() = default;
 Server::Server(Server&&) noexcept = default;
 Server& Server::operator=(Server&&) noexcept = default;
 
-bool Server::Init(ThreadSafeQueue<RecvPacket>* recvQ, ThreadSafeQueue<SendRequest>* sendQ) {
+bool Server::Init(ThreadSafeQueue<RecvPacketPtr>* recvQ, ThreadSafeQueue<SendRequestPtr>* sendQ) {
   if (pimpl)
     return pimpl->Init(recvQ, sendQ);
   else

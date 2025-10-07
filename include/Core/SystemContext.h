@@ -37,11 +37,11 @@ struct SystemContext {
   InputManager* inputManager = nullptr;
   EntityFactory* entityFactory = nullptr;
   TimerManager* timerManager = nullptr;
-  ThreadSafeQueue<RecvPacket>* serverRecvQueue = nullptr; // For incoming packets (both client and server)
-  ThreadSafeQueue<SendRequest>* serverSendQueue = nullptr; // For server outgoing packets (needs SendRequest)
+  ThreadSafeQueue<RecvPacketPtr>* serverRecvQueue = nullptr; // For incoming packets (both client and server)
+  ThreadSafeQueue<SendRequestPtr>* serverSendQueue = nullptr; // For server outgoing packets (needs SendRequestPtr)
   ThreadSafeQueue<PacketPtr>* clientRecvQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
   ThreadSafeQueue<PacketPtr>* clientSendQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
-  ThreadSafeQueue<MoveApplied>* pendingMoves = nullptr;
+  ThreadSafeQueue<MoveAppliedPtr>* pendingMoves = nullptr;
   std::unordered_map<clientid_t, std::string>* clientNameMap = nullptr;
   Server* server = nullptr;
   Socket* socket = nullptr;

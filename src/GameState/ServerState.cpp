@@ -76,11 +76,11 @@ void ServerState::Init(GEngine* engine) {
   eventDispatcher = std::make_unique<EventDispatcher>();
   registry = std::make_unique<Registry>(eventDispatcher.get());
   commandQueue = std::make_unique<CommandQueue>();
-  recvQueue = std::make_unique<ThreadSafeQueue<RecvPacket>>();
-  sendQueue = std::make_unique<ThreadSafeQueue<SendRequest>>();
+  recvQueue = std::make_unique<ThreadSafeQueue<RecvPacketPtr>>();
+  sendQueue = std::make_unique<ThreadSafeQueue<SendRequestPtr>>();
 
-  pendingMoves = std::make_unique<ThreadSafeQueue<MoveApplied>>();
-  server = std::make_unique<Server>();  // ServerImpl needs SendRequest queue
+  pendingMoves = std::make_unique<ThreadSafeQueue<MoveAppliedPtr>>();
+  server = std::make_unique<Server>();  // ServerImpl needs SendRequestPtr queue
   server->Init(recvQueue.get(), sendQueue.get());
   server->Start();
   std::string serverName = "Server";

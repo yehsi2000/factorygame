@@ -111,17 +111,6 @@ struct NewChatEvent : public Event {
   std::shared_ptr<std::string> message;
 };
 
-// Emitted on server when an input seq was applied and Transform updated
-struct MoveAppliedEvent : public Event {
-  MoveAppliedEvent(clientid_t clientID, uint16_t seq, float x, float y,
-                   uint8_t facing)
-      : clientID(clientID), seq(seq), x(x), y(y), facing(facing) {}
-  clientid_t clientID;
-  uint16_t seq;
-  float x, y;
-  uint8_t facing;  // 0 left, 1 right
-};
-
 struct QuitEvent : public Event {};
 
 #endif /* CORE_EVENT_ */

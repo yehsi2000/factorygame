@@ -30,7 +30,7 @@ class ClientNetworkSystem {
   InputManager* inputManager;
   TimerManager* timerManager;
   ThreadSafeQueue<PacketPtr>* recvQueue;
-  ThreadSafeQueue<PacketPtr>* sendQueue;  // Now queues PacketPtr directly
+  ThreadSafeQueue<PacketPtr>* sendQueue;
   World* world;
   Socket* connectionSocket;
 
@@ -70,4 +70,4 @@ class ClientNetworkSystem {
   uint16_t inputSequenceNumber = 0;
 };
 
-#endif /* SYSTEM_CLIENTNETWORKSYSTEM_ */
+#endif/* SYSTEM_CLIENTNETWORKSYSTEM_ */

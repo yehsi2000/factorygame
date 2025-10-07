@@ -44,13 +44,13 @@ ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
     playerSnapShotSize += sClientID + sizeof(uint8_t) + name.size();
 }
 
-void ServerNetworkSystem::ConnectSynHandler(const RecvPacket& recv,
+void ServerNetworkSystem::ConnectSynHandler(const RecvPacketPtr& recv,
                                             clientid_t clientID,
                                             const uint8_t* rp,
                                             std::size_t packetSize) {
   std::cout << "CONNECT_SYN from clientID: " << clientID << "\n";
   const uint8_t nameLen = *rp++;
-  if (packetSize < (static_cast<size_t>(rp - recv.packet.get()) + nameLen)) {
+  if (packetSize < (static_cast<size_t>(rp - recv->packet->data()) + nameLen)) {
     // invalid
     return;
   }
@@ -66,10 +66,9 @@ void ServerNetworkSystem::ConnectSynHandler(const RecvPacket& recv,
                                   sizeof(uint16_t) +
                                   playerSnapShotSize;  // header + playercnt
 
-    std::unique_ptr<uint8_t[]> snapshotPacket =
-        std::make_unique<uint8_t[]>(totalPacketSize);
+    PacketPtr snapshotPacket = std::make_unique<Packet>(totalPacketSize);
 
-    uint8_t* wp = snapshotPacket.get();
+    uint8_t* wp = snapshotPacket->data();
 
     util::WriteHeader(wp, PACKET::CONNECT_ACK, totalPacketSize);
     util::Write64BigEnd(wp, clientID);
@@ -88,9 +87,9 @@ void ServerNetworkSystem::ConnectSynHandler(const RecvPacket& recv,
   AddPlayerToMap(clientID, name);
 
   {  // BROADCAST PLAYER_CONNECTED TO ALL PLAYERS
-    PacketPtr packet = std::make_unique<uint8_t[]>(
-        sHeaderAndId + sizeof(uint8_t) + name.size());
-    uint8_t* wp = packet.get();
+    PacketPtr packet =
+        std::make_unique<Packet>(sHeaderAndId + sizeof(uint8_t) + name.size());
+    uint8_t* wp = packet->data();
     util::WriteHeader(wp, PACKET::PLAYER_CONNECTED_BROADCAST,
                       sHeaderAndId + sizeof(uint8_t) + name.size());
     util::Write64BigEnd(wp, clientID);
@@ -150,41 +149,46 @@ void ServerNetworkSystem::ClientMoveReqHandler(clientid_t clientID,
 
 void ServerNetworkSystem::Update(float deltatime) {
   // Process incoming packets
-  RecvPacket recv;
-  while (recvQueue->TryPop(recv)) {
+
+  while (true) {
+    RecvPacketPtr recv;
+    if (!recvQueue->TryPop(recv)) break;
+
 #ifdef PACKET_DEBUG
-    std::cout << "sender: " << recv.senderClientId
-              << " packet : " << recv.packet << std::endl;
+    std::cout << "sender: " << recv->senderClientId
+              << " packet : " << recv->packet << std::endl;
 #endif
-    if (recv.packet == nullptr) {
+
+    if (recv->packet == nullptr) {
       // Player Disconnected
-      auto iter = clientNameMap->find(recv.senderClientId);
+      auto iter = clientNameMap->find(recv->senderClientId);
       if (iter != clientNameMap->end()) {
         std::string name = iter->second;
         clientNameMap->erase(iter);
         playerSnapShotSize -= sClientID + sizeof(uint8_t) + name.size();
 
         commandQueue->Enqueue(
-            std::make_unique<PlayerDisconnectedCommand>(recv.senderClientId));
+            std::make_unique<PlayerDisconnectedCommand>(recv->senderClientId));
 
         // Broadcast PLAYER_DISCONNECTED to all players
-        PacketPtr packet = std::make_unique<uint8_t[]>(sHeaderAndId);
-        uint8_t* wp = packet.get();
+        PacketPtr packet =
+            std::make_unique<Packet>(sHeaderAndId + sizeof(clientid_t));
+        uint8_t* wp = packet->data();
         util::WriteHeader(wp, PACKET::PLAYER_DISCONNECTED_BROADCAST,
                           sHeaderAndId);
-        util::Write64BigEnd(wp, recv.senderClientId);
+        util::Write64BigEnd(wp, recv->senderClientId);
 
         Broadcast(std::move(packet));
       }
       continue;
     }
 
-    const uint8_t* rp = recv.packet.get();
+    const uint8_t* rp = recv->packet->data();
     std::size_t packetSize;
     PACKET packetId;
 
     util::GetHeader(rp, packetId, packetSize);
-    clientid_t clientID = recv.senderClientId;
+    clientid_t clientID = recv->senderClientId;
 
     switch (packetId) {
       // TODO : add duplicate name check packet
@@ -210,21 +214,21 @@ void ServerNetworkSystem::Update(float deltatime) {
   }
 
   // Send applied move result to requested client
-  MoveApplied mv;
+  MoveAppliedPtr mv = std::make_unique<MoveApplied>();
   while (pendingMoves->TryPop(mv)) {
     // Unicast immediate move result
     const std::size_t payloadSize = sizeof(uint16_t) + sizeof(float) * 2;
     const std::size_t totalSize = sPacketHeader + payloadSize;
 
-    PacketPtr pkt = std::make_unique<uint8_t[]>(totalSize);
-    uint8_t* p = pkt.get();
+    PacketPtr packet = std::make_unique<Packet>(totalSize);
+    uint8_t* p = packet->data();
 
     util::WriteHeader(p, PACKET::CLIENT_MOVE_RES, totalSize);
-    util::Write16BigEnd(p, mv.seq);
-    util::WriteF32BigEnd(p, mv.x);
-    util::WriteF32BigEnd(p, mv.y);
+    util::Write16BigEnd(p, mv->seq);
+    util::WriteF32BigEnd(p, mv->x);
+    util::WriteF32BigEnd(p, mv->y);
 
-    Unicast(mv.clientID, std::move(pkt));
+    Unicast(mv->clientID, std::move(packet));
   }
 }
 
@@ -258,8 +262,8 @@ void ServerNetworkSystem::SendSyncPacket() {
       sPacketHeader + sizeof(uint16_t) +
       entries.size() * (sClientID + sizeof(float) * 2 + sizeof(uint8_t));
 
-  PacketPtr packet = std::make_unique<uint8_t[]>(packetSize);
-  uint8_t* wp = packet.get();
+  PacketPtr packet = std::make_unique<Packet>(packetSize);
+  uint8_t* wp = packet->data();
 
   util::WriteHeader(wp, PACKET::TRANSFORM_SNAPSHOT, packetSize);
   util::Write16BigEnd(wp, static_cast<uint16_t>(entries.size()));
@@ -274,19 +278,19 @@ void ServerNetworkSystem::SendSyncPacket() {
 }
 
 void ServerNetworkSystem::Unicast(clientid_t clientID, PacketPtr packet) {
-  SendRequest request;
-  request.type = ESendType::UNICAST;
-  request.targetClientId = clientID;
-  request.packet = std::move(packet);
+  SendRequestPtr request = std::make_unique<SendRequest>();
+  request->type = ESendType::UNICAST;
+  request->targetClientId = clientID;
+  request->packet = std::move(*packet.release());
   sendQueue->Push(std::move(request));
   server->StartSend();
 }
 
 void ServerNetworkSystem::Broadcast(PacketPtr packet) {
-  SendRequest request;
-  request.type = ESendType::BROADCAST;
-  request.targetClientId = 0;
-  request.packet = std::move(packet);
+  SendRequestPtr request = std::make_unique<SendRequest>();
+  request->type = ESendType::BROADCAST;
+  request->targetClientId = 0;
+  request->packet = std::move(*packet.release());
   sendQueue->Push(std::move(request));
   server->StartSend();
 }

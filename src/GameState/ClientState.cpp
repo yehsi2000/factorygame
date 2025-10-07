@@ -152,8 +152,8 @@ void ClientState::SocketReceiveWorker() {
       break;
     }
 
-    PacketPtr packet = std::make_unique<uint8_t[]>(res);
-    std::memcpy(packet.get(), messageBuffer.data(), res);
+    PacketPtr packet = std::make_unique<Packet>(res);
+    std::memcpy(packet.get()->data(), messageBuffer.data(), res);
     recvQueue->Push(std::move(packet));
   }
   std::cout << "Receive thread ending.\n";
@@ -166,11 +166,12 @@ void ClientState::SocketSendWorker() {
     while (bIsSending) {
       std::optional<PacketPtr> packet = sendQueue->WaitAndPop();
       if(!packet.has_value()) return;
-      const uint8_t* rp = packet.value().get();
+      const uint8_t* rp = packet.value().get()->data();
       std::size_t packetSize;
       PACKET packetId;
       util::GetHeader(rp, packetId, packetSize);
-      connectionSocket->Send(packet.value().get(), packetSize);
+      std::cout<< "sent packetSize : " << packetSize << std::endl;
+      connectionSocket->Send(packet.value().get()->data(), packetSize);
     }
   } catch (const std::runtime_error& e) {
     std::cout << "Send thread ending due to queue shutdown: " << e.what()

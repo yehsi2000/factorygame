@@ -132,8 +132,8 @@ inline PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message,
                                      clientid_t senderId) {
   const std::size_t payload = sizeof(clientid_t) + message->size();
   const std::size_t total = sPacketHeader + payload;
-  PacketPtr packet = std::make_unique<uint8_t[]>(total);
-  uint8_t* p = packet.get();
+  PacketPtr packet = std::make_unique<Packet>(total);
+  uint8_t* p = packet.get()->data();
   WriteHeader(p, CHAT_BROADCAST, total);
   Write64BigEnd(p, senderId);
   std::memcpy(p, message->c_str(), message->size());

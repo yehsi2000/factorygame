@@ -26,7 +26,7 @@ class LinuxServerImpl : public ServerImpl {
   LinuxServerImpl() : epoll_fd(-1) {}
   ~LinuxServerImpl() = default;
 
-  bool Init(ThreadSafeQueue<RecvPacket>* recvQ, ThreadSafeQueue<SendRequest>* sendQ) override {
+  bool Init(ThreadSafeQueue<RecvPacketPtr>* recvQ, ThreadSafeQueue<SendRequestPtr>* sendQ) override {
     // Placeholder for Linux epoll initialization
     std::cout << "Server initialized (Linux placeholder)." << std::endl;
     return true;

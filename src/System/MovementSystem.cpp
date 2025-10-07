@@ -119,7 +119,7 @@ void MovementSystem::ServerUpdate(float deltaTime) {
     // After movement, if it was based on a client request, queue a response.
     if (in.sequence != 0) {
       pendingMoves->Push(
-          {psc.clientID, in.sequence, trans.position.x, trans.position.y});
+          std::make_unique<MoveApplied>(psc.clientID, in.sequence, trans.position.x, trans.position.y));
       in.sequence = 0;  // Consume the input sequence
     }
   }

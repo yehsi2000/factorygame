@@ -5,7 +5,7 @@
 #include <optional>
 #include <semaphore>
 #include <xenium/ramalhete_queue.hpp>
-#include <xenium/reclamation/generic_epoch_based.hpp>
+#include <xenium/reclamation/hazard_pointer.hpp>
 
 /**
  * @brief A generic, thread-safe queue for concurrent data access.
@@ -13,9 +13,9 @@
  * faster access than mutex-based queue. It uses semaphore to provide a blocking
  * `WaitAndPop` method, which efficiently waits for an item to become available
  * without busy-waiting.
- * @tparam T The type of elements to be stored in the queue.
+ * @tparam UniquePtr_T The unique_ptr of elements to be stored in the queue.
  */
-template <typename T>
+template <typename UniquePtr_T>
 class ThreadSafeQueue {
  public:
   ThreadSafeQueue() : sem(0) {}
@@ -23,29 +23,28 @@ class ThreadSafeQueue {
   ThreadSafeQueue(const ThreadSafeQueue&) = delete;
   ThreadSafeQueue& operator=(const ThreadSafeQueue&) = delete;
 
-  void Push(T value) {
-    queue.push(std::make_unique<T>(std::move(value)));
+  void Push(UniquePtr_T&& value) {
+    queue.push(std::move(value));
     sem.release();
-    return;
   }
 
   // Blocking Pop
-  std::optional<T> WaitAndPop() {
+  std::optional<UniquePtr_T> WaitAndPop() {
     sem.acquire();
     if (isDone) {
       sem.release();
       return std::nullopt;
     }
-    std::unique_ptr<T> valueptr;
-    while (!queue.try_pop(valueptr));
-    return std::move(*valueptr);
+    UniquePtr_T value_ptr;
+    while (!queue.try_pop(value_ptr));
+    return std::move(value_ptr);
   }
 
   // Non-Blocking Pop
-  bool TryPop(T& value) {
-    std::unique_ptr<T> valueptr;
-    if (queue.try_pop(valueptr)) {
-      value = std::move(*valueptr);
+  bool TryPop(UniquePtr_T& value) {
+    UniquePtr_T value_ptr;
+    if (queue.try_pop(value_ptr)) {
+      value = std::move(value_ptr);
       return true;
     }
     return false;
@@ -58,8 +57,8 @@ class ThreadSafeQueue {
 
  private:
   xenium::ramalhete_queue<
-      std::unique_ptr<T>,
-      xenium::policy::reclaimer<xenium::reclamation::epoch_based<>>>
+      UniquePtr_T,
+      xenium::policy::reclaimer<xenium::reclamation::hazard_pointer<>>>
       queue;
   std::counting_semaphore<> sem;
   std::atomic<bool> isDone;

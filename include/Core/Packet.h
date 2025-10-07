@@ -3,16 +3,22 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
-using PacketPtr = std::unique_ptr<uint8_t[]>;
+// struct Packet{
+//   std::unique_ptr<uint8_t[]> data;
+// };
+
 using clientid_t = uint64_t;
-
+using Packet = std::vector<uint8_t>;
+using PacketPtr = std::unique_ptr<Packet>;
 
 // run sync between server-client "syncRate" times per second
 constexpr float syncRate = 30.f;
 constexpr float syncDelta = 1.f / syncRate;
 
 #pragma pack(push, 1)
+
 /**
  * @brief The header for all network packets.
  * @details Contains the packet's type identifier and its total size. This
@@ -24,14 +30,6 @@ struct PacketHeader {
   uint16_t packet_size;
 };
 
-/**
- * @brief The base struct for all network packets.
- * @details All specific packet types should inherit from this struct to ensure
- * they include the standard packet header.
- */
-struct Packet {
-  PacketHeader header;
-};
 #pragma pack(pop)
 
 /**
@@ -52,7 +50,16 @@ enum class ESendType {
 struct SendRequest {
   ESendType type;
   clientid_t targetClientId;  // positive int for UNICAST (0 for BROADCAST)
-  PacketPtr packet;
+  Packet packet;
+
+  SendRequest() = default;
+  ~SendRequest() = default;
+
+  SendRequest(const SendRequest&) = delete;
+  SendRequest& operator=(const SendRequest&) = delete;
+
+  SendRequest(SendRequest&&) = default;
+  SendRequest& operator=(SendRequest&&) = default;
 };
 
 /**
@@ -63,6 +70,15 @@ struct SendRequest {
 struct RecvPacket {
   clientid_t senderClientId;
   PacketPtr packet;
+
+  RecvPacket() = default;
+  ~RecvPacket() = default;
+
+  RecvPacket(const RecvPacket&) = delete;
+  RecvPacket& operator=(const RecvPacket&) = delete;
+
+  RecvPacket(RecvPacket&&) = default;
+  RecvPacket& operator=(RecvPacket&&) = default;
 };
 
 /**
@@ -75,6 +91,10 @@ struct MoveApplied {
   uint16_t seq;
   float x, y;
 };
+
+using RecvPacketPtr = std::unique_ptr<RecvPacket>;
+using SendRequestPtr = std::unique_ptr<SendRequest>;
+using MoveAppliedPtr = std::unique_ptr<MoveApplied>;
 
 /**
  * @brief Defines the unique identifiers for each packet type.
@@ -190,4 +210,4 @@ enum class EPlayerInput : uint8_t {
   RIGHT = 1 << 3,  // 0000 1000
 };
 
-#endif/* CORE_PACKET_ */
+#endif /* CORE_PACKET_ */

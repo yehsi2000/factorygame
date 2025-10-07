@@ -16,8 +16,8 @@ class ServerNetworkSystem {
   Registry* registry;
   CommandQueue* commandQueue;
   TimerManager* timerManager;
-  ThreadSafeQueue<RecvPacket>* recvQueue;  // Incoming packets
-  ThreadSafeQueue<SendRequest>*
+  ThreadSafeQueue<RecvPacketPtr>* recvQueue;  // Incoming packets
+  ThreadSafeQueue<SendRequestPtr>*
       sendQueue;  // Outgoing packets (server-specific)
   World* world;
   Server* server;
@@ -27,7 +27,7 @@ class ServerNetworkSystem {
 
   float syncTimer;
 
-  ThreadSafeQueue<MoveApplied>* pendingMoves;
+  ThreadSafeQueue<MoveAppliedPtr>* pendingMoves;
 
  public:
   ServerNetworkSystem(const SystemContext& context);
@@ -40,7 +40,7 @@ class ServerNetworkSystem {
   void Unicast(uint64_t clientID, PacketPtr packet);
   void Broadcast(PacketPtr packet);
   void SendSyncPacket();
-  void ConnectSynHandler(const RecvPacket& recv, clientid_t clientID, const uint8_t* rp,
+  void ConnectSynHandler(const RecvPacketPtr& recv, clientid_t clientID, const uint8_t* rp,
                          std::size_t packetSize);
   void ChatClientHandler(clientid_t clientID, const uint8_t* rp, std::size_t packetSize);
   void ClientMoveReqHandler(clientid_t clientID, const uint8_t* rp);

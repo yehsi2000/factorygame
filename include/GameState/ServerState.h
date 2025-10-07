@@ -65,9 +65,9 @@ class ServerState : public IGameState {
   std::unique_ptr<World> world;
   std::unique_ptr<Server> server;
 
-  std::unique_ptr<ThreadSafeQueue<RecvPacket>> recvQueue;
-  std::unique_ptr<ThreadSafeQueue<SendRequest>> sendQueue;
-  std::unique_ptr<ThreadSafeQueue<MoveApplied>> pendingMoves;
+  std::unique_ptr<ThreadSafeQueue<RecvPacketPtr>> recvQueue;
+  std::unique_ptr<ThreadSafeQueue<SendRequestPtr>> sendQueue;
+  std::unique_ptr<ThreadSafeQueue<MoveAppliedPtr>> pendingMoves;
 
   std::unordered_map<clientid_t, std::string> clientNameMap;
 

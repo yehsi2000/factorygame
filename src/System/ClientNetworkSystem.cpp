@@ -55,14 +55,14 @@ void ClientNetworkSystem::Init(std::u8string playerName) {
 
   const size_t packetSize = sPacketHeader + sizeof(uint8_t) + nameSize;
 
-  PacketPtr packet = std::make_unique<uint8_t[]>(packetSize);
+  PacketPtr packet = std::make_unique<Packet>(packetSize);
 
-  uint8_t* p = packet.get();
+  uint8_t* p = packet.get()->data();
 
   util::WriteHeader(p, PACKET::CONNECT_SYN, packetSize);
   *p++ = nameSize;
   std::memcpy(p, playerName.c_str(), nameSize);
-  connectionSocket->Send(packet.get(), packetSize);
+  connectionSocket->Send(packet.get()->data(), packetSize);
 }
 
 void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp) {
@@ -341,7 +341,7 @@ void ClientNetworkSystem::Update(float deltaTime) {
 
   PacketPtr packet;
   while (recvQueue->TryPop(packet)) {
-    const uint8_t* rp = packet.get();
+    const uint8_t* rp = packet.get()->data();
     std::size_t packetSize;
     PACKET packetId;
     util::GetHeader(rp, packetId, packetSize);
@@ -465,19 +465,19 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   const std::size_t payloadSize = sizeof(uint16_t) + sizeof(uint8_t);
   const std::size_t packetSize = sPacketHeader + payloadSize;
 
-  PacketPtr pkt = std::make_unique<uint8_t[]>(packetSize);
-  uint8_t* p = pkt.get();
+  PacketPtr packet = std::make_unique<Packet>(packetSize);
+  uint8_t* p = packet.get()->data();
   util::WriteHeader(p, PACKET::CLIENT_MOVE_REQ, packetSize);
   util::Write16BigEnd(p, inputSequenceNumber);
   *p++ = inputBit;
-  sendQueue->Push(std::move(pkt));
+  sendQueue->Push(std::move(packet));
 }
 
 void ClientNetworkSystem::SendMessage(std::shared_ptr<std::string> message) {
   PacketPtr packet =
-      std::make_unique<uint8_t[]>(sPacketHeader + message->size());
+      std::make_unique<Packet>(sPacketHeader + message->size());
 
-  uint8_t* p = packet.get();
+  uint8_t* p = packet.get()->data();
   util::WriteHeader(p, PACKET::CHAT_CLIENT, sPacketHeader + message->size());
 
   std::memcpy(p, message->c_str(), message->size());

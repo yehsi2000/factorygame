@@ -11,7 +11,7 @@ class MovementSystem {
   World* world;
   bool bIsServer;
 
-  ThreadSafeQueue<MoveApplied>* pendingMoves;
+  ThreadSafeQueue<MoveAppliedPtr>* pendingMoves;
 
  public:
   MovementSystem(const SystemContext& context);
