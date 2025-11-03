@@ -25,7 +25,7 @@ constexpr int MAX_ENTITIES = 1000000;
  */
 class Registry {
  private:
-  std::queue<EntityID> availableEntities{};
+  std::queue<Entity> availableEntities{};
   std::shared_mutex compArrayMutex;
 
   uint32_t livingEntityCount = 0;
@@ -77,20 +77,20 @@ class Registry {
 
  public:
   Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {
-    for (EntityID entity = 1; entity < MAX_ENTITIES; ++entity) {
-      availableEntities.push(entity);
+    for (int i = 1; i < MAX_ENTITIES; ++i) {
+      availableEntities.push(Entity(i));
     }
   }
 
   /**
    * @brief Creates a new entity.
-   * @details Acquires a unique EntityID from the pool of available IDs.
+   * @details Acquires a unique Entity from the pool of available IDs.
    * @return The ID of the newly created entity.
    */
-  EntityID CreateEntity() {
+  Entity CreateEntity() {
     assert(livingEntityCount < MAX_ENTITIES &&
            "Too many entities in existence.");
-    EntityID id = availableEntities.front();
+    Entity id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;
     return id;
@@ -102,7 +102,7 @@ class Registry {
    *          ID to the available pool.
    * @param entity The ID of the entity to destroy.
    */
-  void DestroyEntity(EntityID entity) {
+  void DestroyEntity(Entity entity) {
     assert(livingEntityCount > 0 && "Destroying non-existent entity.");
 
     eventDispatcher->Publish(EntityDestroyedEvent(entity));
@@ -123,7 +123,7 @@ class Registry {
    * @param component The component instance to add.
    */
   template <typename T>
-  void AddComponent(EntityID entity, T &&component) {
+  void AddComponent(Entity entity, T &&component) {
     GetComponentArray<T>()->AddData(entity, std::move(component));
   }
 
@@ -135,7 +135,7 @@ class Registry {
    * @param args The arguments to forward to the component's constructor.
    */
   template <typename T, typename... Args>
-  void EmplaceComponent(EntityID entity, Args &&...args) {
+  void EmplaceComponent(Entity entity, Args &&...args) {
     GetComponentArray<T>()->EmplaceData(entity, std::forward<Args>(args)...);
   }
 
@@ -145,7 +145,7 @@ class Registry {
    * @param entity The target entity's ID.
    */
   template <typename T>
-  void RemoveComponent(EntityID entity) {
+  void RemoveComponent(Entity entity) {
     GetComponentArray<T>()->RemoveData(entity);
   }
 
@@ -156,7 +156,7 @@ class Registry {
    * @return A reference to the component.
    */
   template <typename T>
-  T &GetComponent(EntityID entity) {
+  T &GetComponent(Entity entity) {
     return GetComponentArray<T>()->GetData(entity);
   }
 
@@ -167,7 +167,7 @@ class Registry {
    * @return True if the entity has the component, false otherwise.
    */
   template <typename T>
-  bool HasComponent(EntityID entity) {
+  bool HasComponent(Entity entity) {
     std::size_t compTypeId = GetComponentTypeID<T>();
 
     if (componentArrays.size() <= compTypeId) return false;
@@ -183,10 +183,10 @@ class Registry {
    *          returns a vector of entity IDs that can be iterated upon.
    * @tparam TComponent The component types required for an entity to be
    * included.
-   * @return A vector of EntityIDs matching the query.
+   * @return A vector of Entitys matching the query.
    */
   template <typename... TComponent>
-  std::vector<EntityID> view() {
+  std::vector<Entity> view() {
     // No component
     if constexpr (sizeof...(TComponent) == 0) {
       return {};
@@ -200,12 +200,12 @@ class Registry {
     std::sort(arrays.begin(), arrays.end(), [](const auto &a, const auto &b) {
       return a->GetSize() < b->GetSize();
     });
-    std::vector<EntityID> result = arrays[0]->GetAllEntities();
+    std::vector<Entity> result = arrays[0]->GetAllEntities();
 
     // Prune entities which doesn't have all components passed
     for (size_t i = 1; i < arrays.size(); ++i) {
       result.erase(std::remove_if(result.begin(), result.end(),
-                                  [&](EntityID entity) {
+                                  [&](Entity entity) {
                                     return !arrays[i]->HasEntity(entity);
                                   }),
                    result.end());

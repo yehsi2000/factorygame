@@ -6,7 +6,7 @@
 namespace util {
 
 void AttachTimer(Registry* registry, TimerManager* timerManager,
-                 EntityID entity, TimerId id, float duration,
+                 Entity entity, TimerId id, float duration,
                  bool bIsRepeating) {
   // Ensure the entity has a TimerComponent. If not, add one.
   if (!registry || !timerManager) return;
@@ -29,7 +29,7 @@ void AttachTimer(Registry* registry, TimerManager* timerManager,
 }
 
 void DetachTimer(Registry* registry, TimerManager* timerManager,
-                 EntityID entity, TimerId id) {
+                 Entity entity, TimerId id) {
   if (!registry || !timerManager) return;
   if (!registry->HasComponent<TimerComponent>(entity)) {
     return;  // Nothing to detach.

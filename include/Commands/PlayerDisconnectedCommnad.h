@@ -24,13 +24,13 @@ class PlayerDisconnectedCommand : public Command {
 
   void Execute(Registry* registry, EventDispatcher* eventDispatcher,
                World* world) override {
-    EntityID disconnected = world->GetPlayerByClientID(clientID);
-    if (disconnected == INVALID_ENTITY) return;
+    Entity disconnected = world->GetPlayerByClientID(clientID);
+    if (disconnected == Entity::Null()) return;
     if (registry->HasComponent<InventoryComponent>(disconnected)) {
       auto& inv = registry->GetComponent<InventoryComponent>(disconnected);
       for (const auto& [itemID, amount] : inv.items) {
         eventDispatcher->Publish(ItemDropInWorldEvent(registry->GetComponent<TransformComponent>(disconnected).position,
-            ItemPayload{INVALID_ENTITY, disconnected, itemID, amount}));
+            ItemPayload{0, disconnected, itemID, amount}));
       }
     }
     registry->DestroyEntity(disconnected);

@@ -10,7 +10,7 @@ ResourceNodeSystem::ResourceNodeSystem(const SystemContext &context)
 
 void ResourceNodeSystem::Update() {
   // Show Resource Amount
-  for (EntityID entity : registry->view<ResourceNodeComponent>()) {
+  for (Entity entity : registry->view<ResourceNodeComponent>()) {
     if (registry->HasComponent<TextComponent>(entity)) {
       const auto &resource =
           registry->GetComponent<ResourceNodeComponent>(entity);

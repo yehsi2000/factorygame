@@ -12,7 +12,7 @@ struct MiningDrillComponent {
   MiningDrillState state;
   bool bIsAnimating;
   bool bIsShowingUI;
-  EntityID oreEntity;
+  Entity oreEntity;
 
   constexpr MiningDrillComponent(
       MiningDrillState state = MiningDrillState::Idle, bool bIsAnimating = false,
@@ -21,7 +21,7 @@ struct MiningDrillComponent {
       : state(state),
         bIsAnimating(bIsAnimating),
         bIsShowingUI(bIsShowingUI),
-        oreEntity(INVALID_ENTITY) {}
+        oreEntity(Entity::Null()) {}
 };
 
 #endif /* COMPONENTS_MININGDRILLCOMPONENT_ */

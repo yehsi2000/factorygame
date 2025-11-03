@@ -11,7 +11,7 @@ AnimationSystem::AnimationSystem(const SystemContext& context)
     : registry(context.registry) {}
 
 void AnimationSystem::Update(float deltaTime) {
-  for (EntityID entity :
+  for (Entity entity :
        registry->view<AnimationComponent, SpriteComponent>()) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;

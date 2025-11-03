@@ -24,13 +24,13 @@ class EntityFactory {
   EntityFactory(Registry* registry, AssetManager* assetManager);
   virtual ~EntityFactory();
   
-  virtual EntityID CreateAssemblingMachine(World* world, Vec2f worldPos);
-  virtual EntityID CreateAssemblingMachine(World* world, Vec2 tileIndex);
+  virtual Entity CreateAssemblingMachine(World* world, Vec2f worldPos);
+  virtual Entity CreateAssemblingMachine(World* world, Vec2 tileIndex);
 
-  virtual EntityID CreateMiningDrill(World* world, Vec2f worldPos);
-  virtual EntityID CreateMiningDrill(World* world, Vec2 tileIndex);
+  virtual Entity CreateMiningDrill(World* world, Vec2f worldPos);
+  virtual Entity CreateMiningDrill(World* world, Vec2 tileIndex);
 
-  virtual EntityID CreatePlayer(World *world, Vec2f worldPos, clientid_t clientID, bool bIsLocalPlayer);
+  virtual Entity CreatePlayer(World *world, Vec2f worldPos, clientid_t clientID, bool bIsLocalPlayer);
 };
 
 #endif /* CORE_ENTITYFACTORY_ */

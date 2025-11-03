@@ -38,8 +38,8 @@ InteractionSystem::InteractionSystem(const SystemContext &context)
 
 void InteractionSystem::OnPlayerEndInteractEvent(
     const PlayerEndInteractEvent &event) {
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
 
   if (registry->HasComponent<PlayerStateComponent>(localPlayer)) {
     auto &playerStateComp =
@@ -60,8 +60,8 @@ void InteractionSystem::OnPlayerInteractEvent(
     const PlayerInteractEvent &event) {
   if (!registry || !world) return;
 
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
   auto& ptrans = registry->GetComponent<TransformComponent>(localPlayer);
   if(maxInteractionDistance < util::dist(ptrans.position, event.target)){
     return;
@@ -71,10 +71,10 @@ void InteractionSystem::OnPlayerInteractEvent(
   if (!tile) return;
 
   // Target occupying entity first
-  EntityID targetEntity = tile->occupyingEntity;
+  Entity targetEntity = tile->occupyingEntity;
 
   // Target Ore if there's no entity
-  if (targetEntity == INVALID_ENTITY && tile->oreEntity != INVALID_ENTITY) {
+  if (targetEntity == Entity::Null() && tile->oreEntity != Entity::Null()) {
     targetEntity = tile->oreEntity;
   }
 
@@ -89,8 +89,8 @@ void InteractionSystem::OnPlayerInteractEvent(
   }
 }
 
-void InteractionSystem::ResourceNodeInteractionHandler(EntityID player,
-                                                       EntityID targetEntity) {
+void InteractionSystem::ResourceNodeInteractionHandler(Entity player,
+                                                       Entity targetEntity) {
   auto &playerStateComp = registry->GetComponent<PlayerStateComponent>(player);
   auto &playerTransComp = registry->GetComponent<TransformComponent>(player);
   auto &playerAnimComp = registry->GetComponent<AnimationComponent>(player);
@@ -121,7 +121,7 @@ void InteractionSystem::ResourceNodeInteractionHandler(EntityID player,
 }
 
 void InteractionSystem::AssemblyMachineInteractionHandler(
-    EntityID player, EntityID targetEntity) {
+    Entity player, Entity targetEntity) {
   auto &machine =
       registry->GetComponent<AssemblingMachineComponent>(targetEntity);
 
@@ -134,8 +134,8 @@ void InteractionSystem::AssemblyMachineInteractionHandler(
   }
 }
 
-void InteractionSystem::MiningDrillInteractionHandler(EntityID player,
-                                                      EntityID targetEntity) {
+void InteractionSystem::MiningDrillInteractionHandler(Entity player,
+                                                      Entity targetEntity) {
   auto &drill = registry->GetComponent<MiningDrillComponent>(targetEntity);
   drill.bIsShowingUI = true;
 }

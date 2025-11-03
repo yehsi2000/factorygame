@@ -8,8 +8,8 @@ class CameraSystem {
   Registry* registry;
   World* world;
   InputManager* inputManager;
-  EntityID cameraEntity;
-  EntityID localPlayer = INVALID_ENTITY;
+  Entity cameraEntity;
+  Entity localPlayer = Entity::Null();
 
  public:
   CameraSystem(const SystemContext& context);

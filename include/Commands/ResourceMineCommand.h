@@ -17,7 +17,7 @@
 // A command to execute mining interaction with resource node
 class ResourceMineCommand : public Command {
  public:
-  ResourceMineCommand(EntityID instigator, EntityID target)
+  ResourceMineCommand(Entity instigator, Entity target)
       : instigator(instigator), target(target) {}
 
   void Execute(Registry *registry, EventDispatcher *eventDispatcher,
@@ -57,8 +57,8 @@ class ResourceMineCommand : public Command {
   }
 
  private:
-  EntityID instigator;
-  EntityID target;
+  Entity instigator;
+  Entity target;
 };
 
 #endif /* COMMANDS_RESOURCEMINECOMMAND_ */

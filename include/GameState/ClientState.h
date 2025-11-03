@@ -75,7 +75,7 @@ class ClientState : public IGameState {
 
   SystemContext systemContext;
   std::unique_ptr<EventHandle> GameEndEventHandle;
-  EntityID player;
+  Entity player;
 
   std::vector<uint8_t> messageBuffer;
   std::thread recvThread;

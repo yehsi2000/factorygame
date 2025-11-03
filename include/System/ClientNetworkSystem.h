@@ -47,6 +47,7 @@ class ClientNetworkSystem {
 
  private:
   std::unique_ptr<EventHandle> sendChatHandle;
+  void ProcessPacket(const PacketPtr& packet, double now);
   void ConnectAckHandler(const uint8_t* rp);
   void PlayerConnectHandler(const uint8_t* rp);
   void ChatBroadcastHandler(const uint8_t* rp, std::size_t packetSize);

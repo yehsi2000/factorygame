@@ -12,7 +12,7 @@ bool test_entity_creation() {
 
   // Test entity creation
   auto entity = registry.CreateEntity();
-  if (entity == INVALID_ENTITY) {
+  if (entity == Entity::Null()) {
     std::cerr << "Entity creation failed" << std::endl;
     return false;
   }

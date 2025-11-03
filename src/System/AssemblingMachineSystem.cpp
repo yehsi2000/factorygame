@@ -80,7 +80,7 @@ void AssemblingMachineSystem::TakeOutputHandler(
   eventDispatcher->Publish(ItemAddEvent{event.target, event.item, amt});
 }
 
-int AssemblingMachineSystem::AddInputItem(EntityID entity, ItemID itemId,
+int AssemblingMachineSystem::AddInputItem(Entity entity, ItemID itemId,
                                           int amount) {
   if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return false;
 
@@ -100,7 +100,7 @@ int AssemblingMachineSystem::AddInputItem(EntityID entity, ItemID itemId,
   return -1;
 }
 
-int AssemblingMachineSystem::TakeOutputItem(EntityID entity, ItemID itemId,
+int AssemblingMachineSystem::TakeOutputItem(Entity entity, ItemID itemId,
                                             int requestedAmount) {
   if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return 0;
 
@@ -119,7 +119,7 @@ int AssemblingMachineSystem::TakeOutputItem(EntityID entity, ItemID itemId,
   return amountToTake;
 }
 
-bool AssemblingMachineSystem::HasEnoughIngredients(EntityID entity) const {
+bool AssemblingMachineSystem::HasEnoughIngredients(Entity entity) const {
   if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return false;
 
   const auto &machine =
@@ -137,7 +137,7 @@ bool AssemblingMachineSystem::HasEnoughIngredients(EntityID entity) const {
   return true;
 }
 
-bool AssemblingMachineSystem::CanStoreOutput(EntityID entity) const {
+bool AssemblingMachineSystem::CanStoreOutput(Entity entity) const {
   if (!registry->HasComponent<AssemblingMachineComponent>(entity)) return false;
 
   const auto &machine =
@@ -155,7 +155,7 @@ bool AssemblingMachineSystem::CanStoreOutput(EntityID entity) const {
 }
 
 void AssemblingMachineSystem::ConsumeIngredients(
-    EntityID entity, AssemblingMachineComponent &machine) {
+    Entity entity, AssemblingMachineComponent &machine) {
   if (machine.currentRecipe == RecipeID::None) return;
 
   const auto &recipeData =
@@ -168,7 +168,7 @@ void AssemblingMachineSystem::ConsumeIngredients(
   }
 }
 
-void AssemblingMachineSystem::ProduceOutput(EntityID entity) {
+void AssemblingMachineSystem::ProduceOutput(Entity entity) {
   auto &machine = registry->GetComponent<AssemblingMachineComponent>(entity);
   if (machine.currentRecipe == RecipeID::None ||
       machine.state != AssemblingMachineState::Crafting)
@@ -191,7 +191,7 @@ void AssemblingMachineSystem::ProduceOutput(EntityID entity) {
 }
 
 void AssemblingMachineSystem::StartCrafting(
-    EntityID entity, AssemblingMachineComponent &machine) {
+    Entity entity, AssemblingMachineComponent &machine) {
   ConsumeIngredients(entity, machine);
   machine.state = AssemblingMachineState::Crafting;
   machine.bIsAnimating = true;
@@ -207,7 +207,7 @@ void AssemblingMachineSystem::StartCrafting(
 }
 
 void AssemblingMachineSystem::UpdateAnimationState(
-    EntityID entity, AssemblingMachineComponent &machine) {
+    Entity entity, AssemblingMachineComponent &machine) {
   if (!registry->HasComponent<AnimationComponent>(entity)) return;
 
   auto &animComp = registry->GetComponent<AnimationComponent>(entity);

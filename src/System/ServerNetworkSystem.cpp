@@ -132,8 +132,8 @@ void ServerNetworkSystem::ClientMoveReqHandler(clientid_t clientID,
             << " inputBit=" << static_cast<int>(inputBit) << "\n";
 #endif
 
-  EntityID e = world->GetPlayerByClientID(clientID);
-  if (e == INVALID_ENTITY) return;
+  Entity e = world->GetPlayerByClientID(clientID);
+  if (e == Entity::Null()) return;
 
   if (!registry->HasComponent<InputStateComponent>(e))
     registry->EmplaceComponent<InputStateComponent>(e);
@@ -239,6 +239,7 @@ void ServerNetworkSystem::AddPlayerToMap(clientid_t clientID,
 }
 
 void ServerNetworkSystem::SendSyncPacket() {
+  // TODO : send info near target client chunk -> Unicast
   struct Entry {
     clientid_t id;
     float x;
@@ -248,7 +249,7 @@ void ServerNetworkSystem::SendSyncPacket() {
 
   std::vector<Entry> entries;
 
-  for (EntityID player :
+  for (Entity player :
        registry->view<PlayerStateComponent, TransformComponent>()) {
     const auto& pc = registry->GetComponent<PlayerStateComponent>(player);
     const auto& t = registry->GetComponent<TransformComponent>(player);
@@ -274,6 +275,7 @@ void ServerNetworkSystem::SendSyncPacket() {
     util::WriteF32BigEnd(wp, e.y);
     *wp++ = e.facing;
   }
+  
   Broadcast(std::move(packet));
 }
 

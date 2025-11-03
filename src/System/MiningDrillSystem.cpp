@@ -78,12 +78,12 @@ void MiningDrillSystem::Update() {
 }
 
 void MiningDrillSystem::StartMining(MiningDrillComponent& drill,
-                                    EntityID entity) {
+                                    Entity entity) {
   auto& transform = registry->GetComponent<TransformComponent>(entity);
 
   TileData* tile = world->GetTileAtWorldPosition(transform.position);
 
-  if (!tile || tile->oreEntity == INVALID_ENTITY) return;
+  if (!tile || tile->oreEntity == Entity::Null()) return;
 
   if (registry->HasComponent<ResourceNodeComponent>(tile->oreEntity)) {
     auto& resnode =
@@ -101,11 +101,11 @@ void MiningDrillSystem::StartMining(MiningDrillComponent& drill,
   }
 }
 
-bool MiningDrillSystem::TileEmpty(EntityID entity) {
+bool MiningDrillSystem::TileEmpty(Entity entity) {
   auto& transform = registry->GetComponent<TransformComponent>(entity);
 
   if (TileData* tile = world->GetTileAtWorldPosition(transform.position)) {
-    if (tile->oreEntity != INVALID_ENTITY &&
+    if (tile->oreEntity != Entity::Null() &&
         registry->HasComponent<ResourceNodeComponent>(tile->oreEntity)) {
       auto& resNode =
           registry->GetComponent<ResourceNodeComponent>(tile->oreEntity);
@@ -116,7 +116,7 @@ bool MiningDrillSystem::TileEmpty(EntityID entity) {
 }
 
 void MiningDrillSystem::UpdateAnimationState(MiningDrillComponent& drill,
-                                             EntityID entity) {
+                                             Entity entity) {
   if (!registry->HasComponent<AnimationComponent>(entity)) return;
 
   auto& animation = registry->GetComponent<AnimationComponent>(entity);

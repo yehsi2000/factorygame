@@ -17,9 +17,9 @@ class MiningDrillSystem {
   World* world;
   TimerManager* timerManager;
   
-  void UpdateAnimationState(MiningDrillComponent& drill, EntityID entity);
-  bool TileEmpty(EntityID entity);
-  void StartMining(MiningDrillComponent& drill, EntityID entity);
+  void UpdateAnimationState(MiningDrillComponent& drill, Entity entity);
+  bool TileEmpty(Entity entity);
+  void StartMining(MiningDrillComponent& drill, Entity entity);
 };
 
 #endif/* SYSTEM_MININGDRILLSYSTEM_ */

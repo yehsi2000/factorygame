@@ -22,7 +22,7 @@ class ItemDragSystem {
   bool bIsPreviewingBuilding;
   bool bIsBuildingPlaced;
   ItemID previewingItemID;
-  EntityID previewEntity;
+  Entity previewEntity;
   std::unique_ptr<EventHandle> itemDropHandle;
 
  public:

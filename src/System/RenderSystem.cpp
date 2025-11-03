@@ -67,7 +67,7 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   // Render all chunks that have a ChunkComponent
   auto chunkView = registry->view<ChunkComponent, TransformComponent>();
 
-  for (EntityID entity : chunkView) {
+  for (Entity entity : chunkView) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;
     }
@@ -102,9 +102,9 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
   auto view = registry->view<SpriteComponent, TransformComponent>();
 
   // Create a vector of entities with their render order for sorting
-  std::vector<std::pair<EntityID, int>> entitiesWithOrder;
+  std::vector<std::pair<Entity, int>> entitiesWithOrder;
 
-  for (EntityID entity : view) {
+  for (Entity entity : view) {
     if (registry->HasComponent<InactiveComponent>(entity) ||
         registry->HasComponent<ChunkComponent>(entity) ||
         registry->HasComponent<BuildingPreviewComponent>(entity)) {
@@ -118,13 +118,13 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
   // Sort entities by render order (lower values rendered first)
   std::sort(
       entitiesWithOrder.begin(), entitiesWithOrder.end(),
-      [](const std::pair<EntityID, int> &a, const std::pair<EntityID, int> &b) {
+      [](const std::pair<Entity, int> &a, const std::pair<Entity, int> &b) {
         return a.second < b.second;
       });
 
   // Render sorted entities
   for (const auto &pair : entitiesWithOrder) {
-    EntityID entity = pair.first;
+    Entity entity = pair.first;
     const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
     const auto &transform = registry->GetComponent<TransformComponent>(entity);
 
@@ -156,7 +156,7 @@ bool RenderSystem::IsOffScreen(Vec2f screenPos, Vec2 screenSize,
 }
 
 void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
-  for (EntityID entity : registry->view<TextComponent, TransformComponent>()) {
+  for (Entity entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<DebugRectComponent>(entity)) continue;
     // TODO :remove render invalid text 
     auto &text = registry->GetComponent<TextComponent>(entity);
@@ -230,7 +230,7 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
   auto previewView =
       registry->view<BuildingPreviewComponent, TransformComponent>();
 
-  for (EntityID entity : previewView) {
+  for (Entity entity : previewView) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;
     }
@@ -300,7 +300,7 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
   // Render all building previews
   auto debugView = registry->view<DebugRectComponent, TransformComponent>();
 
-  for (EntityID entity : debugView) {
+  for (Entity entity : debugView) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;
     }
@@ -323,7 +323,7 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
 }
 
 RenderSystem::~RenderSystem() {
-  for (EntityID entity : registry->view<TextComponent>()) {
+  for (Entity entity : registry->view<TextComponent>()) {
     auto &text = registry->GetComponent<TextComponent>(entity);
     if (text.texture) {
       SDL_DestroyTexture(text.texture);

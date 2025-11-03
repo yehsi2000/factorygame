@@ -34,7 +34,7 @@ World::World(Registry *registry, WorldAssetManager *worldAssetManager,
       worldAssetManager(worldAssetManager),
       eventDispatcher(eventDispatcher),
       font(font),
-      localPlayer(INVALID_ENTITY),
+      localPlayer(Entity::Null()),
       bIsServer(bIsServer) {
   std::random_device rd;
   randomGenerator.seed(rd());
@@ -80,7 +80,7 @@ void World::Update() {
 }
 
 void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool bIsLocal) {
-  EntityID player = factory->CreatePlayer(this, pos, clientID, bIsLocal);
+  Entity player = factory->CreatePlayer(this, pos, clientID, bIsLocal);
   if (bIsLocal) 
     localPlayer = player;
   clientPlayerMap[clientID] = player;
@@ -136,7 +136,7 @@ bool World::IsTilePassable(Vec2 tileIdx) {
   TileData *tile = GetTileAtTileIndex(tileIdx);
   if (tile->type == TileType::Water || tile->type == TileType::Invalid)
     return false;
-  if (tile->occupyingEntity != INVALID_ENTITY &&
+  if (tile->occupyingEntity != Entity::Null() &&
       registry->HasComponent<BuildingComponent>(tile->occupyingEntity))
     return false;
 
@@ -161,7 +161,7 @@ bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width, int height) {
         return false;  // Tile doesn't exist (chunk not loaded)
       }
 
-      if (tile->occupyingEntity != INVALID_ENTITY) {
+      if (tile->occupyingEntity != Entity::Null()) {
         return false;  // Tile is already occupied
       }
 
@@ -177,11 +177,11 @@ bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width, int height) {
   return true;
 }
 
-void World::OccupyTile(EntityID entity, Vec2 tileIndex, int width, int height) {
+void World::OccupyTile(Entity entity, Vec2 tileIndex, int width, int height) {
   OccupyTile(entity, tileIndex.x, tileIndex.y, width, height);
 }
 
-void World::OccupyTile(EntityID entity, int tileX, int tileY, int width,
+void World::OccupyTile(Entity entity, int tileX, int tileY, int width,
                        int height) {
   std::vector<Vec2> occupiedTiles;
 
@@ -206,13 +206,13 @@ void World::OccupyTile(EntityID entity, int tileX, int tileY, int width,
   }
 }
 
-void World::RemoveBuilding(EntityID entity,
+void World::RemoveBuilding(Entity entity,
                            const std::vector<Vec2> &occupiedTiles) {
   // Clear all tiles that this building occupied
   for (const Vec2 &tileIndex : occupiedTiles) {
     TileData *tile = GetTileAtTileIndex(tileIndex);
     if (tile && tile->occupyingEntity == entity) {
-      tile->occupyingEntity = INVALID_ENTITY;
+      tile->occupyingEntity = Entity::Null();
     }
   }
 }
@@ -227,9 +227,9 @@ void World::LoadChunk(int chunkX, int chunkY) {
       for (int x = 0; x < CHUNK_WIDTH; ++x) {
         TileData *tile = chunk.GetTile(x, y);
         if (tile) {
-          if (tile->occupyingEntity != INVALID_ENTITY && registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
+          if (tile->occupyingEntity != Entity::Null() && registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
             registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
-          if (tile->oreEntity != INVALID_ENTITY)
+          if (tile->oreEntity != Entity::Null())
             registry->RemoveComponent<InactiveComponent>(tile->oreEntity);
         }
       }
@@ -252,9 +252,9 @@ void World::UnloadChunk(Chunk &chunk) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       TileData *tile = chunk.GetTile(x, y);
       if (tile) {
-        if (tile->occupyingEntity != INVALID_ENTITY && !registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
+        if (tile->occupyingEntity != Entity::Null() && !registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
           registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
-        if (tile->oreEntity != INVALID_ENTITY)
+        if (tile->oreEntity != Entity::Null())
           registry->EmplaceComponent<InactiveComponent>(tile->oreEntity);
       }
     }
@@ -269,7 +269,7 @@ void World::GenerateChunk(Chunk &chunk) {
   noise.SetFrequency(0.05f);
   int cx = chunk.chunkX;
   int cy = chunk.chunkY;
-  EntityID chunkDebugRect = registry->CreateEntity();
+  Entity chunkDebugRect = registry->CreateEntity();
 #ifdef DRAW_DEBUG_RECTS
   registry->EmplaceComponent<DebugRectComponent>(
       chunkDebugRect,
@@ -293,7 +293,7 @@ void World::GenerateChunk(Chunk &chunk) {
       int worldTileX = chunk.chunkX * CHUNK_WIDTH + x;
       int worldTileY = chunk.chunkY * CHUNK_HEIGHT + y;
 #ifdef DRAW_DEBUG_RECTS
-      EntityID tileDebugRect = registry->CreateEntity();
+      Entity tileDebugRect = registry->CreateEntity();
       registry->EmplaceComponent<DebugRectComponent>(
           tileDebugRect, DebugRectComponent{0, 0, TILE_PIXEL_SIZE,
                                             TILE_PIXEL_SIZE, 0, 255, 0, 80});
@@ -338,8 +338,8 @@ void World::GenerateChunk(Chunk &chunk) {
           chunk.GetTile(x, y)->type != TileType::Water) {
         TileData *tile = chunk.GetTile(x, y);
 
-        if (tile->occupyingEntity == INVALID_ENTITY) {
-          EntityID oreNode = registry->CreateEntity();
+        if (tile->occupyingEntity == Entity::Null()) {
+          Entity oreNode = registry->CreateEntity();
 
           rsrc_amt_t oreAmount = static_cast<rsrc_amt_t>(
               static_cast<float>(maxironOreAmount) * oreValue);
@@ -383,7 +383,7 @@ void World::GenerateChunk(Chunk &chunk) {
   }
 
   // Create a single entity for the entire chunk with a pre-rendered texture
-  EntityID chunkEntity = registry->CreateEntity();
+  Entity chunkEntity = registry->CreateEntity();
   chunk.chunkEntity = chunkEntity;
 
   // Calculate world position of the chunk (top-left corner)

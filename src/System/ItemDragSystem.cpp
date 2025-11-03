@@ -29,7 +29,7 @@ ItemDragSystem::ItemDragSystem(const SystemContext &context)
       factory(context.entityFactory),
       bIsPreviewingBuilding(false),
       bIsBuildingPlaced(false),
-      previewEntity(INVALID_ENTITY),
+      previewEntity(Entity::Null()),
       previewingItemID(ItemID::None) {
   itemDropHandle = eventDispatcher->Subscribe<ItemDropInWorldEvent>(
       [this](const ItemDropInWorldEvent &event) {
@@ -91,7 +91,7 @@ void ItemDragSystem::UpdatePreviewEntity() {
 
 void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
   // Destroy existing preview entity if it exists
-  if (previewEntity != INVALID_ENTITY || bIsBuildingPlaced) {
+  if (previewEntity != Entity::Null() || bIsBuildingPlaced) {
     DestroyPreviewEntity();
     return;
   }
@@ -133,19 +133,19 @@ void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
 }
 
 void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
-  EntityID player = event.payload.owner;
+  Entity player = event.payload.owner;
 
   const ItemDatabase &db = ItemDatabase::instance();
 
   // Check if we're dragging to place building
-  if (player != INVALID_ENTITY && bIsPreviewingBuilding &&
+  if (player != Entity::Null() && bIsPreviewingBuilding &&
       previewingItemID != ItemID::None &&
       db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
     Vec2 tileIndex = world->GetTileIndexFromWorldPosition(event.worldPos);
 
     Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
 
-    EntityID newBuilding = INVALID_ENTITY;
+    Entity newBuilding = Entity::Null();
     if (event.payload.id == ItemID::AssemblingMachine) {
       if (world->HasNoOcuupyingEntity(tileIndex, 2, 2)) {
         newBuilding = factory->CreateAssemblingMachine(world, snapWorldPos);
@@ -156,7 +156,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
       }
     }
 
-    if (newBuilding != INVALID_ENTITY) {
+    if (newBuilding != Entity::Null()) {
       eventDispatcher->Publish(ItemConsumeEvent{player, event.payload.id, 1});
     }
 
@@ -166,7 +166,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
 
   // Handle non-buildable item drop (create item entity on ground)
   else if (!db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
-    EntityID itemEntity = registry->CreateEntity();
+    Entity itemEntity = registry->CreateEntity();
 
     // TODO : scatter item if there's more than one
     registry->EmplaceComponent<TransformComponent>(
@@ -182,18 +182,18 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
     sprite.renderOrder = 0;
     registry->EmplaceComponent<SpriteComponent>(itemEntity, sprite);
 
-    if (player != INVALID_ENTITY)
+    if (player != Entity::Null())
       eventDispatcher->Publish(
           ItemConsumeEvent{player, event.payload.id, event.payload.amount});
   }
 }
 
 void ItemDragSystem::DestroyPreviewEntity() {
-  if (previewEntity != INVALID_ENTITY) {
+  if (previewEntity != Entity::Null()) {
     bIsPreviewingBuilding = false;
     previewingItemID = ItemID::None;
     registry->DestroyEntity(previewEntity);
-    previewEntity = INVALID_ENTITY;
+    previewEntity = Entity::Null();
   }
 }
 

@@ -4,7 +4,7 @@
 #include "Core/Entity.h"
 
 struct RefineryComponent {
-  EntityID connectedMiner = 0;
+  Entity connectedMiner = Entity::Null();
 };
 
 #endif /* COMPONENTS_REFINERYCOMPONENT_ */

@@ -58,7 +58,7 @@ class UISystem {
   void ItemDropBackground();
   void Inventory();
   void AssemblingMachineUI();
-  void AssemblingMachineRecipeSelection(EntityID entity);
+  void AssemblingMachineRecipeSelection(Entity entity);
   void MiningDrillUI();
   void PushChat(clientid_t id, std::shared_ptr<std::string> str);
 

@@ -23,21 +23,21 @@
 EntityFactory::EntityFactory(Registry *registry, AssetManager *assetManager)
     : registry(registry), assetManager(assetManager) {}
 
-EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2f worldPos) {
-  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
+Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2f worldPos) {
+  if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
   return CreateAssemblingMachine(world, tileIndex);
 }
 
-EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
-  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
+Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
+  if (registry == nullptr || world == nullptr) return Entity::Null();
 
   if (!world->HasNoOcuupyingEntity(tileIndex, 2, 2)) {
-    return INVALID_ENTITY;
+    return Entity::Null();
   }
 
-  EntityID entity = registry->CreateEntity();
+  Entity entity = registry->CreateEntity();
 
   Vec2f worldPos = tileIndex * TILE_PIXEL_SIZE;
 
@@ -81,21 +81,21 @@ EntityID EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   return entity;
 }
 
-EntityID EntityFactory::CreateMiningDrill(World *world, Vec2f worldPos) {
-  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
+Entity EntityFactory::CreateMiningDrill(World *world, Vec2f worldPos) {
+  if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
   return CreateMiningDrill(world, tileIndex);
 }
 
-EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
-  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
+Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
+  if (registry == nullptr || world == nullptr) return Entity::Null();
 
   if (!world->HasNoOcuupyingEntity(tileIndex, 1, 1)) {
-    return INVALID_ENTITY;
+    return Entity::Null();
   }
 
-  EntityID entity = registry->CreateEntity();
+  Entity entity = registry->CreateEntity();
 
   Vec2f centerPos = {
       static_cast<float>(tileIndex.x * TILE_PIXEL_SIZE),  // Center of 2x2 area
@@ -152,11 +152,11 @@ EntityID EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   return entity;
 }
 
-EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
+Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
                                      clientid_t clientID, bool bIsLocalPlayer) {
-  if (registry == nullptr || world == nullptr) return INVALID_ENTITY;
+  if (registry == nullptr || world == nullptr) return Entity::Null();
 
-  EntityID player = registry->CreateEntity();
+  Entity player = registry->CreateEntity();
   registry->EmplaceComponent<TransformComponent>(player, worldPos);
 
   SDL_Texture *playerIdleSpritesheet =
@@ -194,7 +194,7 @@ EntityID EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
 
   PlayerStateComponent playerState;
   playerState.bIsMining = false;
-  playerState.interactingEntity = INVALID_ENTITY;
+  playerState.interactingEntity = Entity::Null();
   playerState.clientID = clientID;
   registry->AddComponent<PlayerStateComponent>(player, std::move(playerState));
 

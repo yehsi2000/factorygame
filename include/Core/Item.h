@@ -152,7 +152,7 @@ class ItemDatabase {
  */
 struct ItemPayload {
   int itemIdx;
-  EntityID owner;
+  Entity owner;
   ItemID id;
   int amount;
 };

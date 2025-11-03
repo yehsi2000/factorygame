@@ -47,8 +47,8 @@ void MovementSystem::ServerUpdate(float deltaTime) {
 
   // Pre-pass: write host (server-local) input into InputStateComponent
   {
-    EntityID localPlayer = world->GetLocalPlayer();
-    if (localPlayer != INVALID_ENTITY &&
+    Entity localPlayer = world->GetLocalPlayer();
+    if (localPlayer != Entity::Null() &&
         registry->HasComponent<PlayerStateComponent>(localPlayer)) {
       int ix = inputManager->GetXAxis();
       int iy = inputManager->GetYAxis();
@@ -70,7 +70,7 @@ void MovementSystem::ServerUpdate(float deltaTime) {
   }
 
   // Apply movement for all players using current input state
-  for (EntityID e :
+  for (Entity e :
        registry
            ->view<MovableComponent, MovementComponent, TransformComponent>()) {
     if (registry->HasComponent<InactiveComponent>(e)) continue;
@@ -126,7 +126,7 @@ void MovementSystem::ServerUpdate(float deltaTime) {
 }
 
 void MovementSystem::ClientUpdate(float deltaTime) {
-  for (EntityID entity :
+  for (Entity entity :
        registry
            ->view<MovableComponent, MovementComponent, TransformComponent>()) {
     if (registry->HasComponent<InactiveComponent>(entity)) {

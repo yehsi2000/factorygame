@@ -9,7 +9,7 @@
 
 struct PlayerStateComponent {
   bool bIsMining;
-  EntityID interactingEntity;
+  Entity interactingEntity;
   clientid_t clientID;
 };
 

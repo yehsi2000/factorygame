@@ -12,8 +12,8 @@
 
 class InventoryCommand : public Command {
  public:
-  InventoryCommand(EntityID target, ItemID item, int amount,
-                   EntityID instigator = INVALID_ENTITY)
+  InventoryCommand(Entity target, ItemID item, int amount,
+                   Entity instigator = Entity::Null())
       : target(target), item(item), amount(amount), instigator(instigator) {}
 
   void Execute(Registry *registry, EventDispatcher *eventDispatcher,
@@ -23,7 +23,7 @@ class InventoryCommand : public Command {
 
     auto &targetInventory = registry->GetComponent<InventoryComponent>(target);
 
-    if (instigator != INVALID_ENTITY &&
+    if (instigator != Entity::Null() &&
         registry->HasComponent<InventoryComponent>(instigator)) {
       // Item Transfer
       auto &instigatorInventory =
@@ -44,10 +44,10 @@ class InventoryCommand : public Command {
   }
 
  private:
-  EntityID target;
+  Entity target;
   ItemID item;
   int amount;
-  EntityID instigator;
+  Entity instigator;
 
   int TryAddItem(InventoryComponent &inventory, int amount) {
     int actualAddedAmt = 0;

@@ -95,8 +95,8 @@ void UISystem::ChatInput() {
     if (ImGui::IsKeyPressed(ImGuiKey_Enter, false)) {
       bIsShowingChatInput = false;
       eventDispatcher->Publish(SendChatEvent(playerChat));
-      EntityID localPlayer = world->GetLocalPlayer();
-      if (localPlayer != INVALID_ENTITY) {
+      Entity localPlayer = world->GetLocalPlayer();
+      if (localPlayer != Entity::Null()) {
         clientid_t myID =
             registry->GetComponent<PlayerStateComponent>(localPlayer).clientID;
         PushChat(myID, playerChat);
@@ -185,8 +185,8 @@ void UISystem::ItemDropBackground() {
 }
 
 void UISystem::Inventory() {
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
   auto &invComp = registry->GetComponent<InventoryComponent>(localPlayer);
   const ItemDatabase &itemdb = ItemDatabase::instance();
 
@@ -340,7 +340,7 @@ void UISystem::AssemblingMachineUI() {
         // Show crafting UI
         ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
         std::string windowName =
-            "Assembling Machine##" + std::to_string(machineEntity);
+            "Assembling Machine##" + std::to_string(Entity::IdType(machineEntity));
         bool bIsShowingUI = assemblingComp.bIsShowingUI;
 
         if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
@@ -459,11 +459,11 @@ void UISystem::AssemblingMachineUI() {
   }
 }
 
-void UISystem::AssemblingMachineRecipeSelection(EntityID entity) {
+void UISystem::AssemblingMachineRecipeSelection(Entity entity) {
   auto &assemblingComp =
       registry->GetComponent<AssemblingMachineComponent>(entity);
   if(registry->HasComponent<InactiveComponent>(entity)) return;
-  std::string windowName = "Select Recipe##" + std::to_string(entity);
+  std::string windowName = "Select Recipe##" + std::to_string(Entity::IdType(entity));
   bool showSelection = assemblingComp.bIsShowingRecipeSelection;
 
   if (ImGui::Begin(
@@ -514,7 +514,7 @@ void UISystem::MiningDrillUI() {
     }
     auto &drillComp = registry->GetComponent<MiningDrillComponent>(drillEntity);
     if (drillComp.bIsShowingUI) {
-      std::string windowName = "Mining Drill##" + std::to_string(drillEntity);
+      std::string windowName = "Mining Drill##" + std::to_string(Entity::IdType(drillEntity));
       bool bIsShowingUI = drillComp.bIsShowingUI;
       if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
                        ImGuiWindowFlags_AlwaysAutoResize |

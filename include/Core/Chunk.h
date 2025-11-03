@@ -25,7 +25,7 @@ public:
   const TileData *GetTile(int localX, int localY) const;
   const int chunkX;
   const int chunkY;
-  EntityID chunkEntity = 0;
+  Entity chunkEntity = Entity::Null();
 
 private:
   std::vector<TileData> tiles;

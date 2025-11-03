@@ -73,7 +73,7 @@ class ServerState : public IGameState {
 
   SystemContext systemContext;
   std::unique_ptr<EventHandle> GameEndEventHandle;
-  EntityID player;
+  Entity player;
 
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<AssemblingMachineSystem> assemblingMachineSystem;

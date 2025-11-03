@@ -225,7 +225,7 @@ void ClientState::Update(float deltaTime) {
     }
   }
 
-  if (world->GetLocalPlayer() == INVALID_ENTITY) return;
+  if (world->GetLocalPlayer() == Entity::Null()) return;
   inputSystem->Update();
 
   itemDragSystem->Update();

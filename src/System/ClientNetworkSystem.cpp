@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
+#include <map>
 #include <iostream>
 #include <memory>
 
@@ -86,7 +87,7 @@ void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp) {
     clientNameMap->emplace(id, name);
     commandQueue->Enqueue(std::make_unique<PlayerSpawnCommand>(id, false));
   }
-  if (world->GetLocalPlayer() == INVALID_ENTITY) {
+  if (world->GetLocalPlayer() == Entity::Null()) {
     clientNameMap->emplace(myClientID, myName);
     world->GeneratePlayer(myClientID, {0.f, 0.f}, true);
   }
@@ -94,7 +95,7 @@ void ClientNetworkSystem::ConnectAckHandler(const uint8_t* rp) {
 
 void ClientNetworkSystem::PlayerConnectHandler(const uint8_t* rp) {
   clientid_t connectedClient = util::Read64BigEnd(rp);
-  if (myClientID == INVALID_ENTITY || connectedClient == myClientID) return;
+  if (myClientID == 0 || connectedClient == myClientID) return;
 
   uint8_t nameLen = *rp++;
   size_t copyLen = util::utf8_clamp_to_codepoint(rp, nameLen, NAME_MAX_LEN - 1);
@@ -136,8 +137,8 @@ void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
     float posY = util::ReadF32BigEnd(rp);
     uint8_t facing = *rp++;
 
-    EntityID e = world->GetPlayerByClientID(id);
-    if (e == INVALID_ENTITY) continue;
+    Entity e = world->GetPlayerByClientID(id);
+    if (e == Entity::Null()) continue;
 
     if (!registry->HasComponent<InterpBufferComponent>(e)) {
       registry->EmplaceComponent<InterpBufferComponent>(e);
@@ -161,8 +162,8 @@ void ClientNetworkSystem::ClientMoveResHandler(const uint8_t* rp) {
   float serverX = util::ReadF32BigEnd(rp);
   float serverY = util::ReadF32BigEnd(rp);
 
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
 
   auto& predcomp = registry->GetComponent<NetPredictionComponent>(localPlayer);
   const auto& movecomp = registry->GetComponent<MovementComponent>(localPlayer);
@@ -228,8 +229,8 @@ void ClientNetworkSystem::ApplyMovePrediction(NetPredictionComponent& pred,
 // Smoothly interpolates the visual transform to the corrected predicted
 // position.
 void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
   if (!registry->HasComponent<NetPredictionComponent>(localPlayer)) return;
 
   auto& pred = registry->GetComponent<NetPredictionComponent>(localPlayer);
@@ -244,7 +245,6 @@ void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
 static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
                            float& outX, float& outY, uint8_t& outFacing) {
   if (buf.count == 0) return false;
-  // FIXME : movement flicker
 
   // Find s0 (<= target) and s1 (>= target)
   InterpBufferComponent::Sample s0 = buf.samples[buf.tail];
@@ -292,7 +292,7 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
 
   bool did_log_interp = false;
 
-  for (EntityID e : registry->view<InterpBufferComponent, TransformComponent,
+  for (Entity e : registry->view<InterpBufferComponent, TransformComponent,
                                    AnimationComponent, SpriteComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing
     if (registry->HasComponent<LocalPlayerComponent>(e)) continue;
@@ -339,56 +339,38 @@ void ClientNetworkSystem::Update(float deltaTime) {
   const double now =
       std::chrono::duration<double>(clock::now().time_since_epoch()).count();
 
-  PacketPtr packet;
-  while (recvQueue->TryPop(packet)) {
-    const uint8_t* rp = packet.get()->data();
-    std::size_t packetSize;
-    PACKET packetId;
-    util::GetHeader(rp, packetId, packetSize);
-#ifdef PACKET_DEBUG
-    std::cout << std::format("packetId : {} - size : {}",
-                             static_cast<int>(packetId), packetSize)
-              << std::endl;
-#endif
+  std::vector<PacketPtr> packets;
+  PacketPtr p;
+  while(recvQueue->TryPop(p)) {
+    packets.push_back(std::move(p));
+  }
 
-    switch (packetId) {
-      case CONNECT_ACK:
-        ConnectAckHandler(rp);
-        break;
+  std::map<PACKET, PacketPtr> latestStatePackets;
+  std::vector<PacketPtr> eventPackets;
 
-      case CHAT_BROADCAST:
-        ChatBroadcastHandler(rp, packetSize);
-        break;
+  for (auto& packet : packets) {
+    const uint8_t* rp = packet->data();
+    PACKET packetId = static_cast<PACKET>(*rp);
 
+    switch(packetId) {
+      // State-like packets: only the last one matters
       case TRANSFORM_SNAPSHOT:
-        TransformSnapshotHandler(rp, now);
-        break;
-
       case CLIENT_MOVE_RES:
-        ClientMoveResHandler(rp);
+        latestStatePackets[packetId] = std::move(packet);
         break;
-        
-      case PLAYER_CONNECTED_BROADCAST:
-        PlayerConnectHandler(rp);
-        break;
-
-      case PLAYER_DISCONNECTED_BROADCAST: {
-        clientid_t disconnectedId = util::Read64BigEnd(rp);
-        std::cout << "PLAYER_DISCONNECTED_BROADCAST from server, id: "
-                  << disconnectedId << std::endl;
-
-        auto iter = clientNameMap->find(disconnectedId);
-        if (iter != clientNameMap->end()) {
-          clientNameMap->erase(iter);
-          commandQueue->Enqueue(
-              std::make_unique<PlayerDisconnectedCommand>(disconnectedId));
-        }
-        break;
-      }
-
+      // Event-like packets: all of them should be processed
       default:
+        eventPackets.push_back(std::move(packet));
         break;
     }
+  }
+
+  for (const auto& packet : eventPackets) {
+    ProcessPacket(packet, now);
+  }
+
+  for (auto const& [id, packet] : latestStatePackets) {
+    ProcessPacket(packet, now);
   }
 
   ApplyRemoteInterpolation(now);
@@ -401,10 +383,61 @@ void ClientNetworkSystem::Update(float deltaTime) {
   }
 }
 
+void ClientNetworkSystem::ProcessPacket(const PacketPtr& packet, double now) {
+  const uint8_t* rp = packet->data();
+  std::size_t packetSize;
+  PACKET packetId;
+  util::GetHeader(rp, packetId, packetSize);
+#ifdef PACKET_DEBUG
+  std::cout << std::format("packetId : {} - size : {}",
+                           static_cast<int>(packetId), packetSize)
+            << std::endl;
+#endif
+
+  switch (packetId) {
+    case CONNECT_ACK:
+      ConnectAckHandler(rp);
+      break;
+
+    case CHAT_BROADCAST:
+      ChatBroadcastHandler(rp, packetSize);
+      break;
+
+    case TRANSFORM_SNAPSHOT:
+      TransformSnapshotHandler(rp, now);
+      break;
+
+    case CLIENT_MOVE_RES:
+      ClientMoveResHandler(rp);
+      break;
+
+    case PLAYER_CONNECTED_BROADCAST:
+      PlayerConnectHandler(rp);
+      break;
+
+    case PLAYER_DISCONNECTED_BROADCAST: {
+      clientid_t disconnectedId = util::Read64BigEnd(rp);
+      std::cout << "PLAYER_DISCONNECTED_BROADCAST from server, id: "
+                << disconnectedId << std::endl;
+
+      auto iter = clientNameMap->find(disconnectedId);
+      if (iter != clientNameMap->end()) {
+        clientNameMap->erase(iter);
+        commandQueue->Enqueue(
+            std::make_unique<PlayerDisconnectedCommand>(disconnectedId));
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
 // Local prediction writes to NetPredictionComponent.predicted*, not Transform
 void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
 
   int ix = inputManager->GetXAxis();
   int iy = inputManager->GetYAxis();
@@ -474,8 +507,7 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
 }
 
 void ClientNetworkSystem::SendMessage(std::shared_ptr<std::string> message) {
-  PacketPtr packet =
-      std::make_unique<Packet>(sPacketHeader + message->size());
+  PacketPtr packet = std::make_unique<Packet>(sPacketHeader + message->size());
 
   uint8_t* p = packet.get()->data();
   util::WriteHeader(p, PACKET::CHAT_CLIENT, sPacketHeader + message->size());

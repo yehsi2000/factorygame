@@ -45,7 +45,7 @@ class World {
   WorldAssetManager* worldAssetManager;
   EventDispatcher* eventDispatcher;
   EntityFactory* factory;
-  EntityID localPlayer;
+  Entity localPlayer;
   bool bIsServer;
 
  public:
@@ -102,15 +102,15 @@ class World {
    * @param width The width of the building in tiles.
    * @param height The height of the building in tiles.
    */
-  void OccupyTile(EntityID entity, Vec2 tileIndex, int width, int height);
-  void OccupyTile(EntityID entity, int tileX, int tileY, int width, int height);
+  void OccupyTile(Entity entity, Vec2 tileIndex, int width, int height);
+  void OccupyTile(Entity entity, int tileX, int tileY, int width, int height);
 
   /**
    * @brief Frees tiles previously occupied by a building.
    * @param entity The building entity being removed.
    * @param occupiedTiles A list of tile indices the building occupied.
    */
-  void RemoveBuilding(EntityID entity, const std::vector<Vec2>& occupiedTiles);
+  void RemoveBuilding(Entity entity, const std::vector<Vec2>& occupiedTiles);
 
   /**
    * @brief Checks if a tile at a given position is passable.
@@ -122,13 +122,13 @@ class World {
 
   void GeneratePlayer(clientid_t clientID, Vec2f worldPos = {0.f, 0.f},
                       bool bIsLocalPlayer = false);
-  inline EntityID GetLocalPlayer() const { return localPlayer; }
-  inline EntityID GetPlayerByClientID(clientid_t clientID) const {
+  inline Entity GetLocalPlayer() const { return localPlayer; }
+  inline Entity GetPlayerByClientID(clientid_t clientID) const {
     auto it = clientPlayerMap.find(clientID);
     if (it != clientPlayerMap.end()) {
       return it->second;
     }
-    return INVALID_ENTITY;
+    return Entity::Null();
   }
 
   inline const std::map<ChunkCoord, Chunk>& GetActiveChunks() const {
@@ -147,7 +147,7 @@ class World {
   std::normal_distribution<float> distribution;
   std::map<ChunkCoord, Chunk> activeChunks;
   std::map<ChunkCoord, Chunk> chunkCache;
-  std::map<clientid_t, EntityID> clientPlayerMap;
+  std::map<clientid_t, Entity> clientPlayerMap;
   rsrc_amt_t minironOreAmount;
   // TODO should be configurable
   rsrc_amt_t maxironOreAmount = 10000;

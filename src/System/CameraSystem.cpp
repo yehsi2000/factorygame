@@ -21,7 +21,7 @@ void CameraSystem::InitCameraSystem() {
 void CameraSystem::Update(float deltaTime) {
   localPlayer = world->GetLocalPlayer();
 
-  if (localPlayer == INVALID_ENTITY) return;
+  if (localPlayer == Entity::Null()) return;
 
   UpdateCameraFollow(deltaTime);
   UpdateCameraDrag(deltaTime);

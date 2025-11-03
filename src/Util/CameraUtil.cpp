@@ -8,7 +8,7 @@ Vec2f GetCameraPosition(Registry *registry) {
   // Find the first entity with a CameraComponent
   auto cameraView = registry->view<CameraComponent>();
 
-  for (EntityID entity : cameraView) {
+  for (Entity entity : cameraView) {
     const auto &camera = registry->GetComponent<CameraComponent>(entity);
     return camera.position;
   }
@@ -21,7 +21,7 @@ float GetCameraZoom(Registry *registry) {
   // Find the first entity with a CameraComponent
   auto cameraView = registry->view<CameraComponent>();
 
-  for (EntityID entity : cameraView) {
+  for (Entity entity : cameraView) {
     const auto &camera = registry->GetComponent<CameraComponent>(entity);
     return camera.zoom;
   }

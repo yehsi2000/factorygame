@@ -26,22 +26,22 @@ class AssemblingMachineSystem {
   void Update();
 
   // Inventory management
-  int AddInputItem(EntityID entity, ItemID itemId, int amount);
-  int TakeOutputItem(EntityID entity, ItemID itemId, int requestedAmount);
+  int AddInputItem(Entity entity, ItemID itemId, int amount);
+  int TakeOutputItem(Entity entity, ItemID itemId, int requestedAmount);
 
  private:
   void AddInputHandler(const AssemblyAddInputEvent &event);
   void TakeOutputHandler(const AssemblyTakeOutputEvent &event);
 
-  bool HasEnoughIngredients(EntityID entity) const;
-  bool CanStoreOutput(EntityID entity) const;
+  bool HasEnoughIngredients(Entity entity) const;
+  bool CanStoreOutput(Entity entity) const;
 
-  void UpdateCrafting(EntityID entity, AssemblingMachineComponent &machine,
+  void UpdateCrafting(Entity entity, AssemblingMachineComponent &machine,
                       float deltaTime);
-  void ConsumeIngredients(EntityID entity, AssemblingMachineComponent &machine);
-  void ProduceOutput(EntityID entity);
-  void StartCrafting(EntityID entity, AssemblingMachineComponent &machine);
-  void UpdateAnimationState(EntityID entity,
+  void ConsumeIngredients(Entity entity, AssemblingMachineComponent &machine);
+  void ProduceOutput(Entity entity);
+  void StartCrafting(Entity entity, AssemblingMachineComponent &machine);
+  void UpdateAnimationState(Entity entity,
                             AssemblingMachineComponent &machine);
 };
 

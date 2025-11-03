@@ -170,7 +170,7 @@ graph TD
 template<typename T>
 class ComponentArray {
     std::vector<T> components;  // 연속 메모리
-    std::unordered_map<EntityID, size_t> entityToIndex;
+    std::unordered_map<Entity, size_t> entityToIndex;
     // 캐시 미스를 최소화하는 구조
 };
 ```

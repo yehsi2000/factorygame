@@ -17,10 +17,10 @@ class InteractionSystem {
  private:
   void OnPlayerInteractEvent(const PlayerInteractEvent& event);
   void OnPlayerEndInteractEvent(const PlayerEndInteractEvent& event);
-  void ResourceNodeInteractionHandler(EntityID player, EntityID targetEntity);
-  void AssemblyMachineInteractionHandler(EntityID player,
-                                         EntityID targetEntity);
-  void MiningDrillInteractionHandler(EntityID player, EntityID targetEntity);
+  void ResourceNodeInteractionHandler(Entity player, Entity targetEntity);
+  void AssemblyMachineInteractionHandler(Entity player,
+                                         Entity targetEntity);
+  void MiningDrillInteractionHandler(Entity player, Entity targetEntity);
 
   Registry* registry;
   World* world;

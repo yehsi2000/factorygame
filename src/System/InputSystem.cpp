@@ -77,8 +77,8 @@ void InputSystem::Update() {
 }
 
 void InputSystem::HandleInputAction(InputAction action, InputType type) {
-  EntityID localPlayer = world->GetLocalPlayer();
-  if (localPlayer == INVALID_ENTITY) return;
+  Entity localPlayer = world->GetLocalPlayer();
+  if (localPlayer == Entity::Null()) return;
 
   switch (action) {
     // Player started interacting
