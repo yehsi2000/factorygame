@@ -1,6 +1,5 @@
-#ifndef UTIL_TIMERUTIL_
-#define UTIL_TIMERUTIL_
-
+#pragma once
+ 
 #include "Components/TimerComponent.h"  // For TimerId
 #include "Core/Entity.h"
 
@@ -43,5 +42,3 @@ void DetachTimer(Registry* registry, TimerManager* timerManager,
                  Entity entity, TimerId id);
 
 }  // namespace util
-
-#endif /* UTIL_TIMERUTIL_ */

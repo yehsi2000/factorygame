@@ -1,6 +1,5 @@
-#ifndef UTIL_CAMERAUTIL_
-#define UTIL_CAMERAUTIL_
-
+#pragma once
+ 
 #include "Core/Registry.h"
 #include "Core/Type.h"
 
@@ -16,5 +15,3 @@ Vec2f WorldToScreen(Vec2f worldPos, Vec2f cameraPos, Vec2 screenSize,
 Vec2f ScreenToWorld(Vec2f screenPos, Vec2f cameraPos, Vec2 screenSize,
                     float zoom = 1.0f);
 } // namespace util
-
-#endif /* UTIL_CAMERAUTIL_ */

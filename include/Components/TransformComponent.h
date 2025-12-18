@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_TRANSFORMCOMPONENT_
-#define COMPONENTS_TRANSFORMCOMPONENT_
-
+#pragma once
+ 
 #include "Core/Type.h"
 
 struct TransformComponent {
@@ -14,5 +13,3 @@ struct TransformComponent {
       : position(position), scale(scale), rotation(rotation), bIsDirty(false) {
         };
 };
-
-#endif/* COMPONENTS_TRANSFORMCOMPONENT_ */

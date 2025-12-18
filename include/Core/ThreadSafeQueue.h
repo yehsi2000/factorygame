@@ -1,6 +1,5 @@
-#ifndef CORE_PACKETQUEUE_
-#define CORE_PACKETQUEUE_
-
+#pragma once
+ 
 #include <atomic>
 #include <optional>
 #include <semaphore>
@@ -63,5 +62,3 @@ class ThreadSafeQueue {
   std::counting_semaphore<> sem;
   std::atomic<bool> isDone;
 };
-
-#endif /* CORE_PACKETQUEUE_ */

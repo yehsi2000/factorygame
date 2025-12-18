@@ -1,6 +1,5 @@
-#ifndef GAMESTATE_IGAMESTATE_
-#define GAMESTATE_IGAMESTATE_
-
+#pragma once
+ 
 class GEngine;
 
 /**
@@ -18,5 +17,3 @@ class IGameState {
   virtual void Cleanup() = 0;
   virtual void Update(float deltaTime) = 0;
 };
-
-#endif/* GAMESTATE_IGAMESTATE_ */

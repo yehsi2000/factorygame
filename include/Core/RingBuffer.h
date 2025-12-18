@@ -1,6 +1,5 @@
-#ifndef CORE_RINGBUFFER_
-#define CORE_RINGBUFFER_
-
+#pragma once
+ 
 #include <array>
 #include <stdexcept>
 #include <cstddef>
@@ -80,5 +79,3 @@ class RingBuffer {
   size_t tailIdx = 0;
   bool isFull = false;
 };
-
-#endif /* CORE_RINGBUFFER_ */

@@ -1,6 +1,5 @@
-#ifndef SYSTEM_REFINERYSYSTEM_
-#define SYSTEM_REFINERYSYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 
 class RefineryComponent;
@@ -15,5 +14,3 @@ class RefinerySystem {
   ~RefinerySystem();
   void Update();
 };
-
-#endif /* SYSTEM_REFINERYSYSTEM_ */

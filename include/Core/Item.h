@@ -1,6 +1,5 @@
-﻿#ifndef CORE_ITEM_
-#define CORE_ITEM_
-
+﻿#pragma once
+ 
 #include <string>
 #include <unordered_map>
 
@@ -156,5 +155,3 @@ struct ItemPayload {
   ItemID id;
   int amount;
 };
-
-#endif /* CORE_ITEM_ */

@@ -1,6 +1,5 @@
-#ifndef CORE_TEXTUREDELETER_
-#define CORE_TEXTUREDELETER_
-
+#pragma once
+ 
 #include "SDL.h"
 
 /**
@@ -17,5 +16,3 @@ struct TextureDeleter {
     }
   }
 };
-
-#endif/* CORE_TEXTUREDELETER_ */

@@ -1,6 +1,5 @@
-#ifndef COMMANDS_RESOURCEMINECOMMAND_
-#define COMMANDS_RESOURCEMINECOMMAND_
-
+#pragma once
+ 
 #include <cmath>
 
 #include "Commands/Command.h"
@@ -60,5 +59,3 @@ class ResourceMineCommand : public Command {
   Entity instigator;
   Entity target;
 };
-
-#endif /* COMMANDS_RESOURCEMINECOMMAND_ */

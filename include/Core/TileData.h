@@ -1,5 +1,4 @@
-#ifndef CORE_TILEDATA_
-#define CORE_TILEDATA_
+#pragma once
 
 #include "Core/Entity.h"
 
@@ -22,5 +21,3 @@ struct TileData {
   Entity oreEntity = Entity::Null();
   float debugValue;
 };
-
-#endif /* CORE_TILEDATA_ */

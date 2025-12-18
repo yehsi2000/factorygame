@@ -1,6 +1,5 @@
-#ifndef CORE_SERVERIMPL_
-#define CORE_SERVERIMPL_
-
+#pragma once
+ 
 #include <cstdint>
 #include "Core/Packet.h"
 #include "Core/ThreadSafeQueue.h"
@@ -20,5 +19,3 @@ public:
     virtual void Start() = 0;
     virtual void Stop() = 0;
 };
-
-#endif/* CORE_SERVERIMPL_ */

@@ -1,6 +1,5 @@
-#ifndef UTIL_PACKETUTIL_
-#define UTIL_PACKETUTIL_
-
+#pragma once
+ 
 
 
 #include <cstddef>
@@ -145,5 +144,3 @@ inline PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message) {
 }
 
 }  // namespace util
-
-#endif/* UTIL_PACKETUTIL_ */

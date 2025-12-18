@@ -1,6 +1,5 @@
-#ifndef CORE_EVENTDISPATCHER_
-#define CORE_EVENTDISPATCHER_
-
+#pragma once
+ 
 #include <functional>
 #include <memory>
 #include <cstddef>
@@ -92,5 +91,3 @@ private:
  */
   void Unsubscribe(const std::type_index &ti, CallbackID id);
 };
-
-#endif /* CORE_EVENTDISPATCHER_ */

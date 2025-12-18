@@ -1,6 +1,5 @@
-#ifndef SYSTEM_MININGDRILLSYSTEM_
-#define SYSTEM_MININGDRILLSYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 #include "Core/Entity.h"
 
@@ -21,5 +20,3 @@ class MiningDrillSystem {
   bool TileEmpty(Entity entity);
   void StartMining(MiningDrillComponent& drill, Entity entity);
 };
-
-#endif/* SYSTEM_MININGDRILLSYSTEM_ */

@@ -1,6 +1,5 @@
-#ifndef CORE_WORLD_
-#define CORE_WORLD_
-
+#pragma once
+ 
 #include <cassert>
 #include <map>
 #include <random>
@@ -154,5 +153,3 @@ class World {
   // HACK should be changed with screen size
   int viewDistance = 2;  // Chunk load distance from player
 };
-
-#endif /* CORE_WORLD_ */

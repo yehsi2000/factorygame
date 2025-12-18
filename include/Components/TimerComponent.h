@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_TIMERCOMPONENT_
-#define COMPONENTS_TIMERCOMPONENT_
-
+#pragma once
+ 
 #include <array>
 #include <cstdint>
 
@@ -44,5 +43,3 @@ struct TimerComponent {
 struct TimerExpiredTag {
   TimerId expiredId;
 };
-
-#endif/* COMPONENTS_TIMERCOMPONENT_ */

@@ -1,6 +1,5 @@
-#ifndef CORE_EVENT_
-#define CORE_EVENT_
-
+#pragma once
+ 
 #include <memory>
 #include <string>
 #include <utility>
@@ -112,5 +111,3 @@ struct NewChatEvent : public Event {
 };
 
 struct QuitEvent : public Event {};
-
-#endif /* CORE_EVENT_ */

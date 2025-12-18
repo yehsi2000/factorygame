@@ -1,6 +1,5 @@
-#ifndef SYSTEM_RESOURCENODESYSTEM_
-#define SYSTEM_RESOURCENODESYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 
 /**
@@ -17,5 +16,3 @@ class ResourceNodeSystem {
   Registry* registry;
   World* world;
 };
-
-#endif /* SYSTEM_RESOURCENODESYSTEM_ */

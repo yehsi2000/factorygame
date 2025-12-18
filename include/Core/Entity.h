@@ -1,5 +1,4 @@
-#ifndef CORE_ENTITY_
-#define CORE_ENTITY_
+#pragma once
 
 #include <cstdint>
 #include <functional>
@@ -50,5 +49,3 @@ namespace std {
         }
     };
 }
-
-#endif /* CORE_ENTITY_ */

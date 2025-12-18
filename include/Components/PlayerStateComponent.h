@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_PLAYERSTATECOMPONENT_
-#define COMPONENTS_PLAYERSTATECOMPONENT_
-
+#pragma once
+ 
 #include <cstdint>
 
 #include "Core/Entity.h"
@@ -12,5 +11,3 @@ struct PlayerStateComponent {
   Entity interactingEntity;
   clientid_t clientID;
 };
-
-#endif /* COMPONENTS_PLAYERSTATECOMPONENT_ */

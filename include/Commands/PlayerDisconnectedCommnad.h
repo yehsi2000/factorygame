@@ -1,6 +1,5 @@
-﻿#ifndef COMMANDS_PLAYERDISCONNECTEDCOMMNAD_
-#define COMMANDS_PLAYERDISCONNECTEDCOMMNAD_
-
+﻿#pragma once
+ 
 #include <algorithm>
 #include <cstring>
 
@@ -39,5 +38,3 @@ class PlayerDisconnectedCommand : public Command {
  private:
   clientid_t clientID;
 };
-
-#endif/* COMMANDS_PLAYERDISCONNECTEDCOMMNAD_ */

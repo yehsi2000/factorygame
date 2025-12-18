@@ -1,6 +1,5 @@
-#ifndef UTIL_ANIMUTIL_
-#define UTIL_ANIMUTIL_
-
+#pragma once
+ 
 #include "Components/AnimationComponent.h"
 
 
@@ -13,5 +12,3 @@ void AddAnimation(AnimationComponent &animComp, const AnimationName& animName,
                   SDL_Texture * texture, AnimationSequence&& animSequence);
 
 } // namespace util
-
-#endif /* UTIL_ANIMUTIL_ */

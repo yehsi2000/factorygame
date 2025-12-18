@@ -1,6 +1,5 @@
-#ifndef CORE_REGISTRY_
-#define CORE_REGISTRY_
-
+#pragma once
+ 
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
@@ -226,5 +225,3 @@ class Registry {
     GetComponentArray<T>()->forEach(func);
   }
 };
-
-#endif /* CORE_REGISTRY_ */

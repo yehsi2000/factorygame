@@ -1,6 +1,3 @@
-#ifndef COMPONENTS_MOVABLECOMPONENT_
-#define COMPONENTS_MOVABLECOMPONENT_
-
+#pragma once
+ 
 struct MovableComponent {};
-
-#endif /* COMPONENTS_MOVABLECOMPONENT_ */

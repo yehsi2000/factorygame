@@ -1,6 +1,5 @@
-﻿#ifndef SYSTEM_CLIENTNETWORKSYSTEM_
-#define SYSTEM_CLIENTNETWORKSYSTEM_
-
+﻿#pragma once
+ 
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -70,5 +69,3 @@ class ClientNetworkSystem {
   static constexpr double kInterpolationDelay = 0.1;
   uint16_t inputSequenceNumber = 0;
 };
-
-#endif/* SYSTEM_CLIENTNETWORKSYSTEM_ */

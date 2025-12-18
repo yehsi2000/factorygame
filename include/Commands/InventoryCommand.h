@@ -1,6 +1,5 @@
-#ifndef COMMANDS_INVENTORYCOMMAND_
-#define COMMANDS_INVENTORYCOMMAND_
-
+#pragma once
+ 
 #include <algorithm>
 
 #include "Commands/Command.h"
@@ -105,5 +104,3 @@ class InventoryCommand : public Command {
     return actualConsumeAmt;
   }
 };
-
-#endif /* COMMANDS_INVENTORYCOMMAND_ */

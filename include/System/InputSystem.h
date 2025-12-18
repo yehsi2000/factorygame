@@ -1,6 +1,5 @@
-#ifndef SYSTEM_INPUTSYSTEM_
-#define SYSTEM_INPUTSYSTEM_
-
+#pragma once
+ 
 #include <cstddef>
 #include <vector>
 
@@ -53,5 +52,3 @@ class InputSystem {
  private:
   void RegisterInputBindings();
 };
-
-#endif /* SYSTEM_INPUTSYSTEM_ */

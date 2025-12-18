@@ -1,6 +1,5 @@
-#ifndef GAMESTATE_PAUSESTATE_
-#define GAMESTATE_PAUSESTATE_
-
+#pragma once
+ 
 #include "GameState/IGameState.h"
 
 class GEngine;
@@ -15,5 +14,4 @@ class GEngine;
     virtual void Cleanup() override;
     virtual void Update(float deltaTime) override;
  };
-
-#endif/* GAMESTATE_PAUSESTATE_ */
+ 

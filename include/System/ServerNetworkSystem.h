@@ -1,6 +1,5 @@
-﻿#ifndef SYSTEM_SERVERNETWORKSYSTEM_
-#define SYSTEM_SERVERNETWORKSYSTEM_
-
+﻿#pragma once
+ 
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -45,5 +44,3 @@ class ServerNetworkSystem {
   void ChatClientHandler(clientid_t clientID, const uint8_t* rp, std::size_t packetSize);
   void ClientMoveReqHandler(clientid_t clientID, const uint8_t* rp);
 };
-
-#endif/* SYSTEM_SERVERNETWORKSYSTEM_ */

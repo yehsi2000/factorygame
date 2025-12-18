@@ -1,6 +1,5 @@
-#ifndef CORE_SERVER_
-#define CORE_SERVER_
-
+#pragma once
+ 
 #include <memory>
 #include <cstdint>
 
@@ -35,5 +34,3 @@ private:
     Server(const Server&) = delete;
     Server& operator=(const Server&) = delete;
 };
-
-#endif/* CORE_SERVER_ */

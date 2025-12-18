@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_CAMERACOMPONENT_
-#define COMPONENTS_CAMERACOMPONENT_
-
+#pragma once
+ 
 #include "Core/Type.h"
 
 struct CameraComponent {
@@ -19,5 +18,3 @@ struct CameraComponent {
         followSpeed(speed), bIsFollowing(true), bIsDragging(false),
         dragStartPos{0.0f, 0.0f}, cameraStartPos{0.0f, 0.0f}, zoom(1.0f) {}
 };
-
-#endif /* COMPONENTS_CAMERACOMPONENT_ */

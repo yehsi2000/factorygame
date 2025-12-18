@@ -1,6 +1,5 @@
-﻿#ifndef GAMESTATE_CLIENTSTATE_
-#define GAMESTATE_CLIENTSTATE_
-
+﻿#pragma once
+ 
 #include <cstdint>
 #include <cstdio>
 #include <memory>
@@ -126,5 +125,3 @@ class ClientState : public IGameState {
   void SocketSendWorker();
   void InitCoreSystem();
 };
-
-#endif/* GAMESTATE_CLIENTSTATE_ */

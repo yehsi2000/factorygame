@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_DEBUGRECTCOMPONENT_
-#define COMPONENTS_DEBUGRECTCOMPONENT_
-
+#pragma once
+ 
 struct DebugRectComponent{
   int offsetX;
   int offsetY;
@@ -11,5 +10,3 @@ struct DebugRectComponent{
   int b;
   int a;
 };
-
-#endif/* COMPONENTS_DEBUGRECTCOMPONENT_ */

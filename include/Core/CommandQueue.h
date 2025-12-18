@@ -1,6 +1,5 @@
-#ifndef CORE_COMMANDQUEUE_
-#define CORE_COMMANDQUEUE_
-
+#pragma once
+ 
 #include <memory>
 #include <queue>
 
@@ -30,5 +29,3 @@ class CommandQueue {
 
   bool IsEmpty() const { return queue.empty(); }
 };
-
-#endif /* CORE_COMMANDQUEUE_ */

@@ -1,6 +1,5 @@
-#ifndef SYSTEM_TIMERSYSTEM_
-#define SYSTEM_TIMERSYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 
 /**
@@ -16,5 +15,3 @@ class TimerSystem {
   ~TimerSystem();
   void Update(float deltaTime);
 };
-
-#endif /* SYSTEM_TIMERSYSTEM_ */

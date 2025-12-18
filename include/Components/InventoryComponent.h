@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_INVENTORYCOMPONENT_
-#define COMPONENTS_INVENTORYCOMPONENT_
-
+#pragma once
+ 
 #include <vector>
 
 #include "Core/Item.h"
@@ -10,5 +9,3 @@ struct InventoryComponent {
   int column = 1;
   std::vector<std::pair<ItemID, int>> items;
 };
-
-#endif /* COMPONENTS_INVENTORYCOMPONENT_ */

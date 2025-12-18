@@ -1,6 +1,5 @@
-#ifndef CORE_GENGINE_
-#define CORE_GENGINE_
-
+#pragma once
+ 
 #include <memory>
 #include <vector>
 
@@ -61,5 +60,3 @@ class GEngine {
   inline void Stop() { bIsRunning = false; }
   inline bool IsChangeRequested() { return changeStateRequested; }
 };
-
-#endif/* CORE_GENGINE_ */

@@ -1,6 +1,5 @@
-#ifndef SYSTEM_MOVEMENTSYSTEM_
-#define SYSTEM_MOVEMENTSYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 
 class MovementSystem {
@@ -22,5 +21,3 @@ class MovementSystem {
   void ServerUpdate(float deltaTime);
   void ClientUpdate(float deltaTime);
 };
-
-#endif/* SYSTEM_MOVEMENTSYSTEM_ */

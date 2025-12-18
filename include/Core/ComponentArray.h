@@ -1,6 +1,5 @@
-#ifndef CORE_COMPONENTARRAY_
-#define CORE_COMPONENTARRAY_
-
+#pragma once
+ 
 #include <cassert>
 #include <cstddef>
 #include <unordered_map>
@@ -118,5 +117,3 @@ class ComponentArray : public IComponentArray {
 
   std::size_t GetSize() override { return componentArray.size(); }
 };
-
-#endif /* CORE_COMPONENTARRAY_ */

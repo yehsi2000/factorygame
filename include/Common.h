@@ -1,6 +1,5 @@
-#ifndef COMMON_
-#define COMMON_
-
+#pragma once
+ 
 /**
  * @brief Collection of common constants across the project.
  * 
@@ -19,5 +18,3 @@ constexpr int ICONSIZE_TINY_XSTART = ICONSIZE_BIG + ICONSIZE_MID + ICONSIZE_SMAL
 
 constexpr int ICONSPRITE_WIDTH = ICONSIZE_BIG + ICONSIZE_MID + ICONSIZE_SMALL + ICONSIZE_TINY;
 constexpr int ICONSPRITE_HEIGHT = ICONSIZE_BIG;
-
-#endif/* COMMON_ */

@@ -1,9 +1,6 @@
-#ifndef COMPONENTS_MOVEMENTCOMPONENT_
-#define COMPONENTS_MOVEMENTCOMPONENT_
-
+#pragma once
+ 
 struct MovementComponent {
   float speed=0.f;  // per pixel
   
 };
-
-#endif/* COMPONENTS_MOVEMENTCOMPONENT_ */

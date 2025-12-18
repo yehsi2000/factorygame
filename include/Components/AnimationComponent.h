@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_ANIMATIONCOMPONENT_
-#define COMPONENTS_ANIMATIONCOMPONENT_
-
+#pragma once
+ 
 #include "SDL_render.h"
 #include <map>
 
@@ -39,5 +38,3 @@ struct AnimationComponent {
   bool bIsPlaying = true;
   SDL_Texture *lastTexture = nullptr;
 };
-
-#endif/* COMPONENTS_ANIMATIONCOMPONENT_ */

@@ -1,6 +1,5 @@
-#ifndef SYSTEM_ITEMDRAGSYSTEM_
-#define SYSTEM_ITEMDRAGSYSTEM_
-
+#pragma once
+ 
 #include <memory>
 
 #include "Core/Entity.h"
@@ -36,5 +35,3 @@ class ItemDragSystem {
   void ItemDropEventHandler(const ItemDropInWorldEvent& event);
   void UpdatePreviewEntity();
 };
-
-#endif /* SYSTEM_ITEMDRAGSYSTEM_ */

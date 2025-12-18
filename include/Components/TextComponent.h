@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_TEXTCOMPONENT_
-#define COMPONENTS_TEXTCOMPONENT_
-
+#pragma once
+ 
 #include "SDL.h"
 
 struct TextComponent {
@@ -15,5 +14,3 @@ struct TextComponent {
   int h = 0;
   bool isDirty = true;
 };
-
-#endif /* COMPONENTS_TEXTCOMPONENT_ */

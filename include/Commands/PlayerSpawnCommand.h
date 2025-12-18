@@ -1,6 +1,5 @@
-#ifndef COMMANDS_PLAYERSPAWNCOMMAND_
-#define COMMANDS_PLAYERSPAWNCOMMAND_
-
+#pragma once
+ 
 #include <algorithm>
 #include <cstring>
 
@@ -28,5 +27,3 @@ class PlayerSpawnCommand : public Command {
   clientid_t clientID;
   bool bIsLocalPlayer;
 };
-
-#endif/* COMMANDS_PLAYERSPAWNCOMMAND_ */

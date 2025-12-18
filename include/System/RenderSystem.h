@@ -1,6 +1,5 @@
-#ifndef SYSTEM_RENDERSYSTEM_
-#define SYSTEM_RENDERSYSTEM_
-
+#pragma once
+ 
 #include "Core/Type.h"
 #include "Core/SystemContext.h"
 #include "SDL_ttf.h"
@@ -36,5 +35,3 @@ private:
 
   bool IsOffScreen(Vec2f screenPos, Vec2 screenSize, Vec2f entitySize);
 };
-
-#endif/* SYSTEM_RENDERSYSTEM_ */

@@ -1,6 +1,5 @@
-#ifndef SYSTEM_CAMERASYSTEM_
-#define SYSTEM_CAMERASYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 #include "Core/Entity.h"
 
@@ -22,5 +21,3 @@ class CameraSystem {
   void UpdateCameraFollow(float deltaTime);
   void UpdateCameraDrag(float deltaTime);
 };
-
-#endif /* SYSTEM_CAMERASYSTEM_ */

@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_ASSEMBLINGMACHINECOMPONENT_
-#define COMPONENTS_ASSEMBLINGMACHINECOMPONENT_
-
+#pragma once
+ 
 #include <unordered_map>
 #include "Core/Recipe.h"
 #include "Core/Item.h"
@@ -26,5 +25,3 @@ struct AssemblingMachineComponent {
   bool bIsShowingUI = false;
   bool bIsShowingRecipeSelection = true; // true when no recipe selected
 };
-
-#endif/* COMPONENTS_ASSEMBLINGMACHINECOMPONENT_ */

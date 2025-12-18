@@ -1,6 +1,5 @@
-#ifndef GAMESTATE_MAINMENUSTATE_
-#define GAMESTATE_MAINMENUSTATE_
-
+#pragma once
+ 
 #include "GameState/IGameState.h"
 
 class GEngine;
@@ -25,5 +24,3 @@ class MainMenuState : public IGameState {
   TTF_Font* gFont;
   char clientIPInput[61];
 };
-
-#endif /* GAMESTATE_MAINMENUSTATE_ */

@@ -1,6 +1,5 @@
-﻿#ifndef CORE_RECIPE_
-#define CORE_RECIPE_
-
+﻿#pragma once
+ 
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -121,5 +120,3 @@ class RecipeDatabase {
         4.0f};
   }
 };
-
-#endif /* CORE_RECIPE_ */

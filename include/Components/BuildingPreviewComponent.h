@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_BUILDINGPREVIEWCOMPONENT_
-#define COMPONENTS_BUILDINGPREVIEWCOMPONENT_
-
+#pragma once
+ 
 #include "Core/Item.h"
 
 struct BuildingPreviewComponent {
@@ -14,5 +13,3 @@ struct BuildingPreviewComponent {
   constexpr BuildingPreviewComponent(ItemID id, int w, int h) 
     : itemID(id), width(w), height(h) {}
 };
-
-#endif /* COMPONENTS_BUILDINGPREVIEWCOMPONENT_ */

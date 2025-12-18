@@ -1,6 +1,5 @@
-#ifndef SYSTEM_ASSEMBLINGMACHINESYSTEM_
-#define SYSTEM_ASSEMBLINGMACHINESYSTEM_
-
+#pragma once
+ 
 #include <memory>
 
 #include "Core/Entity.h"
@@ -44,5 +43,3 @@ class AssemblingMachineSystem {
   void UpdateAnimationState(Entity entity,
                             AssemblingMachineComponent &machine);
 };
-
-#endif/* SYSTEM_ASSEMBLINGMACHINESYSTEM_ */

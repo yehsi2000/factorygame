@@ -1,6 +1,5 @@
-﻿#ifndef COMPONENTS_NETPREDICTIONCOMPONENT_
-#define COMPONENTS_NETPREDICTIONCOMPONENT_
-
+﻿#pragma once
+ 
 #include <cstdint>
 #include "Core/Packet.h"
 
@@ -21,5 +20,3 @@ struct NetPredictionComponent {
   // Optional: initialize-once flag
   uint8_t initialized = 0;
 };
-
-#endif /* COMPONENTS_NETPREDICTIONCOMPONENT_ */

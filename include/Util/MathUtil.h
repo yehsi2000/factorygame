@@ -1,6 +1,5 @@
-#ifndef UTIL_MATHUTIL_
-#define UTIL_MATHUTIL_
-
+#pragma once
+ 
 #include "Core/Type.h"
 
 namespace util {
@@ -42,5 +41,3 @@ Vec2f ScreenToWorld(Vec2f screenPos, Vec2f cameraPos, int screenWidth,
                     int screenHeight);
 
 }  // namespace util
-
-#endif /* UTIL_MATHUTIL_ */

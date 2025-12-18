@@ -1,6 +1,5 @@
-#ifndef SYSTEM_INTERACTIONSYSTEM_
-#define SYSTEM_INTERACTIONSYSTEM_
-
+#pragma once
+ 
 #include <memory>
 
 #include "Core/Event.h"
@@ -32,5 +31,3 @@ class InteractionSystem {
   // TODO set it as player upgradable value
   double maxInteractionDistance = 200.0;
 };
-
-#endif/* SYSTEM_INTERACTIONSYSTEM_ */

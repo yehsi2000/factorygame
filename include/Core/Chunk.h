@@ -1,6 +1,5 @@
-#ifndef CORE_CHUNK_
-#define CORE_CHUNK_
-
+#pragma once
+ 
 #include <vector>
 
 #include "Core/Entity.h"
@@ -30,5 +29,3 @@ public:
 private:
   std::vector<TileData> tiles;
 };
-
-#endif /* CORE_CHUNK_ */

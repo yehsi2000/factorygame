@@ -1,6 +1,5 @@
-#ifndef CORE_ENTITYFACTORY_
-#define CORE_ENTITYFACTORY_
-
+#pragma once
+ 
 #include "Core/Entity.h"
 #include "Core/Packet.h"
 #include "Core/Type.h"
@@ -32,5 +31,3 @@ class EntityFactory {
 
   virtual Entity CreatePlayer(World *world, Vec2f worldPos, clientid_t clientID, bool bIsLocalPlayer);
 };
-
-#endif /* CORE_ENTITYFACTORY_ */

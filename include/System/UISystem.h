@@ -1,6 +1,5 @@
-#ifndef SYSTEM_UISYSTEM_
-#define SYSTEM_UISYSTEM_
-
+#pragma once
+ 
 #include <list>
 #include <memory>
 #include <string>
@@ -74,5 +73,3 @@ class UISystem {
   std::shared_ptr<std::string> playerChat;
   std::list<std::string> chatLog;
 };
-
-#endif/* SYSTEM_UISYSTEM_ */

@@ -1,6 +1,5 @@
-#ifndef CORE_OBJECTPOOL_
-#define CORE_OBJECTPOOL_
-
+#pragma once
+ 
 #include <functional>
 #include <memory>
 #include <cstddef>
@@ -60,5 +59,3 @@ class ObjectPool {
     }
   }
 };
-
-#endif /* CORE_OBJECTPOOL_ */

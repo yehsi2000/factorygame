@@ -1,6 +1,5 @@
-#ifndef CORE_PACKET_
-#define CORE_PACKET_
-
+#pragma once
+ 
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -209,5 +208,3 @@ enum class EPlayerInput : uint8_t {
   LEFT = 1 << 2,   // 0000 0100
   RIGHT = 1 << 3,  // 0000 1000
 };
-
-#endif /* CORE_PACKET_ */

@@ -1,6 +1,5 @@
-#ifndef CORE_TYPE_
-#define CORE_TYPE_
-
+#pragma once
+ 
 #include <iostream>
 
 struct Vec2f;
@@ -79,5 +78,3 @@ inline std::ostream& operator<<(std::ostream& out, const Vec2& a) {
   out << "( " << a.x << ", " << a.y << " )";
   return out;
 }
-
-#endif /* CORE_TYPE_ */

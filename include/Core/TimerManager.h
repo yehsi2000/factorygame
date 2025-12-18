@@ -1,6 +1,5 @@
-#ifndef CORE_TIMERMANAGER_
-#define CORE_TIMERMANAGER_
-
+#pragma once
+ 
 #include <memory>
 #include <vector>
 
@@ -62,5 +61,3 @@ class TimerManager {
    */
   TimerHandle nextHandle;
 };
-
-#endif /* CORE_TIMERMANAGER_ */

@@ -1,6 +1,5 @@
-#ifndef CORE_ASSETMANAGER_
-#define CORE_ASSETMANAGER_
-
+#pragma once
+ 
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -26,5 +25,3 @@ class AssetManager {
   AssetManager(SDL_Renderer* renderer);
   ~AssetManager();
 };
-
-#endif /* CORE_ASSETMANAGER_ */

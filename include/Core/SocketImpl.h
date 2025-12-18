@@ -1,6 +1,5 @@
-#ifndef CORE_SOCKETIMPL_
-#define CORE_SOCKETIMPL_
-
+#pragma once
+ 
 #include <string>
 #include <cstddef>
 #include <cstdint>
@@ -20,5 +19,3 @@ public:
     virtual int Receive(uint8_t* buffer, std::size_t size) = 0;
     virtual void Close() = 0;
 };
-
-#endif/* CORE_SOCKETIMPL_ */

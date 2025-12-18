@@ -1,6 +1,5 @@
-#ifndef CORE_WORLDASSETMANAGER_
-#define CORE_WORLDASSETMANAGER_
-
+#pragma once
+ 
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -30,5 +29,3 @@ class WorldAssetManager {
   WorldAssetManager(SDL_Renderer* renderer);
   ~WorldAssetManager();
 };
-
-#endif /* CORE_WORLDASSETMANAGER_ */

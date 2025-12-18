@@ -1,6 +1,5 @@
-#ifndef SYSTEM_TIMEREXPIRESYSTEM_
-#define SYSTEM_TIMEREXPIRESYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 
 class EventDispatcher;
@@ -24,5 +23,3 @@ class TimerExpireSystem {
   ~TimerExpireSystem();
   void Update();
 };
-
-#endif /* SYSTEM_TIMEREXPIRESYSTEM_ */

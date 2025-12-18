@@ -1,6 +1,5 @@
-#ifndef CORE_COMMAND_
-#define CORE_COMMAND_
-
+#pragma once
+ 
 class Registry;
 class EventDispatcher;
 class World;
@@ -14,5 +13,3 @@ class Command {
   virtual ~Command() = default;
   virtual void Execute(Registry *registry, EventDispatcher* eventDispatcher, World* world) = 0;
 };
-
-#endif /* CORE_COMMAND_ */

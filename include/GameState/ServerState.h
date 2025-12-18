@@ -1,6 +1,5 @@
-﻿#ifndef GAMESTATE_SERVERSTATE_
-#define GAMESTATE_SERVERSTATE_
-
+﻿#pragma once
+ 
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -115,5 +114,3 @@ class ServerState : public IGameState {
  private:
   void InitCoreSystem();
 };
-
-#endif /* GAMESTATE_SERVERSTATE_ */

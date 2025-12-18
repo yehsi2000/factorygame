@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_BUILDINGCOMPONENT_
-#define COMPONENTS_BUILDINGCOMPONENT_
-
+#pragma once
+ 
 #include "Core/Type.h"
 #include <vector>
 
@@ -11,5 +10,3 @@ struct BuildingComponent {
   // This is calculated during placement and stored for cleanup during removal
   std::vector<Vec2> occupiedTiles;
 };
-
-#endif /* COMPONENTS_BUILDINGCOMPONENT_ */

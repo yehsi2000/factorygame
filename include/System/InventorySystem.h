@@ -1,6 +1,5 @@
-#ifndef SYSTEM_INVENTORYSYSTEM_
-#define SYSTEM_INVENTORYSYSTEM_
-
+#pragma once
+ 
 #include <memory>
 
 #include "Core/Event.h"
@@ -26,5 +25,3 @@ class InventorySystem {
   void ConsumeItem(const ItemConsumeEvent& e);
   void MoveItem(const ItemMoveEvent& e);
 };
-
-#endif /* SYSTEM_INVENTORYSYSTEM_ */

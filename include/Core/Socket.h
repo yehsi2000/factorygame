@@ -1,6 +1,5 @@
-#ifndef CORE_SOCKET_
-#define CORE_SOCKET_
-
+#pragma once
+ 
 #include <memory>
 #include <cstddef>
 #include <cstdint>
@@ -36,5 +35,3 @@ private:
     Socket(const Socket&) = delete;
     Socket& operator=(const Socket&) = delete;
 };
-
-#endif/* CORE_SOCKET_ */

@@ -1,6 +1,5 @@
-#ifndef COMPONENTS_MININGDRILLCOMPONENT_
-#define COMPONENTS_MININGDRILLCOMPONENT_
-
+#pragma once
+ 
 #include <utility>
 
 #include "Core/Entity.h"
@@ -23,5 +22,3 @@ struct MiningDrillComponent {
         bIsShowingUI(bIsShowingUI),
         oreEntity(Entity::Null()) {}
 };
-
-#endif /* COMPONENTS_MININGDRILLCOMPONENT_ */

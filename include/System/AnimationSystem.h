@@ -1,6 +1,5 @@
-#ifndef SYSTEM_ANIMATIONSYSTEM_
-#define SYSTEM_ANIMATIONSYSTEM_
-
+#pragma once
+ 
 #include "Core/SystemContext.h"
 
 class AnimationSystem {
@@ -11,5 +10,3 @@ class AnimationSystem {
   ~AnimationSystem();
   void Update(float deltaTime);
 };
-
-#endif /* SYSTEM_ANIMATIONSYSTEM_ */
