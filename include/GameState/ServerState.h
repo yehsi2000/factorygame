@@ -10,7 +10,7 @@
 #include "Core/EventDispatcher.h"
 #include "Core/Packet.h"
 #include "Core/SystemContext.h"
-#include "Core/ThreadSafeQueue.h"
+#include "DataStruct/ThreadSafeQueue.h"
 #include "GameState/IGameState.h"
 #include "SDL_ttf.h"
 #include "imgui.h"

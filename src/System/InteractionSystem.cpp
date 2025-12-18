@@ -128,9 +128,9 @@ void InteractionSystem::AssemblyMachineInteractionHandler(
   machine.bIsShowingUI = true;
   // If no recipe is selected, show recipe selection
   if (machine.currentRecipe == RecipeID::None) {
-    machine.bIsShowingRecipeSelection = true;
+    machine.bRecipeSelected = false;
   } else {
-    machine.bIsShowingRecipeSelection = false;
+    machine.bRecipeSelected = true;
   }
 }
 

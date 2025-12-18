@@ -334,7 +334,7 @@ void UISystem::AssemblingMachineUI() {
     auto &assemblingComp =
         registry->GetComponent<AssemblingMachineComponent>(machineEntity);
     if (assemblingComp.bIsShowingUI) {
-      if (assemblingComp.bIsShowingRecipeSelection) {
+      if (assemblingComp.bRecipeSelected) {
         AssemblingMachineRecipeSelection(machineEntity);
       } else {
         // Show crafting UI
@@ -352,7 +352,7 @@ void UISystem::AssemblingMachineUI() {
           ImGui::Text("Crafting Time: %.1fs", recipeData.craftingTime);
 
           if (ImGui::Button("Change Recipe")) {
-            assemblingComp.bIsShowingRecipeSelection = true;
+            assemblingComp.bRecipeSelected = false;
           }
 
           ImGui::Separator();
@@ -464,7 +464,7 @@ void UISystem::AssemblingMachineRecipeSelection(Entity entity) {
       registry->GetComponent<AssemblingMachineComponent>(entity);
   if(registry->HasComponent<InactiveComponent>(entity)) return;
   std::string windowName = "Select Recipe##" + std::to_string(Entity::IdType(entity));
-  bool showSelection = assemblingComp.bIsShowingRecipeSelection;
+  bool showSelection = !assemblingComp.bRecipeSelected;
 
   if (ImGui::Begin(
           windowName.c_str(), &showSelection,
@@ -481,7 +481,7 @@ void UISystem::AssemblingMachineRecipeSelection(Entity entity) {
       if (ImGui::Button((const char *)recipeData.name.c_str(),
                         ImVec2(200, 0))) {
         assemblingComp.currentRecipe = recipeId;
-        assemblingComp.bIsShowingRecipeSelection = false;
+        assemblingComp.bRecipeSelected = true;
         assemblingComp.state = AssemblingMachineState::Idle;
         showSelection = false;
       }
@@ -497,7 +497,7 @@ void UISystem::AssemblingMachineRecipeSelection(Entity entity) {
   }
   ImGui::End();
 
-  assemblingComp.bIsShowingRecipeSelection = showSelection;
+  assemblingComp.bRecipeSelected = !showSelection;
   if (!showSelection && assemblingComp.currentRecipe == RecipeID::None) {
     assemblingComp.bIsShowingUI =
         false;  // Close UI if no recipe selected and cancelled

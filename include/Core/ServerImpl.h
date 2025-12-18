@@ -2,7 +2,7 @@
  
 #include <cstdint>
 #include "Core/Packet.h"
-#include "Core/ThreadSafeQueue.h"
+#include "DataStruct/ThreadSafeQueue.h"
 
 /**
  * @brief Interface for the server implementation.

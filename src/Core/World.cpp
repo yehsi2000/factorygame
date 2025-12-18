@@ -20,7 +20,7 @@
 #include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 #include "Core/World.h"
 #include "Core/WorldAssetManager.h"
 #include "FastNoiseLite.h"
@@ -356,6 +356,7 @@ void World::GenerateChunk(Chunk &chunk) {
           snprintf(textComp.text, sizeof(textComp.text), "%d %d", worldTileX,
                    worldTileY);
           textComp.color = SDL_Color{255, 255, 255, 255};
+          textComp.isDirty = true; // for initial draw
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
           SDL_Texture *spritesheet =

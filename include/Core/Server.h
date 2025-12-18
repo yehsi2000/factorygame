@@ -4,7 +4,7 @@
 #include <cstdint>
 
 #include "Core/Packet.h"
-#include "Core/ThreadSafeQueue.h"
+#include "DataStruct/ThreadSafeQueue.h"
 
 class ServerImpl;
 

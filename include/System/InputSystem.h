@@ -5,7 +5,7 @@
 
 #include "Core/Item.h"
 #include "Core/SystemContext.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 #include "SDL.h"
 #include "imgui.h"
 

@@ -1,4 +1,5 @@
 #include "System/AnimationSystem.h"
+#include <cassert>
 
 #include "Components/AnimationComponent.h"
 #include "Components/InactiveComponent.h"
@@ -7,12 +8,11 @@
 #include "Core/Registry.h"
 #include "SDL_render.h"
 
-AnimationSystem::AnimationSystem(const SystemContext& context)
+AnimationSystem::AnimationSystem(const SystemContext &context)
     : registry(context.registry) {}
 
 void AnimationSystem::Update(float deltaTime) {
-  for (Entity entity :
-       registry->view<AnimationComponent, SpriteComponent>()) {
+  for (Entity entity : registry->view<AnimationComponent, SpriteComponent>()) {
     if (registry->HasComponent<InactiveComponent>(entity)) {
       continue;
     }
@@ -23,7 +23,11 @@ void AnimationSystem::Update(float deltaTime) {
       continue;
     }
 
-    const auto &sequence = anim.animations.at(anim.currentAnimation);
+    const auto &sequence =
+        anim.animations[static_cast<std::size_t>(anim.currentAnimation)];
+
+    assert(sequence.sheetWidth > 0 && sequence.sheetHeight > 0 && "uninitialized animation");
+
     anim.frameTimer += deltaTime;
     // time for single frame = 1/frameRate
     if (anim.frameTimer >= (1.f / sequence.frameRate)) {
@@ -44,7 +48,7 @@ void AnimationSystem::Update(float deltaTime) {
       sprite.texture = sequence.texture;
       anim.lastTexture = sequence.texture;
     }
-    
+
     int framesPerRow = sequence.sheetWidth / sequence.frameWidth;
     int globalFrameIndex = sequence.startIndex + anim.currentFrameIndex;
     sprite.srcRect.x = (globalFrameIndex % framesPerRow) * sequence.frameWidth;

@@ -17,7 +17,7 @@
 #include "Core/EventDispatcher.h"
 #include "Core/Packet.h"
 #include "Core/Server.h"
-#include "Core/ThreadSafeQueue.h"
+#include "DataStruct/ThreadSafeQueue.h"
 #include "Util/PacketUtil.h"
 
 ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)

@@ -5,12 +5,12 @@
 struct TextComponent {
   char text[20];
   SDL_Color color;
-  int x = 0;
-  int y = 0;
+  int x;
+  int y;
 
   // Cache
-  SDL_Texture *texture = nullptr;
-  int w = 0;
-  int h = 0;
-  bool isDirty = true;
+  SDL_Texture *texture;
+  int w;
+  int h;
+  bool isDirty;
 };

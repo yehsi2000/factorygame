@@ -2,7 +2,7 @@
  
 #include "Core/Entity.h"
 #include "Core/Packet.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 class Registry;
 class World;

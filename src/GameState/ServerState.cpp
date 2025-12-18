@@ -36,7 +36,7 @@
 #include "Core/Packet.h"
 #include "Core/Registry.h"
 #include "Core/Server.h"
-#include "Core/ThreadSafeQueue.h"
+#include "DataStruct/ThreadSafeQueue.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Core/WorldAssetManager.h"

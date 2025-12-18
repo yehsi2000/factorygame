@@ -1,6 +1,7 @@
 #pragma once
  
 #include "Components/AnimationComponent.h"
+#include "DataStruct/AnimationData.h"
 
 
 namespace util {

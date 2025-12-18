@@ -7,7 +7,7 @@
 #include "Core/Entity.h"
 #include "Core/Item.h"
 #include "Core/Packet.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 /**
  * @brief The base struct for all events in the game.

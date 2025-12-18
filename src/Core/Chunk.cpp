@@ -1,6 +1,6 @@
 #include "Core/Chunk.h"
 
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 Chunk::Chunk(int _chunkX, int _chunkY) : chunkX(_chunkX), chunkY(_chunkY) {
   tiles.resize(CHUNK_WIDTH * CHUNK_HEIGHT);

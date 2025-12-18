@@ -1,6 +1,6 @@
 #pragma once
  
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 struct CameraComponent {
   Vec2f position;       // Camera position in world coordinates
@@ -13,7 +13,9 @@ struct CameraComponent {
   Vec2f cameraStartPos; // Camera position when drag started
   float zoom;
 
-  constexpr CameraComponent(Vec2f initialPos = {0.0f, 0.0f}, float speed = 10.f)
+  constexpr CameraComponent() = default;
+
+  constexpr CameraComponent(Vec2f initialPos, float speed = 10.f)
       : position(initialPos), target(initialPos), offset{0.0f, 0.0f},
         followSpeed(speed), bIsFollowing(true), bIsDragging(false),
         dragStartPos{0.0f, 0.0f}, cameraStartPos{0.0f, 0.0f}, zoom(1.0f) {}

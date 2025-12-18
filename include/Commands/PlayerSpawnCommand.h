@@ -20,7 +20,7 @@ class PlayerSpawnCommand : public Command {
 
   void Execute(Registry* registry, EventDispatcher* eventDispatcher,
                World* world) override {
-    world->GeneratePlayer(clientID, bIsLocalPlayer);
+    world->GeneratePlayer(clientID, {}, bIsLocalPlayer);
   }
 
  private:

@@ -11,6 +11,8 @@ enum class AssemblingMachineState {
   OutputFull
 };
 
+// TODO : make trivially copyable, destructable
+
 struct AssemblingMachineComponent {
   RecipeID currentRecipe = RecipeID::None;
   
@@ -23,5 +25,5 @@ struct AssemblingMachineComponent {
   bool bIsAnimating = false;
   
   bool bIsShowingUI = false;
-  bool bIsShowingRecipeSelection = true; // true when no recipe selected
+  bool bRecipeSelected = false;
 };

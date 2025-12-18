@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Packet.h"
-#include "Core/ThreadSafeQueue.h"
+#include "DataStruct/ThreadSafeQueue.h"
 #include <cstdint>
 #include <unordered_map>
 #include <string>

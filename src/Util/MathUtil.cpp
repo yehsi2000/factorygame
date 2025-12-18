@@ -1,6 +1,6 @@
 #include "Util/MathUtil.h"
 
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 #include "cmath"
 
 namespace util {

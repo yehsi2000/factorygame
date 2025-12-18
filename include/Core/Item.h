@@ -4,43 +4,7 @@
 #include <unordered_map>
 
 #include "Core/Entity.h"
-
-/**
- * @brief Defines all possible item types in the game.
- */
-enum class ItemID {
-  None = 0,
-
-  IronOre,
-  CopperOre,
-  // Stone,
-  // Wood,
-
-  IronPlate,
-  CopperPlate,
-
-  MiningDrill,
-  AssemblingMachine,
-  // ConveyorBelt,
-  // Smelter,
-  MaxItemID
-};
-
-/**
- * @brief Categorizes items for easier filtering and management.
- */
-enum class ItemCategory { Ore, Ingot, Buildable, Invalid };
-
-/**
- * @brief Defines the types of ores available for mining.
- */
-enum class OreType {
-  Iron = 0,
-  Copper,
-  // Coal,
-  // Stone,
-  MaxOreType
-};
+#include "DataStruct/ItemData.h"
 
 /**
  * @brief Contains static data for a specific item type.
@@ -113,6 +77,8 @@ class ItemDatabase {
 
  private:
   std::unordered_map<ItemID, ItemData> db;
+
+  // TODO : parse data from textfile
   ItemDatabase() {
     db[ItemID::IronOre] = {ItemCategory::Ore, u8"철광석",
                            u8"제련하여 철 주괴로 만들 수 있습니다.",

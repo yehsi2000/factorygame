@@ -9,7 +9,7 @@
 #include "Core/Entity.h"
 #include "Core/Packet.h"
 #include "Core/TileData.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 #include "SDL_ttf.h"
 
 class Registry;
@@ -119,7 +119,7 @@ class World {
   bool IsTilePassable(Vec2f worldPos);
   bool IsTilePassable(Vec2 tileIdx);
 
-  void GeneratePlayer(clientid_t clientID, Vec2f worldPos = {0.f, 0.f},
+  void GeneratePlayer(clientid_t clientID, Vec2f worldPos,
                       bool bIsLocalPlayer = false);
   inline Entity GetLocalPlayer() const { return localPlayer; }
   inline Entity GetPlayerByClientID(clientid_t clientID) const {

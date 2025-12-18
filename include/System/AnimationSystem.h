@@ -1,6 +1,7 @@
 #pragma once
  
 #include "Core/SystemContext.h"
+#include "DataStruct/AnimationData.h"
 
 class AnimationSystem {
   Registry* registry;

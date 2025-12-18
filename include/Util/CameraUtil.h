@@ -1,7 +1,7 @@
 #pragma once
  
 #include "Core/Registry.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 namespace util {
 

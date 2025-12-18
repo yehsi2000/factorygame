@@ -4,7 +4,7 @@
 
 #include "Core/Entity.h"
 #include "Core/TileData.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 constexpr int CHUNK_WIDTH = 8;
 constexpr int CHUNK_HEIGHT = 8;

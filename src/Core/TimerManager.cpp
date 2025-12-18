@@ -8,7 +8,7 @@ TimerManager::TimerManager()
 {
   // Pre-allocate some space to avoid frequent reallocations.
   handleToInstanceMap.resize(128);
-  timerPool.PreAllocate(50);  // Pre-warm the pool
+  timerPool.PreAllocate(64);  // Pre-warm the pool
 }
 
 TimerHandle TimerManager::CreateTimer(TimerId id, float duration,

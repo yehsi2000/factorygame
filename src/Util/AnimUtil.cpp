@@ -1,9 +1,10 @@
 #include "Util/AnimUtil.h"
 
-#include "Components/AnimationComponent.h"
-
-#include "SDL.h"
 #include <utility>
+
+#include "Components/AnimationComponent.h"
+#include "SDL.h"
+
 
 namespace util {
 
@@ -17,15 +18,17 @@ void SetAnimation(AnimationName name, AnimationComponent &animComp,
   animComp.bIsPlaying = bPlay;
 }
 
+// TODO : should store animation data somewhere else like asset
+
 void AddAnimation(AnimationComponent &animComp, const AnimationName &animName,
                   SDL_Texture *texture, AnimationSequence &&animSequence) {
-
-  animComp.animations[animName] = std::move(animSequence);
-  animComp.animations[animName].texture = texture;
+  std::size_t animIdx = static_cast<std::size_t>(animName);
+  animComp.animations[animIdx] = std::move(animSequence);
+  animComp.animations[animIdx].texture = texture;
   int sheetWidth, sheetHeight;
   SDL_QueryTexture(texture, NULL, NULL, &sheetWidth, &sheetHeight);
-  animComp.animations[animName].sheetWidth = sheetWidth;
-  animComp.animations[animName].sheetHeight = sheetHeight;
+  animComp.animations[animIdx].sheetWidth = sheetWidth;
+  animComp.animations[animIdx].sheetHeight = sheetHeight;
 }
 
-} // namespace util
+}  // namespace util

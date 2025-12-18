@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
@@ -9,12 +9,22 @@
 #include <mutex>
 #include <queue>
 #include <shared_mutex>
+#include <type_traits>
 
 #include "Core/ComponentArray.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 
-constexpr int MAX_ENTITIES = 1000000;
+constexpr long long MAX_ENTITIES = 1000000;
+
+template <typename T>
+struct NotTriviallyDefaultConstructable;
+
+template <typename T>
+struct NotTriviallyCopyable;
+
+template <typename T>
+struct NotTriviallyDestructible;
 
 /**
  * @brief The core of the Entity-Component-System (ECS) architecture.
@@ -43,6 +53,7 @@ class Registry {
   ComponentArray<T> *GetComponentArray() {
     std::size_t compTypeId = GetComponentTypeID<T>();
 
+    // get componentarray pointer if it exists
     {
       std::shared_lock<std::shared_mutex> readLock(compArrayMutex);
       if (compTypeId < componentArrays.size() &&
@@ -52,19 +63,38 @@ class Registry {
       }
     }
 
+    // component is not registered
     {
       std::unique_lock<std::shared_mutex> writeLock(compArrayMutex);
 
+      // check once more inside exclusive lock
       if (compTypeId < componentArrays.size() &&
           componentArrays[compTypeId] != nullptr) {
         return static_cast<ComponentArray<T> *>(
             componentArrays[compTypeId].get());
       }
 
+      // It really doesn't exist
+
+      // check if it's triviality for performance
+
+      // if constexpr (!std::is_trivially_default_constructible_v<T>) {
+      //   NotTriviallyCopyable<T> t;
+      // }
+
+      // if constexpr (!std::is_trivially_copyable_v<T>) {
+      //   NotTriviallyCopyable<T> t;
+      // }
+      // if constexpr (!std::is_trivially_destructible_v<T>) {
+      //   NotTriviallyDestructible<T> t;
+      // }
+
+      // expand the componentArray container
       if (componentArrays.size() <= compTypeId) {
         componentArrays.resize(compTypeId + 1);
       }
 
+      // add unique_ptr of component array of that component type
       if (componentArrays[compTypeId] == nullptr) {
         componentArrays[compTypeId] = std::make_unique<ComponentArray<T>>();
       }
@@ -76,6 +106,7 @@ class Registry {
 
  public:
   Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {
+    
     for (int i = 1; i < MAX_ENTITIES; ++i) {
       availableEntities.push(Entity(i));
     }

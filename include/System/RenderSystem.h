@@ -1,6 +1,6 @@
 #pragma once
  
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 #include "Core/SystemContext.h"
 #include "SDL_ttf.h"
 

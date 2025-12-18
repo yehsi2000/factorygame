@@ -1,7 +1,5 @@
 #pragma once
- 
+
 #include "Core/Entity.h"
 
-struct RefineryComponent {
-  Entity connectedMiner = Entity::Null();
-};
+struct RefineryComponent {};

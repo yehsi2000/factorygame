@@ -1,6 +1,6 @@
 #include "Util/CameraUtil.h"
 #include "Components/CameraComponent.h"
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 
 namespace util {
 

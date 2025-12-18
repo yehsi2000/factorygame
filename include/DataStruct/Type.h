@@ -1,6 +1,7 @@
 #pragma once
  
 #include <iostream>
+#include <type_traits>
 
 struct Vec2f;
 
@@ -11,7 +12,9 @@ struct Vec2f;
  */
 struct Vec2 {
   int x, y;
-  constexpr Vec2(int _x = 0, int _y = 0) : x(_x), y(_y) {}
+  
+  constexpr Vec2() = default;
+  constexpr Vec2(int _x, int _y) : x(_x), y(_y) {}
   constexpr Vec2(float _x, float _y)
       : x(static_cast<int>(_x)), y(static_cast<int>(_y)) {}
 
@@ -42,7 +45,10 @@ constexpr Vec2 operator/(const Vec2 a, const int b) {
  */
 struct Vec2f {
   float x, y;
-  constexpr Vec2f(float _x = 0.f, float _y = 0.f) : x(_x), y(_y) {}
+  
+  constexpr Vec2f() = default;
+  
+  constexpr Vec2f(float _x , float _y) : x(_x), y(_y) {}
 
   constexpr Vec2f(const Vec2& other)
       : x(static_cast<float>(other.x)), y(static_cast<float>(other.y)) {}
@@ -78,3 +84,17 @@ inline std::ostream& operator<<(std::ostream& out, const Vec2& a) {
   out << "( " << a.x << ", " << a.y << " )";
   return out;
 }
+
+
+
+static_assert(std::is_standard_layout_v<Vec2f>);
+static_assert(std::is_standard_layout_v<Vec2>);
+
+static_assert(std::is_trivially_copyable_v<Vec2f>);
+static_assert(std::is_trivially_copyable_v<Vec2>);
+
+static_assert(std::is_trivially_default_constructible_v<Vec2f>);
+static_assert(std::is_trivially_default_constructible_v<Vec2>);
+
+static_assert(std::is_trivially_destructible_v<Vec2f>);
+static_assert(std::is_trivially_destructible_v<Vec2>);

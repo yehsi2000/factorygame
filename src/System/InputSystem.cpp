@@ -83,7 +83,7 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
   switch (action) {
     // Player started interacting
     case InputAction::StartInteraction: {
-      Vec2f targetPos;
+      Vec2f targetPos{};
       if (type == InputType::MOUSE) {
         const Vec2f campos = util::GetCameraPosition(registry);
         const Vec2 mousepos = inputManager->GetMousePosition();

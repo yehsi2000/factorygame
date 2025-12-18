@@ -1,7 +1,9 @@
 #pragma once
  
-#include "Core/Type.h"
+#include "DataStruct/Type.h"
 #include <vector>
+
+// TODO : make trivially copyable, destructable
 
 struct BuildingComponent {
   int width = 1;

@@ -1,5 +1,5 @@
 #pragma once
-#include "Type.h" // For Vec2
+#include "DataStruct/Type.h" // For Vec2
 
 enum class MouseButton {
     LEFT,

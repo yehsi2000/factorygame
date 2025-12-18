@@ -32,7 +32,6 @@ struct TimerInstance {
 
 struct TimerComponent {
   std::array<TimerHandle, MAX_TIMERS_PER_ENTITY> timers;
-  TimerComponent() { timers.fill(INVALID_TIMER_HANDLE); }
 };
 
 /**

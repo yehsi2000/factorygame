@@ -14,8 +14,9 @@ private:
     IdType id;
 
 public:
-    // Default constructor creates a null entity.
-    constexpr Entity() : id(null_id) {}
+    // WARNING : if entity is created beside registry, that could be problem
+    // this is to make entity trivial structure
+    constexpr Entity() = default;
 
     // Explicit constructor to create an entity with a specific ID.
     constexpr explicit Entity(IdType id) : id(id) {}
@@ -49,3 +50,11 @@ namespace std {
         }
     };
 }
+
+static_assert(std::is_standard_layout_v<Entity>);
+
+static_assert(std::is_trivially_copyable_v<Entity>);
+
+static_assert(std::is_trivially_default_constructible_v<Entity>);
+
+static_assert(std::is_trivially_destructible_v<Entity>);
