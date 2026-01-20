@@ -44,7 +44,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   registry->EmplaceComponent<TransformComponent>(entity,
                                                  TransformComponent{worldPos});
 
-  BuildingComponent building;
+  BuildingComponent building{};
   building.width = 2;
   building.height = 2;
   registry->EmplaceComponent<BuildingComponent>(entity, building);
@@ -54,7 +54,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   SDL_Texture *spritesheet =
       assetManager->getTexture("assets/img/entity/assembling-machine.png");
 
-  SpriteComponent sprite;
+  SpriteComponent sprite{};
   sprite.texture = spritesheet;
 
   sprite.srcRect = {0, 0, 214, 226};
@@ -62,7 +62,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   registry->EmplaceComponent<SpriteComponent>(entity, sprite);
 
   // Add animation component
-  AnimationComponent anim;
+  AnimationComponent anim{};
 
   // 32 sprites in 4 rows, 8 columns, starts idle (not playing)
   util::AddAnimation(anim, AnimationName::ASSEMBLING_MACHINE_IDLE, spritesheet,
@@ -75,7 +75,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
   // Add assembling machine component
-  AssemblingMachineComponent machine;
+  AssemblingMachineComponent machine{};
   registry->EmplaceComponent<AssemblingMachineComponent>(entity, machine);
 
   return entity;
@@ -107,7 +107,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
                                                  TransformComponent{worldPos});
 
   // Add building component
-  BuildingComponent building;
+  BuildingComponent building{};
   building.width = 1;
   building.height = 1;
   registry->EmplaceComponent<BuildingComponent>(entity, building);
@@ -120,7 +120,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   SDL_Texture *spritesheet =
       assetManager->getTexture("assets/img/entity/mining-drill.png");
 
-  SpriteComponent sprite;
+  SpriteComponent sprite{};
   sprite.texture = spritesheet;
   // Start with first frame (idle state)
   sprite.renderOrder = 1000;
@@ -129,7 +129,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   registry->EmplaceComponent<SpriteComponent>(entity, sprite);
 
   // Add animation component
-  AnimationComponent anim;
+  AnimationComponent anim{};
 
   // 32 sprites in 4 rows, 8 columns, starts idle (not playing)
   util::AddAnimation(anim, AnimationName::DRILL_IDLE, spritesheet,
@@ -141,7 +141,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   anim.bIsPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
-  MiningDrillComponent drill;
+  MiningDrillComponent drill{};
 
   if (TileData *tile = world->GetTileAtTileIndex(tileIndex)) {
     drill.oreEntity = tile->oreEntity;
@@ -177,7 +177,7 @@ Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
                               render_order_t(100)});
 
   // Set Player Animation
-  AnimationComponent anim;
+  AnimationComponent anim{};
   util::AddAnimation(anim, AnimationName::PLAYER_IDLE, playerIdleSpritesheet,
                      {0, 12, 10.f, 16, 16, true});
   util::AddAnimation(anim, AnimationName::PLAYER_WALK, playerWalkSpritesheet,
@@ -192,7 +192,7 @@ Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
 
   registry->EmplaceComponent<MovementComponent>(player, 300.f);
 
-  PlayerStateComponent playerState;
+  PlayerStateComponent playerState{};
   playerState.bIsMining = false;
   playerState.interactingEntity = Entity::Null();
   playerState.clientID = clientID;

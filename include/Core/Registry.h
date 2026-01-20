@@ -38,6 +38,7 @@ class Registry {
   std::shared_mutex compArrayMutex;
 
   uint32_t livingEntityCount = 0;
+  uint32_t entityIdTop = 0;
   std::atomic<std::size_t> typeCounter = 0;
 
   std::vector<std::unique_ptr<IComponentArray>> componentArrays{};
@@ -106,10 +107,10 @@ class Registry {
 
  public:
   Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {
-    
-    for (int i = 1; i < MAX_ENTITIES; ++i) {
-      availableEntities.push(Entity(i));
-    }
+    // TODO : very inefficient, allocate numbers if needed
+    // for (int i = 1; i < MAX_ENTITIES; ++i) {
+    //   availableEntities.push(Entity(i));
+    // }
   }
 
   /**
@@ -118,8 +119,13 @@ class Registry {
    * @return The ID of the newly created entity.
    */
   Entity CreateEntity() {
+    // TODO : this should also be refactored with constructor
+    // Should allocated unused number and take destroyed entity number in O(1)
     assert(livingEntityCount < MAX_ENTITIES &&
            "Too many entities in existence.");
+    if(availableEntities.empty()){
+      availableEntities.push(Entity(++entityIdTop));
+    }
     Entity id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;

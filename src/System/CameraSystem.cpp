@@ -15,7 +15,8 @@ CameraSystem::CameraSystem(const SystemContext &context)
 
 void CameraSystem::InitCameraSystem() {
   cameraEntity = registry->CreateEntity();
-  registry->EmplaceComponent<CameraComponent>(cameraEntity);
+  registry->AddComponent<CameraComponent>(cameraEntity,
+                                          CameraComponent(Vec2f{0.f, 0.f}));
 }
 
 void CameraSystem::Update(float deltaTime) {

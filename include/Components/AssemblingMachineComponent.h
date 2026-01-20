@@ -14,16 +14,16 @@ enum class AssemblingMachineState {
 // TODO : make trivially copyable, destructable
 
 struct AssemblingMachineComponent {
-  RecipeID currentRecipe = RecipeID::None;
+  RecipeID currentRecipe;
   
-  AssemblingMachineState state = AssemblingMachineState::Idle;
+  AssemblingMachineState state;
   
   std::unordered_map<ItemID, int> inputInventory;
   
   std::unordered_map<ItemID, int> outputInventory;
   
-  bool bIsAnimating = false;
+  bool bIsAnimating;
   
-  bool bIsShowingUI = false;
-  bool bRecipeSelected = false;
+  bool bIsShowingUI;
+  bool bRecipeSelected;
 };

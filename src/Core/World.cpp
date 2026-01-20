@@ -20,11 +20,12 @@
 #include "Core/EventDispatcher.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
-#include "DataStruct/Type.h"
 #include "Core/World.h"
 #include "Core/WorldAssetManager.h"
+#include "DataStruct/Type.h"
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
+
 
 World::World(Registry *registry, WorldAssetManager *worldAssetManager,
              EntityFactory *factory, EventDispatcher *eventDispatcher,
@@ -81,8 +82,7 @@ void World::Update() {
 
 void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool bIsLocal) {
   Entity player = factory->CreatePlayer(this, pos, clientID, bIsLocal);
-  if (bIsLocal) 
-    localPlayer = player;
+  if (bIsLocal) localPlayer = player;
   clientPlayerMap[clientID] = player;
 }
 
@@ -124,8 +124,8 @@ TileData *World::GetTileAtTileIndex(int tileX, int tileY) {
     Vec2 localCoords = it->second.GetLocalTileIndex(tileX, tileY);
     return it->second.GetTile(localCoords.x, localCoords.y);
   }
-//TODO: 내가 들어오고 그다음 들어온 사람이 안보임
-// TODO : 같이 움직일 때 튕김
+  // TODO: 내가 들어오고 그다음 들어온 사람이 안보임
+  // TODO : 같이 움직일 때 튕김
   return nullptr;
 }
 
@@ -227,7 +227,8 @@ void World::LoadChunk(int chunkX, int chunkY) {
       for (int x = 0; x < CHUNK_WIDTH; ++x) {
         TileData *tile = chunk.GetTile(x, y);
         if (tile) {
-          if (tile->occupyingEntity != Entity::Null() && registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
+          if (tile->occupyingEntity != Entity::Null() &&
+              registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
             registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
           if (tile->oreEntity != Entity::Null())
             registry->RemoveComponent<InactiveComponent>(tile->oreEntity);
@@ -252,7 +253,8 @@ void World::UnloadChunk(Chunk &chunk) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
       TileData *tile = chunk.GetTile(x, y);
       if (tile) {
-        if (tile->occupyingEntity != Entity::Null() && !registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
+        if (tile->occupyingEntity != Entity::Null() &&
+            !registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
           registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
         if (tile->oreEntity != Entity::Null())
           registry->EmplaceComponent<InactiveComponent>(tile->oreEntity);
@@ -269,8 +271,8 @@ void World::GenerateChunk(Chunk &chunk) {
   noise.SetFrequency(0.05f);
   int cx = chunk.chunkX;
   int cy = chunk.chunkY;
-  Entity chunkDebugRect = registry->CreateEntity();
 #ifdef DRAW_DEBUG_RECTS
+  Entity chunkDebugRect = registry->CreateEntity();
   registry->EmplaceComponent<DebugRectComponent>(
       chunkDebugRect,
       DebugRectComponent{0, 0, TILE_PIXEL_SIZE * CHUNK_WIDTH,
@@ -281,7 +283,7 @@ void World::GenerateChunk(Chunk &chunk) {
           {(float)(chunk.chunkX * CHUNK_WIDTH * TILE_PIXEL_SIZE),
            float(chunk.chunkY * CHUNK_HEIGHT * TILE_PIXEL_SIZE)}});
 
-  TextComponent textComp;
+  TextComponent textComp{};
   snprintf(textComp.text, sizeof(textComp.text), "chunk %d:%d", chunk.chunkX,
            chunk.chunkY);
   textComp.color = SDL_Color{255, 255, 255, 255};
@@ -302,7 +304,7 @@ void World::GenerateChunk(Chunk &chunk) {
           TransformComponent{{(float)(worldTileX * TILE_PIXEL_SIZE),
                               (float)(worldTileY * TILE_PIXEL_SIZE)}});
 
-      TextComponent textComp;
+      TextComponent textComp{};
       snprintf(textComp.text, sizeof(textComp.text), "tile %d:%d", worldTileX,
                worldTileY);
       textComp.color = SDL_Color{255, 255, 255, 255};
@@ -345,23 +347,21 @@ void World::GenerateChunk(Chunk &chunk) {
               static_cast<float>(maxironOreAmount) * oreValue);
 
           registry->EmplaceComponent<TransformComponent>(
-              oreNode, TransformComponent{
-                           {static_cast<float>(worldTileX * TILE_PIXEL_SIZE),
-                            static_cast<float>(worldTileY * TILE_PIXEL_SIZE)}});
+              oreNode, TransformComponent(Vec2f(
+                           static_cast<float>(worldTileX * TILE_PIXEL_SIZE),
+                           static_cast<float>(worldTileY * TILE_PIXEL_SIZE))));
 
-          registry->EmplaceComponent<ResourceNodeComponent>(
-              oreNode, ResourceNodeComponent{oreAmount, OreType::Iron});
-
-          TextComponent textComp;
+          TextComponent textComp{};
           snprintf(textComp.text, sizeof(textComp.text), "%d %d", worldTileX,
                    worldTileY);
           textComp.color = SDL_Color{255, 255, 255, 255};
-          textComp.isDirty = true; // for initial draw
+          textComp.isDirty = true;  // for initial draw
+          // textComp.texture = nullptr;
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
           SDL_Texture *spritesheet =
               worldAssetManager->getTexture("assets/img/entity/iron-ore.png");
-          SpriteComponent spriteComp;
+          SpriteComponent spriteComp{};
           spriteComp.texture = spritesheet;
           // tile->debugValue = oreAmount;
 
@@ -395,11 +395,10 @@ void World::GenerateChunk(Chunk &chunk) {
 
   // Add transform component for positioning
   registry->EmplaceComponent<TransformComponent>(
-      chunkEntity, TransformComponent{{worldX, worldY}});
+      chunkEntity, TransformComponent(Vec2f(worldX, worldY)));
 
   // Create and add the chunk component with the pre-rendered texture
-  ChunkComponent chunkComp;
-  chunkComp.chunkTexture = worldAssetManager->CreateChunkTexture(chunk);
+  ChunkComponent chunkComp{};
   chunkComp.bNeedsRedraw = false;
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
 

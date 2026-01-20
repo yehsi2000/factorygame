@@ -122,7 +122,7 @@ void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
   SDL_Texture *texture = assetManager->getTexture(itemData.icon);
 
   if (texture) {
-    SpriteComponent sprite;
+    SpriteComponent sprite{};
     sprite.texture = texture;
     sprite.srcRect = {0, 0, ICONSIZE_BIG, ICONSIZE_BIG};
     sprite.renderRect = {0, 0, TILE_PIXEL_SIZE * width,
@@ -175,7 +175,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
     const ItemData &itemData = db.get(event.payload.id);
     SDL_Texture *texture = assetManager->getTexture(itemData.icon);
 
-    SpriteComponent sprite;
+    SpriteComponent sprite{};
     sprite.texture = texture;
     sprite.srcRect = {ICONSIZE_SMALL_XSTART, 0, ICONSIZE_SMALL, ICONSIZE_SMALL};
     sprite.renderRect = {0, 0, ICONSIZE_SMALL, ICONSIZE_SMALL};

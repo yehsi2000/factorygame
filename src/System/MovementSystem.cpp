@@ -50,8 +50,14 @@ void MovementSystem::ServerUpdate(float deltaTime) {
     Entity localPlayer = world->GetLocalPlayer();
     if (localPlayer != Entity::Null() &&
         registry->HasComponent<PlayerStateComponent>(localPlayer)) {
+      auto playerStateComp =
+          registry->GetComponent<PlayerStateComponent>(localPlayer);
+
       int ix = inputManager->GetXAxis();
       int iy = inputManager->GetYAxis();
+
+      if (playerStateComp.bIsMining) ix = 0, iy = 0;
+
       uint8_t bit{0};
       if (ix > 0)
         bit |= static_cast<uint8_t>(EPlayerInput::RIGHT);
@@ -118,8 +124,8 @@ void MovementSystem::ServerUpdate(float deltaTime) {
 
     // After movement, if it was based on a client request, queue a response.
     if (in.sequence != 0) {
-      pendingMoves->Push(
-          std::make_unique<MoveApplied>(psc.clientID, in.sequence, trans.position.x, trans.position.y));
+      pendingMoves->Push(std::make_unique<MoveApplied>(
+          psc.clientID, in.sequence, trans.position.x, trans.position.y));
       in.sequence = 0;  // Consume the input sequence
     }
   }

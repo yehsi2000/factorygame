@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <iostream>
 #include <type_traits>
 
@@ -12,26 +12,34 @@ struct Vec2f;
  */
 struct Vec2 {
   int x, y;
-  
+
   constexpr Vec2() = default;
   constexpr Vec2(int _x, int _y) : x(_x), y(_y) {}
   constexpr Vec2(float _x, float _y)
       : x(static_cast<int>(_x)), y(static_cast<int>(_y)) {}
 
-  constexpr Vec2 operator+(const Vec2& other) const {
-    return {x + other.x, y + other.y};
-  }
-
-  constexpr Vec2 operator-(const Vec2& other) const {
-    return {x - other.x, y - other.y};
-  }
+  constexpr friend auto operator<=>(const Vec2&, const Vec2&) = default;
 };
 
-constexpr Vec2 operator*(const Vec2 a, const int b) {
-  return {a.x * b, a.y * b};
+constexpr Vec2 operator+(Vec2 a, const Vec2& b) {
+  a.x += b.x;
+  a.y += b.y;
+  return a;
 }
 
-constexpr Vec2 operator/(const Vec2 a, const int b) {
+constexpr Vec2 operator-(Vec2 a, const Vec2& b) {
+  a.x -= b.x;
+  a.y -= b.y;
+  return a;
+}
+
+constexpr Vec2 operator*(Vec2 a, const int b) {
+  a.x *= b;
+  a.y *= b;
+  return a;
+}
+
+constexpr Vec2 operator/(Vec2 a, const int b) {
   if (b != 0)
     return {a.x / b, a.y / b};
   else
@@ -45,10 +53,10 @@ constexpr Vec2 operator/(const Vec2 a, const int b) {
  */
 struct Vec2f {
   float x, y;
-  
+
   constexpr Vec2f() = default;
-  
-  constexpr Vec2f(float _x , float _y) : x(_x), y(_y) {}
+
+  constexpr Vec2f(float _x, float _y) : x(_x), y(_y) {}
 
   constexpr Vec2f(const Vec2& other)
       : x(static_cast<float>(other.x)), y(static_cast<float>(other.y)) {}
@@ -56,23 +64,35 @@ struct Vec2f {
   constexpr explicit operator Vec2() const {
     return {static_cast<int>(x), static_cast<int>(y)};
   }
-
-  constexpr Vec2f operator+(const Vec2f& other) const {
-    return {x + other.x, y + other.y};
-  }
-
-  constexpr Vec2f operator-(const Vec2f& other) const {
-    return {x - other.x, y - other.y};
-  }
+  
+  constexpr friend auto operator<=>(const Vec2f&, const Vec2f&) = default;
 };
 
-constexpr Vec2f operator*(Vec2f a, float b) { return {a.x * b, a.y * b}; }
+constexpr Vec2f operator+(Vec2f a, Vec2f b) {
+  a.x += b.x;
+  a.y += b.y;
+  return a;
+}
+
+constexpr Vec2f operator-(Vec2f a, Vec2f b) {
+  a.x -= b.x;
+  a.y -= b.y;
+  return a;
+}
+
+constexpr Vec2f operator*(Vec2f a, float b) {
+  a.x *= b;
+  a.y *= b;
+  return a;
+}
 
 constexpr Vec2f operator/(Vec2f a, float b) {
-  if (b != 0.f)
-    return {a.x / b, a.y / b};
-  else
-    return a;
+  if (b != 0.f) {
+    a.x /= b;
+    a.y /= b;
+  }
+
+  return a;
 }
 
 inline std::ostream& operator<<(std::ostream& out, const Vec2f& a) {
@@ -84,8 +104,6 @@ inline std::ostream& operator<<(std::ostream& out, const Vec2& a) {
   out << "( " << a.x << ", " << a.y << " )";
   return out;
 }
-
-
 
 static_assert(std::is_standard_layout_v<Vec2f>);
 static_assert(std::is_standard_layout_v<Vec2>);

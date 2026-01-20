@@ -10,8 +10,8 @@
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/Event.h"
-#include "Core/InputManager.h"
 #include "Core/EventDispatcher.h"
+#include "Core/InputManager.h"
 #include "Core/Registry.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
@@ -62,8 +62,8 @@ void InteractionSystem::OnPlayerInteractEvent(
 
   Entity localPlayer = world->GetLocalPlayer();
   if (localPlayer == Entity::Null()) return;
-  auto& ptrans = registry->GetComponent<TransformComponent>(localPlayer);
-  if(maxInteractionDistance < util::dist(ptrans.position, event.target)){
+  auto &ptrans = registry->GetComponent<TransformComponent>(localPlayer);
+  if (maxInteractionDistance < util::dist(ptrans.position, event.target)) {
     return;
   }
 
@@ -91,6 +91,14 @@ void InteractionSystem::OnPlayerInteractEvent(
 
 void InteractionSystem::ResourceNodeInteractionHandler(Entity player,
                                                        Entity targetEntity) {
+  if (!registry->HasComponent<PlayerStateComponent>(player) ||
+      !registry->HasComponent<TransformComponent>(player) ||
+      !registry->HasComponent<AnimationComponent>(player) ||
+      !registry->HasComponent<SpriteComponent>(player) ||
+      !registry->HasComponent<TransformComponent>(targetEntity)) {
+    return;
+  }
+
   auto &playerStateComp = registry->GetComponent<PlayerStateComponent>(player);
   auto &playerTransComp = registry->GetComponent<TransformComponent>(player);
   auto &playerAnimComp = registry->GetComponent<AnimationComponent>(player);
@@ -120,8 +128,8 @@ void InteractionSystem::ResourceNodeInteractionHandler(Entity player,
   util::AttachTimer(registry, timerManager, player, TimerId::Mine, 1.0f, true);
 }
 
-void InteractionSystem::AssemblyMachineInteractionHandler(
-    Entity player, Entity targetEntity) {
+void InteractionSystem::AssemblyMachineInteractionHandler(Entity player,
+                                                          Entity targetEntity) {
   auto &machine =
       registry->GetComponent<AssemblingMachineComponent>(targetEntity);
 

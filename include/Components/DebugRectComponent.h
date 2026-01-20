@@ -1,6 +1,6 @@
 #pragma once
- 
-struct DebugRectComponent{
+
+struct DebugRectComponent {
   int offsetX;
   int offsetY;
   int width;

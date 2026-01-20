@@ -297,7 +297,6 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
 
 void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
                                    float zoom) {
-  // Render all building previews
   auto debugView = registry->view<DebugRectComponent, TransformComponent>();
 
   for (Entity entity : debugView) {
@@ -327,6 +326,7 @@ RenderSystem::~RenderSystem() {
     auto &text = registry->GetComponent<TextComponent>(entity);
     if (text.texture) {
       SDL_DestroyTexture(text.texture);
+      text.texture = nullptr;
     }
   }
 }
