@@ -340,7 +340,7 @@ void UISystem::AssemblingMachineUI() {
         // Show crafting UI
         ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
         std::string windowName =
-            "Assembling Machine##" + std::to_string(Entity::IdType(machineEntity));
+            "Assembling Machine##" + std::to_string(machineEntity.Id());
         bool bIsShowingUI = assemblingComp.bIsShowingUI;
 
         if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
@@ -463,7 +463,7 @@ void UISystem::AssemblingMachineRecipeSelection(Entity entity) {
   auto &assemblingComp =
       registry->GetComponent<AssemblingMachineComponent>(entity);
   if(registry->HasComponent<InactiveComponent>(entity)) return;
-  std::string windowName = "Select Recipe##" + std::to_string(Entity::IdType(entity));
+  std::string windowName = "Select Recipe##" + std::to_string(entity.Id());
   bool showSelection = !assemblingComp.bRecipeSelected;
 
   if (ImGui::Begin(
@@ -514,7 +514,7 @@ void UISystem::MiningDrillUI() {
     }
     auto &drillComp = registry->GetComponent<MiningDrillComponent>(drillEntity);
     if (drillComp.bIsShowingUI) {
-      std::string windowName = "Mining Drill##" + std::to_string(Entity::IdType(drillEntity));
+      std::string windowName = "Mining Drill##" + std::to_string(drillEntity.Id());
       bool bIsShowingUI = drillComp.bIsShowingUI;
       if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
                        ImGuiWindowFlags_AlwaysAutoResize |

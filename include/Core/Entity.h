@@ -4,52 +4,43 @@
 #include <functional>
 #include <limits>
 
-struct Entity
-{
-    using IdType = std::uint64_t;
+struct Entity {
+  using IdType = std::uint32_t;
 
-    static constexpr IdType null_id = std::numeric_limits<IdType>::max();
+  static constexpr IdType null_id = std::numeric_limits<IdType>::max();
+  friend class Registry;
 
-private:
-    IdType id;
+ private:
+  IdType id;
+  IdType generation;
 
-public:
-    // WARNING : if entity is created beside registry, that could be problem
-    // this is to make entity trivial structure
-    constexpr Entity() = default;
+ public:
+  // WARNING : if entity is created beside registry, that could be problem
+  // this is to make entity trivial structure
+  constexpr Entity() = default;
 
-    // Explicit constructor to create an entity with a specific ID.
-    constexpr explicit Entity(IdType id) : id(id) {}
+  // Explicit constructor to create an entity with a specific ID.
+  constexpr explicit Entity(IdType id) : id(id), generation(0) {}
 
-    // Check if the entity is valid (i.e., not null).
-    constexpr bool IsValid() const { return id != null_id; }
+  // Overload bool operator for easy validity checks (e.g., if (myEntity) { ...
+  // })
+  constexpr explicit operator bool() const { return id != null_id; }
 
-    // Overload bool operator for easy validity checks (e.g., if (myEntity) { ... })
-    constexpr explicit operator bool() const { return IsValid(); }
+  // Comparison operators
+  constexpr bool operator==(const Entity& other) const noexcept {
+    if (id == other.id && generation == other.generation) return true;
+    return false;
+  }
 
-    // Explicit conversion to the underlying type.
-    constexpr explicit operator IdType() const { return id; }
+  constexpr bool operator!=(const Entity& other) const noexcept {
+    return !(*this == other);
+  }
 
-    // Comparison operators
-    constexpr bool operator==(const Entity& other) const { return id == other.id; }
-    constexpr bool operator!=(const Entity& other) const { return id != other.id; }
-    constexpr bool operator<(const Entity& other) const { return id < other.id; }
+  constexpr IdType Id() const { return id; }
 
-    // Static function to get a null entity instance, for clarity.
-    static constexpr Entity Null() { return Entity(null_id); }
+  // Static function to get a null entity instance, for clarity.
+  static constexpr Entity Null() { return Entity(null_id); }
 };
-
-// Hash function for using Entity as a key in unordered maps/sets
-namespace std {
-    template <>
-    struct hash<Entity>
-    {
-        std::size_t operator()(const Entity& e) const
-        {
-            return std::hash<Entity::IdType>()(static_cast<Entity::IdType>(e));
-        }
-    };
-}
 
 static_assert(std::is_standard_layout_v<Entity>);
 

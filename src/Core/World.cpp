@@ -26,7 +26,6 @@
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
 
-
 World::World(Registry *registry, WorldAssetManager *worldAssetManager,
              EntityFactory *factory, EventDispatcher *eventDispatcher,
              TTF_Font *font, bool bIsServer)
@@ -351,13 +350,16 @@ void World::GenerateChunk(Chunk &chunk) {
                            static_cast<float>(worldTileX * TILE_PIXEL_SIZE),
                            static_cast<float>(worldTileY * TILE_PIXEL_SIZE))));
 
+          registry->EmplaceComponent<ResourceNodeComponent>(
+              oreNode, ResourceNodeComponent{oreAmount, OreType::Iron});
+
           TextComponent textComp{};
           snprintf(textComp.text, sizeof(textComp.text), "%d %d", worldTileX,
                    worldTileY);
           textComp.color = SDL_Color{255, 255, 255, 255};
           textComp.isDirty = true;  // for initial draw
-          // textComp.texture = nullptr;
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
+          // textComp.texture = nullptr;
 
           SDL_Texture *spritesheet =
               worldAssetManager->getTexture("assets/img/entity/iron-ore.png");
@@ -376,6 +378,8 @@ void World::GenerateChunk(Chunk &chunk) {
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
           spriteComp.renderRect = {0, 0, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);
+          registry->AddComponent<ResourceNodeComponent>(
+              oreNode, ResourceNodeComponent{oreAmount, OreType::Iron});
           tile->oreEntity = oreNode;
           tile->type = TileType::Stone;
         }
@@ -400,6 +404,7 @@ void World::GenerateChunk(Chunk &chunk) {
   // Create and add the chunk component with the pre-rendered texture
   ChunkComponent chunkComp{};
   chunkComp.bNeedsRedraw = false;
+  chunkComp.chunkTexture = worldAssetManager->CreateChunkTexture(chunk);
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
 
   // std::cout << "Generated Chunk at (" << chunk.chunkX << ", " << chunk.chunkY

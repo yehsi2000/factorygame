@@ -106,12 +106,7 @@ class Registry {
   }
 
  public:
-  Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {
-    // TODO : very inefficient, allocate numbers if needed
-    // for (int i = 1; i < MAX_ENTITIES; ++i) {
-    //   availableEntities.push(Entity(i));
-    // }
-  }
+  Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {}
 
   /**
    * @brief Creates a new entity.
@@ -123,7 +118,7 @@ class Registry {
     // Should allocated unused number and take destroyed entity number in O(1)
     assert(livingEntityCount < MAX_ENTITIES &&
            "Too many entities in existence.");
-    if(availableEntities.empty()){
+    if (availableEntities.empty()) {
       availableEntities.push(Entity(++entityIdTop));
     }
     Entity id = availableEntities.front();
@@ -148,6 +143,7 @@ class Registry {
       compArray->EntityDestroyed(entity);
     }
 
+    entity.generation++;
     availableEntities.push(entity);
     livingEntityCount--;
   }
@@ -233,10 +229,11 @@ class Registry {
     (arrays.push_back(GetComponentArray<TComponent>()), ...);
 
     // Find smallest array
-    std::sort(arrays.begin(), arrays.end(), [](const auto &a, const auto &b) {
+    auto minArray = std::min_element(arrays.begin(), arrays.end(), [](const auto &a, const auto &b) {
       return a->GetSize() < b->GetSize();
     });
-    std::vector<Entity> result = arrays[0]->GetAllEntities();
+
+    std::vector<Entity> result = (*minArray)->GetAllEntities();
 
     // Prune entities which doesn't have all components passed
     for (size_t i = 1; i < arrays.size(); ++i) {
@@ -248,17 +245,5 @@ class Registry {
     }
 
     return result;
-  }
-
-  /**
-   * @brief Iterates over all entities with a specific component.
-   * @tparam T The component type to iterate over.
-   * @tparam Func The function or lambda to execute for each component.
-   * @param func The function to call, which receives the component as an
-   * argument.
-   */
-  template <typename T, typename Func>
-  void forEach(Func func) {
-    GetComponentArray<T>()->forEach(func);
   }
 };

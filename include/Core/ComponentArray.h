@@ -1,11 +1,13 @@
 #pragma once
- 
+
+#include <array>
 #include <cassert>
 #include <cstddef>
-#include <unordered_map>
+#include <limits>
 #include <vector>
 
 #include "Core/Entity.h"
+
 
 /**
  * @brief Interface for component arrays.
@@ -17,13 +19,11 @@ class IComponentArray {
  public:
   virtual ~IComponentArray() = default;
   virtual void EntityDestroyed(Entity entity) = 0;
-  virtual bool HasEntity(Entity entity) = 0;
-  virtual std::size_t GetSize() = 0;
+  virtual bool HasEntity(Entity entity) const = 0;
+  virtual std::size_t GetSize() const = 0;
   virtual std::vector<Entity> GetAllEntities() = 0;
 };
 
-// TODO : in case of bottleneck -> refactor to entt-style sparse map
-// (using pagenation, tombstone, reverse iteration)
 /**
  * @brief A cache-friendly container for a single type of component.
  * @details Stores components of a specific type in a contiguous array for fast
@@ -32,88 +32,112 @@ class IComponentArray {
  * components.
  * @tparam T The type of component to store.
  */
+
 template <typename T>
 class ComponentArray : public IComponentArray {
  private:
-  // contiguous memory allocation for fast read
-  // TODO : non-pod component's reallocation is expensive
+  static constexpr std::size_t PAGE_SIZE =
+      4096;  // Pagination for memory reduction
+  static constexpr uint32_t TOMBSTONE =
+      std::numeric_limits<uint32_t>::max();  // invalid value
+
+  std::vector<std::unique_ptr<std::array<uint32_t, PAGE_SIZE>>>
+      sparse;  // entity id -> dense index
+  std::vector<Entity> dense;
   std::vector<T> componentArray;
 
-  // entityID -> componentArray index
-  std::unordered_map<Entity, std::size_t> entityToIndexMap;
-  // componentArray index -> entityID (for quick remove)
-  std::unordered_map<std::size_t, Entity> indexToEntityMap;
-
- public:
-  void AddData(Entity entity, T &&component) {
-    assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
-           "Component added to same entity more than once.");
-
-    std::size_t newIndex = componentArray.size();
-    entityToIndexMap[entity] = newIndex;
-    indexToEntityMap[newIndex] = entity;
-    componentArray.emplace_back(std::move(component));
+  uint32_t *GetPage(std::size_t pageIdx) const {
+    // page out of bound
+    if (pageIdx >= sparse.size() || !sparse[pageIdx]) {
+      return nullptr;
+    }
+    return sparse[pageIdx]->data();
   }
 
-  void RemoveData(Entity entity) {
-    assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
-           "Removing non-existent component.");
+  uint32_t *GetPageRequired(std::size_t pageIdx) {
+    // page out of bound
+    if (pageIdx >= sparse.size()) {
+      sparse.resize(pageIdx + 1);
+    }
+    // in-range but page does not exists
+    if (!sparse[pageIdx]) {
+      sparse[pageIdx] =
+          std::make_unique<std::array<uint32_t, PAGE_SIZE>>();  // new page
+      sparse[pageIdx]->fill(TOMBSTONE);  // invalidate all entries
+    }
 
-    std::size_t indexOfRemovedEntity = entityToIndexMap[entity];
-    std::size_t indexOfLastElement = componentArray.size() - 1;
-    componentArray[indexOfRemovedEntity] = std::move(componentArray[indexOfLastElement]);
+    return sparse[pageIdx]->data();
+  }
 
-    Entity entityOfLastElement = indexToEntityMap[indexOfLastElement];
-    entityToIndexMap[entityOfLastElement] = indexOfRemovedEntity;
-    indexToEntityMap[indexOfRemovedEntity] = entityOfLastElement;
+ public:
+  bool HasEntity(Entity entity) const override {
+    std::size_t page = entity.Id() / PAGE_SIZE;
+    std::size_t offset = entity.Id() % PAGE_SIZE;
+    auto *p = GetPage(page);
+    if (!p) return false;
+    uint32_t idx = p[offset];
+    return idx < dense.size() && dense[idx] == entity;
+  }
 
-    componentArray.pop_back();
-    entityToIndexMap.erase(entity);
-    indexToEntityMap.erase(indexOfLastElement);
+  void AddData(Entity entity, T &&component) {
+    // assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
+    //        "Component added to same entity more than once.");
+    std::size_t page = entity.Id() / PAGE_SIZE;
+    std::size_t offset = entity.Id() % PAGE_SIZE;
+    auto *p = GetPageRequired(page);
+    p[offset] = static_cast<uint32_t>(dense.size());
+    dense.push_back(entity);
+    componentArray.push_back(std::move(component));
   }
 
   template <typename... Args>
   void EmplaceData(Entity entity, Args &&...args) {
-    assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
-           "Component added to same entity more than once.");
-    std::size_t newIndex = componentArray.size();
-    entityToIndexMap[entity] = newIndex;
-    indexToEntityMap[newIndex] = entity;
+    // assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
+    //        "Component added to same entity more than once.");
+    std::size_t page = entity.Id() / PAGE_SIZE;
+    std::size_t offset = entity.Id() % PAGE_SIZE;
+    auto *p = GetPageRequired(page);
+    p[offset] = static_cast<uint32_t>(dense.size());
+    dense.push_back(entity);
     componentArray.emplace_back(std::forward<Args>(args)...);
   }
 
+  // TODO : lazy removal
+  void RemoveData(Entity entity) {
+    std::size_t page = entity.Id() / PAGE_SIZE;
+    std::size_t offset = entity.Id() % PAGE_SIZE;
+    auto *p = GetPage(page);
+    if (!p) return;
+
+    uint32_t idx = p[offset];
+
+    Entity lastEntity = dense.back();
+    std::size_t lastPage = lastEntity.Id() / PAGE_SIZE;
+    std::size_t lastOffset = lastEntity.Id() % PAGE_SIZE;
+
+    dense[idx] = lastEntity;
+    componentArray[idx] = std::move(componentArray.back());
+    sparse[lastPage]->at(lastOffset) = idx;
+
+    dense.pop_back();
+    componentArray.pop_back();
+    p[offset] = TOMBSTONE;
+  }
+
   T &GetData(Entity entity) {
-    assert(entityToIndexMap.find(entity) != entityToIndexMap.end() &&
-           "Retrieving non-existent component.");
-    return componentArray[entityToIndexMap[entity]];
+    std::size_t page = entity.Id() / PAGE_SIZE;
+    std::size_t offset = entity.Id() % PAGE_SIZE;
+    return componentArray[sparse[page]->at(offset)];
   }
 
-  template <typename Func>
-  void forEach(Func func) {
-    for (int i = static_cast<int>(componentArray.size()) - 1; i >= 0; --i) {
-      func(indexToEntityMap.at(i), componentArray[i]);
-    }
-  }
-
-  std::vector<Entity> GetAllEntities() override {
-    std::vector<Entity> res;
-    res.reserve(entityToIndexMap.size());
-    for (auto &[id, _] : entityToIndexMap) {
-      res.push_back(id);
-    }
-    return res;
-  }
-
-  bool HasEntity(Entity entity) override {
-    return entityToIndexMap.count(entity) > 0;
-  }
+  std::vector<Entity> GetAllEntities() override { return dense; }
 
   // Called when entity is destoryed
   void EntityDestroyed(Entity entity) override {
-    if (entityToIndexMap.count(entity)) {
+    if (HasEntity(entity)) {
       RemoveData(entity);
     }
   }
 
-  std::size_t GetSize() override { return componentArray.size(); }
+  std::size_t GetSize() const override { return componentArray.size(); }
 };
