@@ -19,7 +19,7 @@ class TimerExpireSystem {
   TimerManager* timerManager;
 
  public:
-  TimerExpireSystem(const SystemContext& context);
+  explicit TimerExpireSystem(const SystemContext& context);
   ~TimerExpireSystem();
   void Update();
 };

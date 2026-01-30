@@ -58,13 +58,13 @@ struct Vec2f {
 
   constexpr Vec2f(float _x, float _y) : x(_x), y(_y) {}
 
-  constexpr Vec2f(const Vec2& other)
+  constexpr explicit Vec2f(const Vec2& other)
       : x(static_cast<float>(other.x)), y(static_cast<float>(other.y)) {}
 
   constexpr explicit operator Vec2() const {
     return {static_cast<int>(x), static_cast<int>(y)};
   }
-  
+
   constexpr friend auto operator<=>(const Vec2f&, const Vec2f&) = default;
 };
 

@@ -1,6 +1,6 @@
 #pragma once
- 
-#include "SDL.h"
+
+#include "SDL_render.h"
 
 /**
  * @brief A custom deleter for SDL_Texture smart pointers.
@@ -9,6 +9,7 @@
  * out of scope. This helps prevent resource leaks by simplifying texture
  * memory management.
  */
+
 struct TextureDeleter {
   void operator()(SDL_Texture* texture) const {
     if (texture) {

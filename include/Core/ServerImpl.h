@@ -1,6 +1,5 @@
 #pragma once
  
-#include <cstdint>
 #include "Core/Packet.h"
 #include "DataStruct/ThreadSafeQueue.h"
 

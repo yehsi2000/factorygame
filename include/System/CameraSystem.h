@@ -1,7 +1,7 @@
 #pragma once
- 
-#include "Core/SystemContext.h"
+
 #include "Core/Entity.h"
+#include "Core/SystemContext.h"
 
 class CameraSystem {
   Registry* registry;
@@ -11,12 +11,12 @@ class CameraSystem {
   Entity localPlayer = Entity::Null();
 
  public:
-  CameraSystem(const SystemContext& context);
+  explicit CameraSystem(const SystemContext& context);
   ~CameraSystem();
   void InitCameraSystem();
 
   void Update(float deltaTime);
-  
+
  private:
   void UpdateCameraFollow(float deltaTime);
   void UpdateCameraDrag(float deltaTime);

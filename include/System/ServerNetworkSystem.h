@@ -29,7 +29,7 @@ class ServerNetworkSystem {
   ThreadSafeQueue<MoveAppliedPtr>* pendingMoves;
 
  public:
-  ServerNetworkSystem(const SystemContext& context);
+  explicit ServerNetworkSystem(const SystemContext& context);
   ~ServerNetworkSystem();
   void Update(float deltatime);
   void AddPlayerToMap(clientid_t clientID, std::string name);

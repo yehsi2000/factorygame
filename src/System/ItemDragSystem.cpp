@@ -4,7 +4,6 @@
 
 #include "Common.h"
 #include "Components/BuildingPreviewComponent.h"
-#include "Components/CameraComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/AssetManager.h"
@@ -18,7 +17,6 @@
 #include "Core/World.h"
 #include "Util/CameraUtil.h"
 #include "imgui.h"
-#include "imgui_internal.h"
 
 ItemDragSystem::ItemDragSystem(const SystemContext &context)
     : registry(context.registry),
@@ -74,7 +72,7 @@ void ItemDragSystem::UpdatePreviewEntity() {
 
   float zoom = util::GetCameraZoom(registry);
   Vec2f mouseWorldPos =
-      util::ScreenToWorld(inputManager->GetMousePosition(),
+      util::ScreenToWorld(Vec2f(inputManager->GetMousePosition()),
                           util::GetCameraPosition(registry),
                           inputManager->GetScreenSize(), zoom);
 
@@ -83,7 +81,7 @@ void ItemDragSystem::UpdatePreviewEntity() {
   auto &previewComp =
       registry->GetComponent<BuildingPreviewComponent>(previewEntity);
 
-  Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
+  Vec2f snapWorldPos = Vec2f(tileIndex * TILE_PIXEL_SIZE);
 
   auto &transform = registry->GetComponent<TransformComponent>(previewEntity);
   transform.position = snapWorldPos;
@@ -143,7 +141,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
       db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
     Vec2 tileIndex = world->GetTileIndexFromWorldPosition(event.worldPos);
 
-    Vec2f snapWorldPos = (tileIndex * TILE_PIXEL_SIZE);
+    Vec2f snapWorldPos = Vec2f(tileIndex * TILE_PIXEL_SIZE);
 
     Entity newBuilding = Entity::Null();
     if (event.payload.id == ItemID::AssemblingMachine) {

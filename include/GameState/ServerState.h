@@ -1,10 +1,8 @@
 ﻿#pragma once
  
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <tuple>
-#include <vector>
 
 #include "Core/Entity.h"
 #include "Core/EventDispatcher.h"
@@ -13,7 +11,6 @@
 #include "DataStruct/ThreadSafeQueue.h"
 #include "GameState/IGameState.h"
 #include "SDL_ttf.h"
-#include "imgui.h"
 
 class GEngine;
 class CommandQueue;

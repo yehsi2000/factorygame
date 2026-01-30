@@ -9,7 +9,8 @@
 CameraSystem::CameraSystem(const SystemContext &context)
     : registry(context.registry),
       world(context.world),
-      inputManager(context.inputManager) {
+      inputManager(context.inputManager),
+      cameraEntity(Entity::Null()) { // Explicitly initialize cameraEntity
   InitCameraSystem();
 }
 
@@ -87,7 +88,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   // Continue dragging
   if (camera.bIsDragging &&
       inputManager->IsMouseButtonDown(MouseButton::RIGHT)) {
-    Vec2f currentMousePos = inputManager->GetMousePosition();
+    Vec2f currentMousePos = Vec2f(inputManager->GetMousePosition());
     Vec2f mouseDelta =
         Vec2f(inputManager->GetMousePosition()) - camera.dragStartPos;
 

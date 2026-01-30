@@ -1,12 +1,8 @@
 #pragma once
  
-#include <algorithm>
-#include <cstring>
 
 #include "Commands/Command.h"
-#include "Components/InventoryComponent.h"
 #include "Core/EventDispatcher.h"
-#include "Core/Item.h"
 #include "Core/Packet.h"
 #include "Core/Registry.h"
 #include "Core/World.h"

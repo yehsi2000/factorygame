@@ -1,13 +1,12 @@
 ﻿#pragma once
- 
+
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#include "DataStruct/RingBuffer.h"
 #include "Core/SystemContext.h"
-
+#include "DataStruct/RingBuffer.h"
 
 class EventHandle;
 class NetPredictionComponent;
@@ -39,9 +38,9 @@ class ClientNetworkSystem {
   std::string myName;
 
  public:
-  ClientNetworkSystem(const SystemContext& context);
+  explicit ClientNetworkSystem(const SystemContext& context);
   ~ClientNetworkSystem();
-  void Init(std::u8string playerName);
+  void Init(const std::u8string& playerName);
   void Update(float deltatime);
 
  private:
@@ -52,7 +51,6 @@ class ClientNetworkSystem {
   void ChatBroadcastHandler(const uint8_t* rp, std::size_t packetSize);
   void TransformSnapshotHandler(const uint8_t* rp, double now);
   void ClientMoveResHandler(const uint8_t* rp);
-  
 
   void ApplyMovePrediction(NetPredictionComponent& pred,
                            const MovementComponent& move, uint8_t inputBit,
@@ -60,7 +58,7 @@ class ClientNetworkSystem {
   void ApplyRemoteInterpolation(double now);
   void ApplyLocalSmoothing(float deltaTime);
 
-  void SendMessage(std::shared_ptr<std::string> message);
+  void SendMessage(const std::shared_ptr<std::string>& message);
   void SendMoveRequest(float deltaTime);
 
   // For client-side prediction and server reconciliation

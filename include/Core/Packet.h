@@ -47,8 +47,8 @@ enum class ESendType {
  * it's a unicast message.
  */
 struct SendRequest {
-  ESendType type;
-  clientid_t targetClientId;  // positive int for UNICAST (0 for BROADCAST)
+  ESendType type{};
+  clientid_t targetClientId{};  // positive int for UNICAST (0 for BROADCAST)
   Packet packet;
 
   SendRequest() = default;
@@ -67,7 +67,7 @@ struct SendRequest {
  * packet data and the ID of the client who sent it.
  */
 struct RecvPacket {
-  clientid_t senderClientId;
+  clientid_t senderClientId{};
   PacketPtr packet;
 
   RecvPacket() = default;

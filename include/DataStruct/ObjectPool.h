@@ -12,7 +12,7 @@ class ObjectPool {
   std::function<std::unique_ptr<T>()> createFunction;
 
  public:
-  ObjectPool(std::function<std::unique_ptr<T>()> createFunc)
+  explicit ObjectPool(std::function<std::unique_ptr<T>()> createFunc)
       : createFunction(std::move(createFunc)) {}
 
   /**

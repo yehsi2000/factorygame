@@ -6,7 +6,6 @@
 #include "Components/SpriteComponent.h"
 #include "Core/Entity.h"
 #include "Core/Registry.h"
-#include "SDL_render.h"
 
 AnimationSystem::AnimationSystem(const SystemContext &context)
     : registry(context.registry) {}

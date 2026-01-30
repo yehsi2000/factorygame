@@ -15,7 +15,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <vector>
 
 class WindowsSocketImpl : public SocketImpl {
   SOCKET connectSocket = INVALID_SOCKET;

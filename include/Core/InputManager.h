@@ -1,8 +1,8 @@
 #pragma once
 
 #include <vector>
-#include "SDL.h"
 #include "Core/InputState.h"
+#include "SDL_events.h"
 
 struct SDL_Window;
 struct ImGuiIO;
@@ -17,7 +17,7 @@ struct ImGuiIO;
  */
 class InputManager {
 public:
-    InputManager(SDL_Window* window);
+    explicit InputManager(SDL_Window* window);
     ~InputManager();
 
     void PrepareForNewFrame();

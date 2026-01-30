@@ -14,7 +14,6 @@
 #include "DataStruct/ThreadSafeQueue.h"
 #include "GameState/IGameState.h"
 #include "SDL_ttf.h"
-#include "imgui.h"
 
 class GEngine;
 class CommandQueue;

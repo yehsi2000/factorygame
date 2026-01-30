@@ -3,12 +3,7 @@
 #include "Core/GEngine.h"
 #include "GameState/ClientState.h"
 #include "GameState/ServerState.h"
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_ttf.h"
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
 
 void MainMenuState::Init(GEngine* engine) {
   gEngine = engine;

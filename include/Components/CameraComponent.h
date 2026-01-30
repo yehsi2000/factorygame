@@ -15,7 +15,7 @@ struct CameraComponent {
 
   constexpr CameraComponent() = default;
 
-  constexpr CameraComponent(Vec2f initialPos, float speed = 10.f)
+  constexpr explicit CameraComponent(Vec2f initialPos, float speed = 10.f)
       : position(initialPos), target(initialPos), offset{0.0f, 0.0f},
         followSpeed(speed), bIsFollowing(true), bIsDragging(false),
         dragStartPos{0.0f, 0.0f}, cameraStartPos{0.0f, 0.0f}, zoom(1.0f) {}

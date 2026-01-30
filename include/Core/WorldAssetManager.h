@@ -4,7 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "SDL.h"
 #include "DataStruct/TextureDeleter.h"
 
 class Chunk;
@@ -26,6 +25,6 @@ class WorldAssetManager {
   // TODO : refactor cache not to use string key in hash map but to use int and vector cache
   SDL_Texture* CreateChunkTexture(Chunk& chunk);
   SDL_Texture* getTexture(const std::string& path);
-  WorldAssetManager(SDL_Renderer* renderer);
+  explicit WorldAssetManager(SDL_Renderer* renderer);
   ~WorldAssetManager();
 };

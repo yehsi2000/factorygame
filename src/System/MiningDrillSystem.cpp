@@ -8,7 +8,6 @@
 #include "Core/Entity.h"
 #include "Core/Item.h"
 #include "Core/Registry.h"
-#include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Util/AnimUtil.h"
 #include "Util/TimerUtil.h"

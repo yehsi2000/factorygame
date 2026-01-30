@@ -3,9 +3,7 @@
 #include <cstring>
 
 #include "Core/InputManager.h"
-#include "SDL.h"
 #include "imgui.h"
-#include "imgui_internal.h"
 
 InputManager::InputManager(SDL_Window* window) : window(window), io(ImGui::GetIO()) {
   currentKeyState = SDL_GetKeyboardState(nullptr);
@@ -79,10 +77,10 @@ void InputManager::UpdateContinuousState() {
     return;
   }
 
-  state.axis.x = static_cast<float>(currentKeyState[SDL_SCANCODE_D] -
-                                    currentKeyState[SDL_SCANCODE_A]);
-  state.axis.y = static_cast<float>(currentKeyState[SDL_SCANCODE_S] -
-                                    currentKeyState[SDL_SCANCODE_W]);
+  state.axis.x =
+      currentKeyState[SDL_SCANCODE_D] - currentKeyState[SDL_SCANCODE_A];
+  state.axis.y =
+      currentKeyState[SDL_SCANCODE_S] - currentKeyState[SDL_SCANCODE_W];
 }
 
 bool InputManager::IsKeyDown(SDL_Scancode key) const {

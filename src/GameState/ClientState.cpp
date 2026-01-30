@@ -6,30 +6,6 @@
 #include <utility>
 #include <optional>
 
-#include "Components/AnimationComponent.h"
-#include "Components/AssemblingMachineComponent.h"
-#include "Components/BuildingComponent.h"
-#include "Components/BuildingPreviewComponent.h"
-#include "Components/CameraComponent.h"
-#include "Components/ChunkComponent.h"
-#include "Components/DebugRectComponent.h"
-#include "Components/InactiveComponent.h"
-#include "Components/InputStateComponent.h"
-#include "Components/InterpBufferComponent.h"
-#include "Components/InventoryComponent.h"
-#include "Components/LocalPlayerComponent.h"
-#include "Components/MiningDrillComponent.h"
-#include "Components/MovableComponent.h"
-#include "Components/MovementComponent.h"
-#include "Components/NetPredictionComponent.h"
-#include "Components/PlayerStateComponent.h"
-#include "Components/RefineryComponent.h"
-#include "Components/ResourceNodeComponent.h"
-#include "Components/SpriteComponent.h"
-#include "Components/TextComponent.h"
-#include "Components/TimerComponent.h"
-#include "Components/TransformComponent.h"
-#include "Core/AssetManager.h"
 #include "Core/CommandQueue.h"
 #include "Core/EntityFactory.h"
 #include "Core/Event.h"
@@ -41,7 +17,6 @@
 #include "DataStruct/ThreadSafeQueue.h"
 #include "Core/TimerManager.h"
 #include "Core/World.h"
-#include "Core/WorldAssetManager.h"
 #include "GameState/IGameState.h"
 #include "GameState/MainMenuState.h"
 #include "System/AnimationSystem.h"
@@ -61,7 +36,6 @@
 #include "System/TimerSystem.h"
 #include "System/UISystem.h"
 #include "Util/PacketUtil.h"
-#include "imgui_impl_sdlrenderer2.h"
 
 ClientState::ClientState() : gEngine(nullptr), bIsQuit(false) {}
 ClientState::~ClientState() = default;

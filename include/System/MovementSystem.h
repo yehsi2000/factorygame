@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include "Core/SystemContext.h"
 
 class MovementSystem {
@@ -13,7 +13,7 @@ class MovementSystem {
   ThreadSafeQueue<MoveAppliedPtr>* pendingMoves;
 
  public:
-  MovementSystem(const SystemContext& context);
+  explicit MovementSystem(const SystemContext& context);
   ~MovementSystem();
   void Update(float deltaTime);
 

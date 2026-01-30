@@ -1,10 +1,6 @@
 #include "Util/AnimUtil.h"
 
-#include <utility>
-
 #include "Components/AnimationComponent.h"
-#include "SDL.h"
-
 
 namespace util {
 
@@ -22,7 +18,7 @@ void SetAnimation(AnimationName name, AnimationComponent &animComp,
 
 void AddAnimation(AnimationComponent &animComp, const AnimationName &animName,
                   SDL_Texture *texture, AnimationSequence &&animSequence) {
-  std::size_t animIdx = static_cast<std::size_t>(animName);
+  auto animIdx = static_cast<std::size_t>(animName);
   animComp.animations[animIdx] = std::move(animSequence);
   animComp.animations[animIdx].texture = texture;
   int sheetWidth, sheetHeight;

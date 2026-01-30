@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 
 #include "Core/Entity.h"
@@ -20,7 +20,7 @@ class AssemblingMachineSystem {
   std::unique_ptr<EventHandle> CraftOutputEventHandle;
 
  public:
-  AssemblingMachineSystem(const SystemContext &context);
+  explicit AssemblingMachineSystem(const SystemContext &context);
   ~AssemblingMachineSystem();
   void Update();
 
@@ -40,6 +40,5 @@ class AssemblingMachineSystem {
   void ConsumeIngredients(Entity entity, AssemblingMachineComponent &machine);
   void ProduceOutput(Entity entity);
   void StartCrafting(Entity entity, AssemblingMachineComponent &machine);
-  void UpdateAnimationState(Entity entity,
-                            AssemblingMachineComponent &machine);
+  void UpdateAnimationState(Entity entity, AssemblingMachineComponent &machine);
 };

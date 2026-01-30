@@ -2,34 +2,18 @@
 
 #include <cassert>
 
-#include "Common.h"
-#include "Components/AnimationComponent.h"
-#include "Components/BuildingPreviewComponent.h"
-#include "Components/CameraComponent.h"
-#include "Components/InactiveComponent.h"
-#include "Components/PlayerStateComponent.h"
-#include "Components/SpriteComponent.h"
-#include "Components/TimerComponent.h"
 #include "Components/TransformComponent.h"
-#include "Core/AssetManager.h"
 #include "Core/EntityFactory.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
 #include "Core/GEngine.h"
 #include "Core/InputManager.h"
-#include "Core/Item.h"
 #include "Core/Registry.h"
-#include "Core/TileData.h"
 #include "Core/World.h"
 #include "SDL_events.h"
-#include "Util/AnimUtil.h"
 #include "Util/CameraUtil.h"
-#include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 #include "boost/functional/hash.hpp"
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_internal.h"
 
 InputSystem::InputSystem(const SystemContext &context)
     : registry(context.registry),
@@ -66,11 +50,9 @@ void InputSystem::Update() {
   }
 
   for (auto &[key, action] : keyBindings) {
-    if (inputManager->WasKeyPressedThisFrame(key.Scancode) &&
-        key.EventType == SDL_KEYDOWN) {
-      HandleInputAction(action, InputType::KEYBOARD);
-    } else if (inputManager->WasKeyReleasedThisFrame(key.Scancode) &&
-               key.EventType == SDL_KEYUP) {
+    bool pressed = inputManager->WasKeyPressedThisFrame(key.Scancode) && key.EventType == SDL_KEYDOWN;
+    bool released = inputManager->WasKeyReleasedThisFrame(key.Scancode) && key.EventType == SDL_KEYUP;
+    if (pressed || released) {
       HandleInputAction(action, InputType::KEYBOARD);
     }
   }
@@ -86,7 +68,7 @@ void InputSystem::HandleInputAction(InputAction action, InputType type) {
       Vec2f targetPos{};
       if (type == InputType::MOUSE) {
         const Vec2f campos = util::GetCameraPosition(registry);
-        const Vec2 mousepos = inputManager->GetMousePosition();
+        const Vec2f mousepos = Vec2f(inputManager->GetMousePosition());
         targetPos = util::ScreenToWorld(mousepos, campos,
                                         inputManager->GetScreenSize());
       } else if (type == InputType::KEYBOARD) {

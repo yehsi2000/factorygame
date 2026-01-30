@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
+#include <type_traits>
 #include <limits>
 
 struct Entity {
@@ -22,11 +22,9 @@ struct Entity {
   // Explicit constructor to create an entity with a specific ID.
   constexpr explicit Entity(IdType id) : id(id), generation(0) {}
 
-  // Overload bool operator for easy validity checks (e.g., if (myEntity) { ...
-  // })
+  // bool operator for easy validity checks
   constexpr explicit operator bool() const { return id != null_id; }
 
-  // Comparison operators
   constexpr bool operator==(const Entity& other) const noexcept {
     if (id == other.id && generation == other.generation) return true;
     return false;

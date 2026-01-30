@@ -10,10 +10,8 @@
 #include "Core/Item.h"
 #include "Core/Recipe.h"
 #include "Core/Registry.h"
-#include "Core/TimerManager.h"
 #include "Util/AnimUtil.h"
 #include "Util/TimerUtil.h"
-
 
 AssemblingMachineSystem::AssemblingMachineSystem(const SystemContext &context)
     : registry(context.registry),
@@ -128,13 +126,13 @@ bool AssemblingMachineSystem::HasEnoughIngredients(Entity entity) const {
 
   const auto &recipeData =
       RecipeDatabase::instance().get(machine.currentRecipe);
-  for (const auto &ingredient : recipeData.ingredients) {
-    auto it = machine.inputInventory.find(ingredient.itemId);
-    if (it == machine.inputInventory.end() || it->second < ingredient.amount) {
-      return false;
-    }
-  }
-  return true;
+
+  return std::ranges::all_of(
+      recipeData.ingredients, [&](const auto &ingredient) {
+        auto it = machine.inputInventory.find(ingredient.itemId);
+        return it != machine.inputInventory.end() &&
+               it->second >= ingredient.amount;
+      });
 }
 
 bool AssemblingMachineSystem::CanStoreOutput(Entity entity) const {

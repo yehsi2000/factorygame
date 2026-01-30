@@ -127,7 +127,7 @@ inline void GetHeader(const uint8_t*& beginPtr, enum PACKET& packetID,
   size = Read16BigEnd(beginPtr);
 }
 
-inline PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message,
+inline PacketPtr ChatBroadcastPacket(const std::shared_ptr<std::string>& message,
                                      clientid_t senderId) {
   const std::size_t payload = sizeof(clientid_t) + message->size();
   const std::size_t total = sPacketHeader + payload;
@@ -139,8 +139,8 @@ inline PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message,
   return packet;
 }
 
-inline PacketPtr ChatBroadcastPacket(std::shared_ptr<std::string> message) {
-  return ChatBroadcastPacket(std::move(message), 0);
+inline PacketPtr ChatBroadcastPacket(const std::shared_ptr<std::string>& message) {
+  return ChatBroadcastPacket(message, 0);
 }
 
 }  // namespace util

@@ -1,9 +1,7 @@
 #pragma once
  
-#include <utility>
 
 #include "Core/Entity.h"
-#include "Core/Item.h"
 
 enum class MiningDrillState { Idle=0, TileEmpty, Mining, OutputFull };
 

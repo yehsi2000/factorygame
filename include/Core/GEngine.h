@@ -3,10 +3,8 @@
 #include <memory>
 #include <vector>
 
-#include "Core/Entity.h"
 #include "GameState/IGameState.h"
 #include "SDL_ttf.h"
-#include "imgui.h"
 
 class AssetManager;
 class WorldAssetManager;
@@ -58,5 +56,5 @@ class GEngine {
   }
   inline InputManager *GetInputManager() { return inputManager.get(); }
   inline void Stop() { bIsRunning = false; }
-  inline bool IsChangeRequested() { return changeStateRequested; }
+  inline bool IsChangeRequested() const { return changeStateRequested; }
 };

@@ -1,6 +1,6 @@
 #pragma once
  
-#include "SDL.h"
+struct SDL_Texture;
 
 struct ChunkComponent {
   SDL_Texture *chunkTexture;

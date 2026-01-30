@@ -1,8 +1,8 @@
 #include "System/RenderSystem.h"
 
 #include <algorithm>
-#include <vector>
 #include <cmath>
+#include <vector>
 
 #include "Components/BuildingPreviewComponent.h"
 #include "Components/ChunkComponent.h"
@@ -18,15 +18,19 @@
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
-#include "SDL.h"
 #include "SDL_ttf.h"
 #include "Util/CameraUtil.h"
 
-
-RenderSystem::RenderSystem(const SystemContext &context, SDL_Renderer* renderer, TTF_Font *font)
-    : registry(context.registry), renderer(renderer), world(context.world), font(font) {
-      entityDestroyedEventHandle = context.eventDispatcher->Subscribe<EntityDestroyedEvent>([this](const auto& event) { this->OnEntityDestroyed(event); });
-    }
+RenderSystem::RenderSystem(const SystemContext &context, SDL_Renderer *renderer,
+                           TTF_Font *font)
+    : registry(context.registry),
+      renderer(renderer),
+      world(context.world),
+      font(font) {
+  entityDestroyedEventHandle =
+      context.eventDispatcher->Subscribe<EntityDestroyedEvent>(
+          [this](const auto &event) { this->OnEntityDestroyed(event); });
+}
 
 void RenderSystem::Update() {
   SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
@@ -52,8 +56,7 @@ void RenderSystem::Update() {
   RenderDebugRect(cameraPos, screenSize, zoom);
 }
 
-void RenderSystem::OnEntityDestroyed(const EntityDestroyedEvent& event)
-{
+void RenderSystem::OnEntityDestroyed(const EntityDestroyedEvent &event) {
   if (registry->HasComponent<TextComponent>(event.entity)) {
     auto &text = registry->GetComponent<TextComponent>(event.entity);
     if (text.texture) {
@@ -78,8 +81,10 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    Vec2 chunkTextureSize = Vec2{CHUNK_WIDTH * TILE_PIXEL_SIZE * zoom,
-                                 CHUNK_HEIGHT * TILE_PIXEL_SIZE * zoom};
+    Vec2 chunkPixelSize{CHUNK_WIDTH * TILE_PIXEL_SIZE,
+                        CHUNK_HEIGHT * TILE_PIXEL_SIZE};
+    Vec2f chunkTextureSize{chunkPixelSize.x * zoom,
+                                    chunkPixelSize.y * zoom};
     // Cull chunks that are off-screen
     if (IsOffScreen(screenPos, screenSize, chunkTextureSize)) {
       continue;
@@ -89,8 +94,10 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
       SDL_Rect destRect;
       destRect.x = static_cast<int>(floorf(screenPos.x));
       destRect.y = static_cast<int>(floorf(screenPos.y));
-      destRect.w = static_cast<int>(ceilf(screenPos.x + chunkTextureSize.x)) - destRect.x;
-      destRect.h = static_cast<int>(ceilf(screenPos.y + chunkTextureSize.y)) - destRect.y;
+      destRect.w = static_cast<int>(ceilf(screenPos.x + chunkTextureSize.x)) -
+                   destRect.x;
+      destRect.h = static_cast<int>(ceilf(screenPos.y + chunkTextureSize.y)) -
+                   destRect.y;
       SDL_RenderCopy(renderer, chunk.chunkTexture, nullptr, &destRect);
     }
   }
@@ -112,7 +119,7 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
     }
 
     const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
-    entitiesWithOrder.push_back({entity, sprite.renderOrder});
+    entitiesWithOrder.emplace_back(entity, sprite.renderOrder);
   }
 
   // Sort entities by render order (lower values rendered first)
@@ -132,8 +139,8 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    Vec2f entitySize = {sprite.renderRect.w * transform.scale.x * zoom,
-                        sprite.renderRect.h * transform.scale.y * zoom};
+    Vec2f entitySize = {static_cast<float>(sprite.renderRect.w) * transform.scale.x * zoom,
+                        static_cast<float>(sprite.renderRect.h) * transform.scale.y * zoom};
 
     // Simple culling - skip entities that are clearly off-screen
     if (IsOffScreen(screenPos, screenSize, entitySize)) {
@@ -150,7 +157,7 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
 }
 
 bool RenderSystem::IsOffScreen(Vec2f screenPos, Vec2 screenSize,
-                               Vec2f entitySize) {
+                               Vec2f entitySize) const {
   return (screenPos.x + entitySize.x < 0 || screenPos.x > screenSize.x ||
           screenPos.y + entitySize.y < 0 || screenPos.y > screenSize.y);
 }
@@ -158,7 +165,7 @@ bool RenderSystem::IsOffScreen(Vec2f screenPos, Vec2 screenSize,
 void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   for (Entity entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<DebugRectComponent>(entity)) continue;
-    // TODO :remove render invalid text 
+    // TODO :remove render invalid text
     auto &text = registry->GetComponent<TextComponent>(entity);
     const auto &transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =
@@ -173,9 +180,9 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
     }
 
     if (registry->HasComponent<InactiveComponent>(entity)) {
-      // Special case for inactive entities, render "inactive" text
-      // This part is not cached as it's a temporary state overlay
-      #ifdef DEBUG_TEXT
+// Special case for inactive entities, render "inactive" text
+// This part is not cached as it's a temporary state overlay
+#ifdef DEBUG_TEXT
       SDL_Surface *textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
       SDL_Texture *textTexture =
@@ -191,7 +198,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
 
       SDL_FreeSurface(textSurface);
       SDL_DestroyTexture(textTexture);
-      #endif
+#endif
       continue;
     }
 
@@ -253,8 +260,12 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
         const float tilePixelSizeZoomed = TILE_PIXEL_SIZE * zoom;
         tileRect.x = static_cast<int>(floorf(screenPos.x));
         tileRect.y = static_cast<int>(floorf(screenPos.y));
-        tileRect.w = static_cast<int>(ceilf(screenPos.x + tilePixelSizeZoomed)) - tileRect.x;
-        tileRect.h = static_cast<int>(ceilf(screenPos.y + tilePixelSizeZoomed)) - tileRect.y;
+        tileRect.w =
+            static_cast<int>(ceilf(screenPos.x + tilePixelSizeZoomed)) -
+            tileRect.x;
+        tileRect.h =
+            static_cast<int>(ceilf(screenPos.y + tilePixelSizeZoomed)) -
+            tileRect.y;
 
         // Set color based on validity - use more visible alpha values
         if (world->HasNoOcuupyingEntity(tileindex + Vec2{dx, dy}, 1, 1)) {

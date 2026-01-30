@@ -6,6 +6,10 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+#ifndef UNICODE
+#define UNICODE
+#endif
+
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <memory.h>
@@ -224,17 +228,18 @@ class WindowsServerImpl : public ServerImpl {
           }
 
           // Peek at the header to get the full packet size
-          const uint8_t* buffer_data = completionKey->recvBuffer.data();
-          
+          const uint8_t *buffer_data = completionKey->recvBuffer.data();
+
           // Manually read the big-endian size from the header (offset 2)
-          const uint16_t packet_size = (static_cast<uint16_t>(buffer_data[2]) << 8) | buffer_data[3];
+          const uint16_t packet_size =
+              (static_cast<uint16_t>(buffer_data[2]) << 8) | buffer_data[3];
 
           // Basic validation of packet size
           if (packet_size == 0 || packet_size > MAX_BUFFER) {
             std::cerr << "Invalid packet size " << packet_size
                       << " from client " << completionKey->clientID
                       << ". Disconnecting." << std::endl;
-            
+
             // Trigger disconnect for this client
             RecvPacketPtr disconnectPacket = std::make_unique<RecvPacket>();
             disconnectPacket->senderClientId = completionKey->clientID;
@@ -309,13 +314,13 @@ class WindowsServerImpl : public ServerImpl {
   }
 
   static unsigned WINAPI ThreadEntry(void *p) {
-    WindowsServerImpl *pServer = static_cast<WindowsServerImpl *>(p);
+    auto *pServer = static_cast<WindowsServerImpl *>(p);
     pServer->WorkerThread();
     return 0;
   }
 
   static unsigned WINAPI StartServer(void *p) {
-    WindowsServerImpl *pServer = static_cast<WindowsServerImpl *>(p);
+    auto *pServer = static_cast<WindowsServerImpl *>(p);
     pServer->StartThread();
     return 0;
   }
@@ -427,7 +432,7 @@ class WindowsServerImpl : public ServerImpl {
       }
       std::cout << "Client connected." << std::endl;
 
-      ClientInfo *pClientInfo = new ClientInfo(clientSocket, nextClientID++);
+      auto *pClientInfo = new ClientInfo(clientSocket, nextClientID++);
 
       AcquireSRWLockExclusive(&clientMapSRW);
       socketToInfoMap[clientSocket] = pClientInfo;

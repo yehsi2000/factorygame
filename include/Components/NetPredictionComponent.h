@@ -1,7 +1,6 @@
 ﻿#pragma once
  
 #include <cstdint>
-#include "Core/Packet.h"
 
 // Simple POD for local prediction/smoothing
 struct NetPredictionComponent {

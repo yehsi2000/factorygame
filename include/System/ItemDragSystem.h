@@ -1,12 +1,11 @@
 #pragma once
- 
+
 #include <memory>
 
 #include "Core/Entity.h"
 #include "Core/Event.h"
 #include "Core/Item.h"
 #include "Core/SystemContext.h"
-
 
 class EventHandle;
 
@@ -25,7 +24,7 @@ class ItemDragSystem {
   std::unique_ptr<EventHandle> itemDropHandle;
 
  public:
-  ItemDragSystem(const SystemContext& context);
+  explicit ItemDragSystem(const SystemContext& context);
   ~ItemDragSystem();
   void Update();
 

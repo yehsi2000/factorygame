@@ -7,12 +7,11 @@
 #include <string>
 #include <utility>
 
-#include "Common.h"
 #include "Components/AssemblingMachineComponent.h"
+#include "Components/InactiveComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/MiningDrillComponent.h"
 #include "Components/PlayerStateComponent.h"
-#include "Components/InactiveComponent.h"
 #include "Core/AssetManager.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
@@ -23,11 +22,8 @@
 #include "Core/World.h"
 #include "Util/CameraUtil.h"
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
 #include "imgui_stdlib.h"
 
-#define TEXTLATER
 
 UISystem::UISystem(const SystemContext &context)
     : assetManager(context.assetManager),
@@ -36,15 +32,18 @@ UISystem::UISystem(const SystemContext &context)
       world(context.world),
       inputManager(context.inputManager),
       clientNameMap(context.clientNameMap),
-      bIsServer(context.bIsServer) {
+      bIsServer(context.bIsServer),
+      timerManager(nullptr),  // Explicitly initialize timerManager
+      payload{}               // Explicitly initialize payload
+{
   showInventoryHandle = eventDispatcher->Subscribe<ToggleInventoryEvent>(
-      [this](ToggleInventoryEvent e) {
+      [this](const ToggleInventoryEvent &e) {
         bIsShowingInventory = !bIsShowingInventory;
       });
   newChatHandle = eventDispatcher->Subscribe<NewChatEvent>(
-      [this](NewChatEvent e) { PushChat(e.id, e.message); });
+      [this](const NewChatEvent &e) { PushChat(e.id, e.message); });
   showChatHandle = eventDispatcher->Subscribe<ToggleChatInputEvent>(
-      [this](ToggleChatInputEvent e) {
+      [this](const ToggleChatInputEvent &e) {
         if (!bIsShowingChatInput) {
           SDL_StartTextInput();
           bIsShowingChatInput = true;
@@ -55,13 +54,14 @@ UISystem::UISystem(const SystemContext &context)
   playerChat = std::make_shared<std::string>("");
 }
 
-void UISystem::PushChat(clientid_t id, std::shared_ptr<std::string> str) {
+void UISystem::PushChat(clientid_t id,
+                        const std::shared_ptr<std::string> &str) {
   std::string chat;
   chat.reserve(str->size() + clientNameMap->at(id).size() + 2);
   chat += clientNameMap->at(id);
   chat += ": ";
   chat += *str;
-  chatLog.push_back(chat.c_str());
+  chatLog.emplace_back(chat.c_str());
   if (chatLog.size() > 10) chatLog.pop_front();
 }
 
@@ -121,7 +121,7 @@ void UISystem::ChatWindow() {
   ImGui::PushFont(nullptr, 16);
   if (ImGui::Begin("##ChatWindow", nullptr, window_flags)) {
     for (std::string_view chat : chatLog) {
-      ImGui::Text(chat.data());
+      ImGui::Text("%s", chat.data());
       ImGui::Separator();
     }
   }
@@ -157,9 +157,10 @@ void UISystem::ItemDropBackground() {
       IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
 
       float zoom = util::GetCameraZoom(registry);
-      Vec2f mouseWorldPos = util::ScreenToWorld(
-          inputManager->GetMousePosition(), util::GetCameraPosition(registry),
-          inputManager->GetScreenSize(), zoom);
+      Vec2f mouseWorldPos =
+          util::ScreenToWorld(Vec2f(inputManager->GetMousePosition()),
+                              util::GetCameraPosition(registry),
+                              inputManager->GetScreenSize(), zoom);
 
       ItemPayload item_payload = *static_cast<ItemPayload *>(payload->Data);
 
@@ -169,7 +170,7 @@ void UISystem::ItemDropBackground() {
 
       if (bIsServer) {
         eventDispatcher->Publish(
-            ItemDropInWorldEvent{mouseWorldPos, std::move(item_payload)});
+            ItemDropInWorldEvent{mouseWorldPos, item_payload});
       } else {
         // TODO : send request to server to drop item
         // eventDispatcher->Publish(ClientRequestItemDropEvent{
@@ -221,17 +222,17 @@ void UISystem::Inventory() {
             if (payload_ptr->owner != localPlayer) {
               if (registry->HasComponent<InventoryComponent>(
                       payload_ptr->owner)) {
-                eventDispatcher->Publish(ItemMoveEvent(payload_ptr->owner,
-                                                       localPlayer, payload_ptr->id,
-                                                       payload_ptr->amount));
+                eventDispatcher->Publish(
+                    ItemMoveEvent(payload_ptr->owner, localPlayer,
+                                  payload_ptr->id, payload_ptr->amount));
               } else if (registry->HasComponent<AssemblingMachineComponent>(
                              payload_ptr->owner)) {
                 eventDispatcher->Publish(AssemblyTakeOutputEvent(
                     payload_ptr->owner, localPlayer, payload_ptr->id,
                     payload_ptr->amount));
               } else {
-                eventDispatcher->Publish(
-                    ItemAddEvent(localPlayer, payload_ptr->id, payload_ptr->amount));
+                eventDispatcher->Publish(ItemAddEvent(
+                    localPlayer, payload_ptr->id, payload_ptr->amount));
               }
             }
           }
@@ -249,11 +250,11 @@ void UISystem::Inventory() {
       // item amount on top of inventory item
       ImVec2 start_pos = ImGui::GetCursorScreenPos();
 
-      ItemData itemdata = itemdb.get(invItemId);
+      const ItemData &itemdata = itemdb.get(invItemId);
 
       // create inventory node with item
-      ImTextureID iconTexture = (intptr_t)(assetManager->getTexture(
-          itemdb.get(invItemId).icon.c_str()));
+      ImTextureID iconTexture =
+          (intptr_t)(assetManager->getTexture(itemdb.get(invItemId).icon));
       ImVec2 iconSize{invNodeSize - padding.x * 2.f,
                       invNodeSize - padding.y * 2.f};
       ImGui::ImageButton((const char *)itemdata.name.c_str(), iconTexture,
@@ -280,17 +281,17 @@ void UISystem::Inventory() {
           if (payload_ptr->owner != localPlayer) {
             if (registry->HasComponent<InventoryComponent>(
                     payload_ptr->owner)) {
-              eventDispatcher->Publish(ItemMoveEvent(payload_ptr->owner, localPlayer,
-                                                     payload_ptr->id,
-                                                     payload_ptr->amount));
+              eventDispatcher->Publish(
+                  ItemMoveEvent(payload_ptr->owner, localPlayer,
+                                payload_ptr->id, payload_ptr->amount));
             } else if (registry->HasComponent<AssemblingMachineComponent>(
                            payload_ptr->owner)) {
               eventDispatcher->Publish(AssemblyTakeOutputEvent(
                   payload_ptr->owner, localPlayer, payload_ptr->id,
                   payload_ptr->amount));
             } else {
-              eventDispatcher->Publish(
-                  ItemAddEvent(localPlayer, payload_ptr->id, payload_ptr->amount));
+              eventDispatcher->Publish(ItemAddEvent(
+                  localPlayer, payload_ptr->id, payload_ptr->amount));
             }
           } else {
             if (payload_ptr->itemIdx < invComp.items.size()) {
@@ -303,8 +304,6 @@ void UISystem::Inventory() {
       }
       ImVec2 next_pos = ImGui::GetCursorScreenPos();
 
-#ifdef TEXTLATER
-
       ImVec2 btnSize = ImGui::GetItemRectSize();
       // item amount on top of inventory item
       ImGui::SetCursorScreenPos(start_pos);
@@ -315,7 +314,6 @@ void UISystem::Inventory() {
       ImGui::SetCursorScreenPos(start_pos);
       ImGui::SetNextItemAllowOverlap();
       ImGui::Dummy(btnSize);
-#endif
 
       ImGui::EndGroup();
       ImGui::PopID();
@@ -325,16 +323,18 @@ void UISystem::Inventory() {
 }
 
 void UISystem::AssemblingMachineUI() {
+  // TODO : turn off ui when player is out of interaction range
   // Find all assembling machines that should show UI
   for (auto machineEntity : registry->view<AssemblingMachineComponent>()) {
-    if(registry->HasComponent<InactiveComponent>(machineEntity)) {
-      registry->GetComponent<AssemblingMachineComponent>(machineEntity).bIsShowingUI=false;
+    if (registry->HasComponent<InactiveComponent>(machineEntity)) {
+      registry->GetComponent<AssemblingMachineComponent>(machineEntity)
+          .bIsShowingUI = false;
       continue;
     }
     auto &assemblingComp =
         registry->GetComponent<AssemblingMachineComponent>(machineEntity);
     if (assemblingComp.bIsShowingUI) {
-      if (assemblingComp.bRecipeSelected) {
+      if (!assemblingComp.bRecipeSelected) {
         AssemblingMachineRecipeSelection(machineEntity);
       } else {
         // Show crafting UI
@@ -372,7 +372,7 @@ void UISystem::AssemblingMachineUI() {
             if (i > 0) ImGui::SameLine();
 
             ImTextureID iconTexture =
-                (intptr_t)(assetManager->getTexture(itemData.icon.c_str()));
+                (intptr_t)(assetManager->getTexture(itemData.icon));
 
             ImVec2 slotSize(64, 64);
             ImGui::BeginGroup();
@@ -420,7 +420,7 @@ void UISystem::AssemblingMachineUI() {
                                  : 0;
 
           ImTextureID outputTexture =
-              (intptr_t)(assetManager->getTexture(outputData.icon.c_str()));
+              (intptr_t)(assetManager->getTexture(outputData.icon));
 
           ImVec2 outputSlotSize(64, 64);
           ImGui::ImageButton("output", outputTexture, outputSlotSize,
@@ -462,7 +462,7 @@ void UISystem::AssemblingMachineUI() {
 void UISystem::AssemblingMachineRecipeSelection(Entity entity) {
   auto &assemblingComp =
       registry->GetComponent<AssemblingMachineComponent>(entity);
-  if(registry->HasComponent<InactiveComponent>(entity)) return;
+  if (registry->HasComponent<InactiveComponent>(entity)) return;
   std::string windowName = "Select Recipe##" + std::to_string(entity.Id());
   bool showSelection = !assemblingComp.bRecipeSelected;
 
@@ -508,13 +508,15 @@ void UISystem::MiningDrillUI() {
   const ItemDatabase &itemdb = ItemDatabase::instance();
   ImVec2 outputSlotSize(60, 60);
   for (auto drillEntity : registry->view<MiningDrillComponent>()) {
-    if(registry->HasComponent<InactiveComponent>(drillEntity)) {
-      registry->GetComponent<MiningDrillComponent>(drillEntity).bIsShowingUI=false;
+    if (registry->HasComponent<InactiveComponent>(drillEntity)) {
+      registry->GetComponent<MiningDrillComponent>(drillEntity).bIsShowingUI =
+          false;
       continue;
     }
     auto &drillComp = registry->GetComponent<MiningDrillComponent>(drillEntity);
     if (drillComp.bIsShowingUI) {
-      std::string windowName = "Mining Drill##" + std::to_string(drillEntity.Id());
+      std::string windowName =
+          "Mining Drill##" + std::to_string(drillEntity.Id());
       bool bIsShowingUI = drillComp.bIsShowingUI;
       if (ImGui::Begin(windowName.c_str(), &bIsShowingUI,
                        ImGuiWindowFlags_AlwaysAutoResize |
@@ -537,7 +539,7 @@ void UISystem::MiningDrillUI() {
 
           const ItemData &invdata = itemdb.get(invcomp.items[0].first);
           ImTextureID outputTexture =
-              (intptr_t)(assetManager->getTexture(invdata.icon.c_str()));
+              (intptr_t)(assetManager->getTexture(invdata.icon));
 
           ImGui::ImageButton("output", outputTexture, outputSlotSize,
                              ImVec2{uB0, vB0}, ImVec2{uB1, vB1});

@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 
 #include "Core/Event.h"
@@ -9,7 +9,7 @@ class EventHandle;
 
 class InteractionSystem {
  public:
-  InteractionSystem(const SystemContext& context);
+  explicit InteractionSystem(const SystemContext& context);
   ~InteractionSystem();
   void Update();  // In case the system needs a per-frame update in the future.
 
@@ -17,8 +17,7 @@ class InteractionSystem {
   void OnPlayerInteractEvent(const PlayerInteractEvent& event);
   void OnPlayerEndInteractEvent(const PlayerEndInteractEvent& event);
   void ResourceNodeInteractionHandler(Entity player, Entity targetEntity);
-  void AssemblyMachineInteractionHandler(Entity player,
-                                         Entity targetEntity);
+  void AssemblyMachineInteractionHandler(Entity player, Entity targetEntity);
   void MiningDrillInteractionHandler(Entity player, Entity targetEntity);
 
   Registry* registry;

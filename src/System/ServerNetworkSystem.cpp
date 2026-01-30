@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <format>
 #include <iostream>
 #include <memory>
 
@@ -36,7 +35,7 @@ ServerNetworkSystem::ServerNetworkSystem(const SystemContext& context)
       playerSnapShotSize(0) {
   // Subscribe chat event
   sendChatHandle =
-      eventDispatcher->Subscribe<SendChatEvent>([this](SendChatEvent e) {
+      eventDispatcher->Subscribe<SendChatEvent>([this](const SendChatEvent& e) {
         Broadcast(util::ChatBroadcastPacket(e.message));
       });
 
@@ -202,6 +201,14 @@ void ServerNetworkSystem::Update(float deltatime) {
 
       case CLIENT_MOVE_REQ:
         ClientMoveReqHandler(clientID, rp);
+        break;
+
+      case CONNECT_ACK:
+      case PLAYER_CONNECTED_BROADCAST:
+      case CHAT_BROADCAST:
+      case CLIENT_MOVE_RES:
+      case TRANSFORM_SNAPSHOT:
+      case PLAYER_DISCONNECTED_BROADCAST:
         break;
     }
   }

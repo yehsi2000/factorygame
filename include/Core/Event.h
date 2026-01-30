@@ -21,12 +21,12 @@ struct Event {
 };
 
 struct EntityDestroyedEvent : public Event {
-  EntityDestroyedEvent(Entity entity) : entity(entity) {}
+  explicit EntityDestroyedEvent(Entity entity) : entity(entity) {}
   Entity entity;
 };
 
 struct PlayerInteractEvent : public Event {
-  PlayerInteractEvent(Vec2f t) : target(t) {}
+  explicit PlayerInteractEvent(Vec2f t) : target(t) {}
   Vec2f target;
 };
 
@@ -61,7 +61,7 @@ struct ItemMoveEvent : public Event {
 
 struct ItemDropInWorldEvent : public Event {
   ItemDropInWorldEvent(const Vec2f worldPos, ItemPayload payload)
-      : worldPos(worldPos), payload(std::move(payload)) {}
+      : worldPos(worldPos), payload(payload) {}
   ItemPayload payload;
   const Vec2f worldPos;
 };
@@ -86,7 +86,7 @@ struct AssemblyTakeOutputEvent : public Event {
 };
 
 struct AssemblyCraftOutputEvent : public Event {
-  AssemblyCraftOutputEvent(Entity machine) : machine(machine) {}
+  explicit AssemblyCraftOutputEvent(Entity machine) : machine(machine) {}
   Entity machine;
 };
 
@@ -99,13 +99,13 @@ struct ToggleChatInputEvent : public Event {
 };
 
 struct SendChatEvent : public Event {
-  SendChatEvent(std::shared_ptr<std::string> msg) : message(msg) {}
+  explicit SendChatEvent(std::shared_ptr<std::string> msg) : message(std::move(msg)) {}
   std::shared_ptr<std::string> message;
 };
 
 struct NewChatEvent : public Event {
   NewChatEvent(clientid_t id, std::shared_ptr<std::string> msg)
-      : id(id), message(msg) {}
+      : id(id), message(std::move(msg)) {}
   clientid_t id;
   std::shared_ptr<std::string> message;
 };

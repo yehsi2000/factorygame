@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <limits>
+#include <memory>
 #include <vector>
 
 #include "Core/Entity.h"

@@ -21,13 +21,15 @@ constexpr std::size_t MAX_TIMERS_PER_ENTITY =
     static_cast<std::size_t>(TimerId::MaxTimers);
 
 struct TimerInstance {
-  TimerId id;
+  TimerId id = TimerId::MaxTimers;
   TimerHandle handle = INVALID_TIMER_HANDLE;
   float duration = 0.0f;
   float elapsed = 0.0f;
   bool bIsRepeating = false;
   bool bIsPaused = false;
   bool bIsActive = false;
+
+  TimerInstance() = default;
 };
 
 struct TimerComponent {

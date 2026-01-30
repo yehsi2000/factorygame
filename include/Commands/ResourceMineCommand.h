@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <cmath>
 
 #include "Commands/Command.h"
@@ -46,10 +46,10 @@ class ResourceMineCommand : public Command {
 
         int richnessIndex =
             (IRON_SPRITESHEET_HEIGHT - 1) -
-            std::min(
+            static_cast<int>(std::min(
                 7.0f,
                 std::floor(static_cast<float>(resource.LeftResource - minIron) /
-                           static_cast<float>(maxIron - minIron) * 8.f));
+                           static_cast<float>(maxIron - minIron) * 8.f)));
         sprite.srcRect = {0, richnessIndex * 128, 128, 128};
       }
     }

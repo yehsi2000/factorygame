@@ -2,8 +2,6 @@
 
 #include <cassert>
 #include <chrono>
-#include <tuple>
-#include <utility>
 
 #include "Core/AssetManager.h"
 #include "Core/InputManager.h"
@@ -12,12 +10,10 @@
 #include "GameState/MainMenuState.h"
 #include "GameState/PauseState.h"
 #include "GameState/ServerState.h"
-#include "SDL.h"
-#include "SDL_image.h"
 #include "SDL_ttf.h"
-#include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+
 
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
     : gWindow(window),

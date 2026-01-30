@@ -1,13 +1,13 @@
 #pragma once
- 
-#include "Core/SystemContext.h"
+
 #include "Core/Entity.h"
+#include "Core/SystemContext.h"
 
 class MiningDrillComponent;
 
 class MiningDrillSystem {
  public:
-  MiningDrillSystem(const SystemContext& context);
+  explicit MiningDrillSystem(const SystemContext& context);
   ~MiningDrillSystem();
   void Update();
 
@@ -15,7 +15,7 @@ class MiningDrillSystem {
   Registry* registry;
   World* world;
   TimerManager* timerManager;
-  
+
   void UpdateAnimationState(MiningDrillComponent& drill, Entity entity);
   bool TileEmpty(Entity entity);
   void StartMining(MiningDrillComponent& drill, Entity entity);

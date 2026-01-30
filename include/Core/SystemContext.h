@@ -2,7 +2,6 @@
 
 #include "Core/Packet.h"
 #include "DataStruct/ThreadSafeQueue.h"
-#include <cstdint>
 #include <unordered_map>
 #include <string>
 
@@ -45,5 +44,5 @@ struct SystemContext {
   std::unordered_map<clientid_t, std::string>* clientNameMap = nullptr;
   Server* server = nullptr;
   Socket* socket = nullptr;
-  bool bIsServer; // 0 for server
+  bool bIsServer{};
 };

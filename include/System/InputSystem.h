@@ -1,14 +1,9 @@
 #pragma once
- 
-#include <cstddef>
+
 #include <vector>
 
-#include "Core/Item.h"
 #include "Core/SystemContext.h"
-#include "DataStruct/Type.h"
 #include "SDL.h"
-#include "imgui.h"
-
 
 enum class InputAction {
   StartInteraction,
@@ -42,7 +37,7 @@ class InputSystem {
   double maxInteractionRadius = 200.0;
 
  public:
-  InputSystem(const SystemContext& context);
+  explicit InputSystem(const SystemContext& context);
   ~InputSystem();
   void Update();
 

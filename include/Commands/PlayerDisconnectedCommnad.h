@@ -1,7 +1,5 @@
 ﻿#pragma once
  
-#include <algorithm>
-#include <cstring>
 
 #include "Commands/Command.h"
 #include "Components/InventoryComponent.h"
@@ -16,7 +14,7 @@
 
 class PlayerDisconnectedCommand : public Command {
  public:
-  PlayerDisconnectedCommand(clientid_t clientID)
+  explicit PlayerDisconnectedCommand(clientid_t clientID)
       : clientID(clientID) {};
 
   ~PlayerDisconnectedCommand() = default;

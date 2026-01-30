@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include "Core/SystemContext.h"
 
 class RefineryComponent;
@@ -10,7 +10,7 @@ class RefineryComponent;
  */
 class RefinerySystem {
  public:
-  RefinerySystem(const SystemContext& context);
+  explicit RefinerySystem(const SystemContext& context);
   ~RefinerySystem();
   void Update();
 };

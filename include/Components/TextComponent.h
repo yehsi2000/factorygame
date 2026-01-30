@@ -1,6 +1,9 @@
 #pragma once
  
-#include "SDL.h"
+
+#include "SDL_pixels.h"
+
+struct SDL_Texture;
 
 struct TextComponent {
   char text[20];

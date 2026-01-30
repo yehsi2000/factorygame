@@ -69,7 +69,7 @@ class RingBuffer {
     }
   }
 
-  const std::array<T, Size> data() const{
+  const std::array<T, Size>& data() const {
     return buffer;
   }
 

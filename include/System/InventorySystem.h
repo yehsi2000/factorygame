@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 
 #include "Core/Event.h"
@@ -9,7 +9,7 @@ class EventHandle;
 
 class InventorySystem {
  public:
-  InventorySystem(const SystemContext& context);
+  explicit InventorySystem(const SystemContext& context);
   ~InventorySystem();
 
  private:

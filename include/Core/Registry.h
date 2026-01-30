@@ -4,12 +4,10 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <shared_mutex>
-#include <type_traits>
 
 #include "Core/ComponentArray.h"
 #include "Core/Event.h"
@@ -106,7 +104,7 @@ class Registry {
   }
 
  public:
-  Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {}
+  explicit Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {}
 
   /**
    * @brief Creates a new entity.

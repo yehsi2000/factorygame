@@ -11,7 +11,7 @@ class TimerSystem {
   TimerManager* timerManager;
 
  public:
-  TimerSystem(const SystemContext& context);
+  explicit TimerSystem(const SystemContext& context);
   ~TimerSystem();
   void Update(float deltaTime);
 };

@@ -16,7 +16,6 @@
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
-#include "SDL.h"
 #include "Util/AnimUtil.h"
 
 
@@ -39,7 +38,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
 
   Entity entity = registry->CreateEntity();
 
-  Vec2f worldPos = tileIndex * TILE_PIXEL_SIZE;
+  Vec2f worldPos = Vec2f(tileIndex * TILE_PIXEL_SIZE);
 
   registry->EmplaceComponent<TransformComponent>(entity,
                                                  TransformComponent{worldPos});
@@ -101,7 +100,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
       static_cast<float>(tileIndex.x * TILE_PIXEL_SIZE),  // Center of 2x2 area
       static_cast<float>(tileIndex.y * TILE_PIXEL_SIZE)};
 
-  Vec2f worldPos = tileIndex * TILE_PIXEL_SIZE;
+  Vec2f worldPos = Vec2f(tileIndex * TILE_PIXEL_SIZE);
 
   registry->EmplaceComponent<TransformComponent>(entity,
                                                  TransformComponent{worldPos});

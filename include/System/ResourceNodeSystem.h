@@ -8,7 +8,7 @@
  */
 class ResourceNodeSystem {
  public:
-  ResourceNodeSystem(const SystemContext& context);
+  explicit ResourceNodeSystem(const SystemContext& context);
   ~ResourceNodeSystem();
   void Update();
 

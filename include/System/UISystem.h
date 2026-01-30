@@ -46,7 +46,7 @@ class UISystem {
   InputManager* inputManager;
 
  public:
-  UISystem(const SystemContext& context);
+  explicit UISystem(const SystemContext& context);
   ~UISystem();
   void Update();
   inline void ToggleInventory() { bIsShowingInventory = !bIsShowingInventory; }
@@ -59,7 +59,7 @@ class UISystem {
   void AssemblingMachineUI();
   void AssemblingMachineRecipeSelection(Entity entity);
   void MiningDrillUI();
-  void PushChat(clientid_t id, std::shared_ptr<std::string> str);
+  void PushChat(clientid_t id, const std::shared_ptr<std::string>& str);
 
   std::unique_ptr<EventHandle> showInventoryHandle;
   std::unique_ptr<EventHandle> showChatHandle;

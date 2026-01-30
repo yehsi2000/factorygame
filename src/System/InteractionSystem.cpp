@@ -1,7 +1,5 @@
 #include "System/InteractionSystem.h"
 
-#include <optional>
-
 #include "Components/AnimationComponent.h"
 #include "Components/AssemblingMachineComponent.h"
 #include "Components/MiningDrillComponent.h"
@@ -11,12 +9,9 @@
 #include "Components/TransformComponent.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
-#include "Core/InputManager.h"
 #include "Core/Registry.h"
-#include "Core/TimerManager.h"
 #include "Core/World.h"
 #include "Util/AnimUtil.h"
-#include "Util/CameraUtil.h"
 #include "Util/MathUtil.h"
 #include "Util/TimerUtil.h"
 

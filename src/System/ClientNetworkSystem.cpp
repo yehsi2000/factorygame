@@ -1,4 +1,4 @@
-﻿#include "System/ClientNetworkSystem.h"
+#include "System/ClientNetworkSystem.h"
 
 #include <algorithm>
 #include <chrono>
@@ -46,10 +46,10 @@ ClientNetworkSystem::ClientNetworkSystem(const SystemContext& context)
       myClientID(-1),
       moveReqTimer(0.f) {
   sendChatHandle = eventDispatcher->Subscribe<SendChatEvent>(
-      [this](SendChatEvent e) { SendMessage(e.message); });
+      [this](const SendChatEvent& e) { SendMessage(e.message); });
 }
 
-void ClientNetworkSystem::Init(std::u8string playerName) {
+void ClientNetworkSystem::Init(const std::u8string& playerName) {
   myName = std::string(reinterpret_cast<const char*>(playerName.c_str()));
   const uint8_t nameSize =
       std::min(static_cast<uint8_t>(playerName.size()), NAME_MAX_LEN);
@@ -506,7 +506,7 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   sendQueue->Push(std::move(packet));
 }
 
-void ClientNetworkSystem::SendMessage(std::shared_ptr<std::string> message) {
+void ClientNetworkSystem::SendMessage(const std::shared_ptr<std::string>& message) {
   PacketPtr packet = std::make_unique<Packet>(sPacketHeader + message->size());
 
   uint8_t* p = packet.get()->data();

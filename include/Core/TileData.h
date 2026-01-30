@@ -19,5 +19,5 @@ struct TileData {
   TileType type = TileType::Invalid;
   Entity occupyingEntity = Entity::Null();
   Entity oreEntity = Entity::Null();
-  float debugValue;
+  float debugValue{};
 };
