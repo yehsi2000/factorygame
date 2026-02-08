@@ -4,5 +4,5 @@ struct SDL_Texture;
 
 struct ChunkComponent {
   SDL_Texture *chunkTexture;
-  bool bNeedsRedraw;
+  bool isDirty;
 };

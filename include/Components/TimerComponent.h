@@ -25,9 +25,9 @@ struct TimerInstance {
   TimerHandle handle = INVALID_TIMER_HANDLE;
   float duration = 0.0f;
   float elapsed = 0.0f;
-  bool bIsRepeating = false;
-  bool bIsPaused = false;
-  bool bIsActive = false;
+  bool isRepeating = false;
+  bool isPaused = false;
+  bool isActive = false;
 
   TimerInstance() = default;
 };

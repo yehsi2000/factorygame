@@ -22,10 +22,10 @@ namespace util {
  * @param entity The ID of the entity to attach the timer to.
  * @param id The semantic ID of the timer (e.g., TimerId::Interact).
  * @param duration The duration of the timer in seconds.
- * @param bIsRepeating Whether the timer should repeat after expiring.
+ * @param isRepeating Whether the timer should repeat after expiring.
  */
 void AttachTimer(Registry* registry, TimerManager* timerManager,
-                 Entity entity, TimerId id, float duration, bool bIsRepeating);
+                 Entity entity, TimerId id, float duration, bool isRepeating);
 
 /**
  * @brief Detaches a timer from an entity.

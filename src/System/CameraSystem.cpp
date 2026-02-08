@@ -40,7 +40,7 @@ void CameraSystem::UpdateCameraFollow(float deltaTime) {
   }
 
   // Only follow if not dragging and following is enabled
-  if (camera.bIsFollowing && !camera.bIsDragging) {
+  if (camera.isFollowing && !camera.isDragging) {
     // Smooth camera movement towards target
     Vec2f targetPos = camera.target + camera.offset;
     Vec2f direction = {targetPos.x - camera.position.x,
@@ -66,15 +66,15 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   auto &camera = registry->GetComponent<CameraComponent>(cameraEntity);
 
   // Check if player is moving (disable drag if moving)
-  bool bIsPlayerMoving = false;
-  bIsPlayerMoving = abs(inputManager->GetXAxis()) > 0.1f ||
+  bool isPlayerMoving = false;
+  isPlayerMoving = abs(inputManager->GetXAxis()) > 0.1f ||
                     abs(inputManager->GetYAxis()) > 0.1f;
 
   // Start dragging
   if (inputManager->WasMouseButtonPressed(MouseButton::RIGHT) &&
-      !bIsPlayerMoving) {
-    camera.bIsDragging = true;
-    camera.bIsFollowing = false;
+      !isPlayerMoving) {
+    camera.isDragging = true;
+    camera.isFollowing = false;
     camera.dragStartPos = Vec2f(inputManager->GetMousePosition());
     camera.cameraStartPos = camera.position;
   }
@@ -86,7 +86,7 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   // Continue dragging
-  if (camera.bIsDragging &&
+  if (camera.isDragging &&
       inputManager->IsMouseButtonDown(MouseButton::RIGHT)) {
     Vec2f currentMousePos = Vec2f(inputManager->GetMousePosition());
     Vec2f mouseDelta =
@@ -99,8 +99,8 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
 
   // End dragging
   if (inputManager->WasMouseButtonReleased(MouseButton::RIGHT) ||
-      bIsPlayerMoving) {
-    if (camera.bIsDragging) {
+      isPlayerMoving) {
+    if (camera.isDragging) {
       // Store the offset for smooth transition back to following
       if (registry->HasComponent<TransformComponent>(localPlayer)) {
         const auto &playerTransform =
@@ -109,10 +109,10 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
                          camera.position.y - playerTransform.position.y};
       }
 
-      camera.bIsDragging = false;
+      camera.isDragging = false;
       // Re-enable following when player starts moving or after a delay
-      if (bIsPlayerMoving) {
-        camera.bIsFollowing = true;
+      if (isPlayerMoving) {
+        camera.isFollowing = true;
         // Gradually reduce offset when player moves
         camera.offset.x *= 0.95f;
         camera.offset.y *= 0.95f;
@@ -125,10 +125,10 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
 
   // Auto re-enable following after some time of inactivity
   static float inactiveTime = 0.0f;
-  if (!camera.bIsDragging && !camera.bIsFollowing) {
+  if (!camera.isDragging && !camera.isFollowing) {
     inactiveTime += deltaTime;
     if (inactiveTime > 3.0f) {  // 3 seconds of inactivity
-      camera.bIsFollowing = true;
+      camera.isFollowing = true;
       camera.offset = {0.0f, 0.0f};
       inactiveTime = 0.0f;
     }

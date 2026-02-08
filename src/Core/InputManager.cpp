@@ -16,10 +16,10 @@ InputManager::InputManager(SDL_Window* window) : window(window), io(ImGui::GetIO
 InputManager::~InputManager() = default;
 
 void InputManager::PrepareForNewFrame() {
-  state.bIsLeftMousePressed = false;
-  state.bIsRightMousePressed = false;
-  state.bIsLeftMouseReleased = false;
-  state.bIsRightMouseReleased = false;
+  state.isLeftMousePressed = false;
+  state.isRightMousePressed = false;
+  state.isLeftMouseReleased = false;
+  state.isRightMouseReleased = false;
   state.mouseWheel = {0, 0};
   state.mouseDelta = {0, 0};
 
@@ -29,43 +29,43 @@ void InputManager::PrepareForNewFrame() {
 
 void InputManager::ProcessEvent(const SDL_Event& event) {
   if (event.type == SDL_QUIT) {
-    state.bIsQuit = true;
+    state.isQuit = true;
   }
 
   // This is the new, more robust condition
-  bool bIsUIBusy = io.WantCaptureMouse || ImGui::IsAnyItemActive();
+  bool isUIBusy = io.WantCaptureMouse || ImGui::IsAnyItemActive();
 
   switch (event.type) {
     case SDL_MOUSEBUTTONDOWN:
-      if (bIsUIBusy) break;
+      if (isUIBusy) break;
       if (event.button.button == SDL_BUTTON_LEFT) {
-        state.bIsLeftMouseDown = true;
-        state.bIsLeftMousePressed = true;
+        state.isLeftMouseDown = true;
+        state.isLeftMousePressed = true;
       } else if (event.button.button == SDL_BUTTON_RIGHT) {
-        state.bIsRightMouseDown = true;
-        state.bIsRightMousePressed = true;
+        state.isRightMouseDown = true;
+        state.isRightMousePressed = true;
       }
       break;
 
     case SDL_MOUSEBUTTONUP:
-      if (bIsUIBusy) break;
+      if (isUIBusy) break;
       if (event.button.button == SDL_BUTTON_LEFT) {
-        state.bIsLeftMouseDown = false;
-        state.bIsLeftMouseReleased = true;
+        state.isLeftMouseDown = false;
+        state.isLeftMouseReleased = true;
       } else if (event.button.button == SDL_BUTTON_RIGHT) {
-        state.bIsRightMouseDown = false;
-        state.bIsRightMouseReleased = true;
+        state.isRightMouseDown = false;
+        state.isRightMouseReleased = true;
       }
       break;
 
     case SDL_MOUSEWHEEL:
-      if (bIsUIBusy) break;
+      if (isUIBusy) break;
       state.mouseWheel = {event.wheel.x, event.wheel.y};
       break;
 
     case SDL_MOUSEMOTION:
       state.mousePos = {event.motion.x, event.motion.y};
-      if (bIsUIBusy) break;
+      if (isUIBusy) break;
       state.mouseDelta = {event.motion.xrel, event.motion.yrel};
       break;
   }
@@ -105,8 +105,8 @@ bool InputManager::WasKeyReleasedThisFrame(SDL_Scancode key) const {
 
 bool InputManager::IsMouseButtonDown(MouseButton button) const {
   if (io.WantCaptureMouse) return false;
-  if (button == MouseButton::LEFT) return state.bIsLeftMouseDown;
-  if (button == MouseButton::RIGHT) return state.bIsRightMouseDown;
+  if (button == MouseButton::LEFT) return state.isLeftMouseDown;
+  if (button == MouseButton::RIGHT) return state.isRightMouseDown;
   return false;
 }
 
@@ -116,15 +116,15 @@ bool InputManager::IsMouseButtonUp(MouseButton button) const {
 
 bool InputManager::WasMouseButtonPressed(MouseButton button) const {
   if (io.WantCaptureMouse) return false;
-  if (button == MouseButton::LEFT) return state.bIsLeftMousePressed;
-  if (button == MouseButton::RIGHT) return state.bIsRightMousePressed;
+  if (button == MouseButton::LEFT) return state.isLeftMousePressed;
+  if (button == MouseButton::RIGHT) return state.isRightMousePressed;
   return false;
 }
 
 bool InputManager::WasMouseButtonReleased(MouseButton button) const {
   if (io.WantCaptureMouse) return false;
-  if (button == MouseButton::LEFT) return state.bIsLeftMouseReleased;
-  if (button == MouseButton::RIGHT) return state.bIsRightMouseReleased;
+  if (button == MouseButton::LEFT) return state.isLeftMouseReleased;
+  if (button == MouseButton::RIGHT) return state.isRightMouseReleased;
   return false;
 }
 
@@ -145,4 +145,4 @@ Vec2 InputManager::GetScreenSize() {
   return screenSize;
 }
 
-bool InputManager::IsQuit() const { return state.bIsQuit; }
+bool InputManager::IsQuit() const { return state.isQuit; }

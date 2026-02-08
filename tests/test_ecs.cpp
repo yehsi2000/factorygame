@@ -18,7 +18,7 @@ bool test_entity_creation() {
   }
 
   // Test component addition
-  registry.AddComponent<TransformComponent>(entity, Vec2f{10.0f, 20.0f});
+  registry.EmplaceComponent<TransformComponent>(entity, Vec2f{10.0f, 20.0f});
 
   if (!registry.HasComponent<TransformComponent>(entity)) {
     std::cerr << "Component addition failed" << std::endl;
@@ -35,7 +35,7 @@ bool test_component_access() {
   auto entity = registry.CreateEntity();
   Vec2f testPos{100.0f, 200.0f};
 
-  registry.AddComponent<TransformComponent>(entity, testPos);
+  registry.EmplaceComponent<TransformComponent>(entity, testPos);
 
   auto &transform = registry.GetComponent<TransformComponent>(entity);
 
@@ -62,10 +62,10 @@ bool test_entity_view() {
 
   // Create entities with different component combinations
   auto entity1 = registry.CreateEntity();
-  registry.AddComponent<TransformComponent>(entity1, Vec2f{0, 0});
+  registry.EmplaceComponent<TransformComponent>(entity1, Vec2f{0, 0});
 
   auto entity2 = registry.CreateEntity();
-  registry.AddComponent<TransformComponent>(entity2, Vec2f{10, 10});
+  registry.EmplaceComponent<TransformComponent>(entity2, Vec2f{10, 10});
   registry.EmplaceComponent<MovementComponent>(entity2, 1.0f);
 
   auto entity3 = registry.CreateEntity();

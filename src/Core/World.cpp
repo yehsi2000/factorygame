@@ -25,14 +25,14 @@
 
 World::World(Registry *registry, WorldAssetManager *worldAssetManager,
              EntityFactory *factory, EventDispatcher *eventDispatcher,
-             TTF_Font *font, bool bIsServer)
+             TTF_Font *font, bool isServer)
     : registry(registry),
       factory(factory),
       worldAssetManager(worldAssetManager),
       eventDispatcher(eventDispatcher),
       font(font),
       localPlayer(Entity::Null()),
-      bIsServer(bIsServer),
+      isServer(isServer),
       minironOreAmount(0.0f) {
   std::random_device rd;
   randomGenerator.seed(rd());
@@ -77,9 +77,9 @@ void World::Update() {
   }
 }
 
-void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool bIsLocal) {
-  Entity player = factory->CreatePlayer(this, pos, clientID, bIsLocal);
-  if (bIsLocal) localPlayer = player;
+void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool isLocal) {
+  Entity player = factory->CreatePlayer(this, pos, clientID, isLocal);
+  if (isLocal) localPlayer = player;
   clientPlayerMap[clientID] = player;
 }
 
@@ -402,7 +402,7 @@ void World::GenerateChunk(Chunk &chunk) {
 
   // Create and add the chunk component with the pre-rendered texture
   ChunkComponent chunkComp{};
-  chunkComp.bNeedsRedraw = false;
+  chunkComp.isDirty = false;
   chunkComp.chunkTexture = worldAssetManager->CreateChunkTexture(chunk);
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
 

@@ -18,7 +18,7 @@ void AnimationSystem::Update(float deltaTime) {
     auto &anim = registry->GetComponent<AnimationComponent>(entity);
     auto &sprite = registry->GetComponent<SpriteComponent>(entity);
 
-    if (!anim.bIsPlaying) {
+    if (!anim.isPlaying) {
       continue;
     }
 
@@ -33,11 +33,11 @@ void AnimationSystem::Update(float deltaTime) {
       anim.frameTimer = 0.f;
       anim.currentFrameIndex++;
       if (anim.currentFrameIndex >= sequence.numFrames) {
-        if (sequence.bIsLoop) {
+        if (sequence.isLoop) {
           anim.currentFrameIndex = 0;
         } else {
           anim.currentFrameIndex = sequence.numFrames - 1;
-          anim.bIsPlaying = false;
+          anim.isPlaying = false;
         }
       }
     }

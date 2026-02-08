@@ -29,5 +29,5 @@ class EntityFactory {
   virtual Entity CreateMiningDrill(World* world, Vec2f worldPos);
   virtual Entity CreateMiningDrill(World* world, Vec2 tileIndex);
 
-  virtual Entity CreatePlayer(World *world, Vec2f worldPos, clientid_t clientID, bool bIsLocalPlayer);
+  virtual Entity CreatePlayer(World *world, Vec2f worldPos, clientid_t clientID, bool isLocalPlayer);
 };

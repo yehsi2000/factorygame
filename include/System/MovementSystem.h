@@ -8,7 +8,7 @@ class MovementSystem {
   InputManager* inputManager;
   EventDispatcher* eventDispatcher;
   World* world;
-  bool bIsServer;
+  bool isServer;
 
   ThreadSafeQueue<MoveAppliedPtr>* pendingMoves;
 

@@ -70,7 +70,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
                      spritesheet, {0, 32, 8.0f, 214, 226, true});
 
   anim.currentAnimation = AnimationName::ASSEMBLING_MACHINE_IDLE;
-  anim.bIsPlaying = false;
+  anim.isPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
   // Add assembling machine component
@@ -137,7 +137,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
                      {0, 32, 8.0f, 185, 168, true});
 
   anim.currentAnimation = AnimationName::DRILL_IDLE;
-  anim.bIsPlaying = false;
+  anim.isPlaying = false;
   registry->EmplaceComponent<AnimationComponent>(entity, anim);
 
   MiningDrillComponent drill{};
@@ -152,7 +152,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
 }
 
 Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
-                                     clientid_t clientID, bool bIsLocalPlayer) {
+                                     clientid_t clientID, bool isLocalPlayer) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Entity player = registry->CreateEntity();
@@ -192,12 +192,12 @@ Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
   registry->EmplaceComponent<MovementComponent>(player, 300.f);
 
   PlayerStateComponent playerState{};
-  playerState.bIsMining = false;
+  playerState.isMining = false;
   playerState.interactingEntity = Entity::Null();
   playerState.clientID = clientID;
   registry->AddComponent<PlayerStateComponent>(player, std::move(playerState));
 
-  if (bIsLocalPlayer) {
+  if (isLocalPlayer) {
     registry->EmplaceComponent<LocalPlayerComponent>(player, clientID);
     registry->EmplaceComponent<NetPredictionComponent>(player);
   }

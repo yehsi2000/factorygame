@@ -7,7 +7,7 @@
 namespace util {
 
 void SetAnimation(AnimationName name, AnimationComponent &animComp,
-                  bool bPlayNow);
+                  bool doPlayNow);
 
 void AddAnimation(AnimationComponent &animComp, const AnimationName& animName,
                   SDL_Texture * texture, AnimationSequence&& animSequence);

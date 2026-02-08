@@ -24,7 +24,7 @@ struct AnimationSequence {
   float frameRate;
   int frameWidth;  // single frame size in spritesheet
   int frameHeight;
-  bool bIsLoop;
+  bool isLoop;
   int sheetWidth;
   int sheetHeight;
   SDL_Texture *texture;  // Cached texture reference

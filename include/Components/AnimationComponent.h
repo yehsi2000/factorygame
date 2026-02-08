@@ -12,7 +12,7 @@ struct AnimationComponent {
 
   int currentFrameIndex;
   float frameTimer;
-  bool bIsPlaying;
+  bool isPlaying;
   SDL_Texture *lastTexture;
 };
 
@@ -22,5 +22,5 @@ struct AnimationComponent {
 //   AnimationName currentAnim;
 //   int currentFrameIndex;
 //   float frameTimer;
-//   bool bIsPlaying;
+//   bool isPlaying;
 // };

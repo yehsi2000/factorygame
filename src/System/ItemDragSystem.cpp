@@ -25,8 +25,8 @@ ItemDragSystem::ItemDragSystem(const SystemContext &context)
       inputManager(context.inputManager),
       eventDispatcher(context.eventDispatcher),
       factory(context.entityFactory),
-      bIsPreviewingBuilding(false),
-      bIsBuildingPlaced(false),
+      isPreviewingBuilding(false),
+      isBuildingPlaced(false),
       previewEntity(Entity::Null()),
       previewingItemID(ItemID::None) {
   itemDropHandle = eventDispatcher->Subscribe<ItemDropInWorldEvent>(
@@ -36,14 +36,14 @@ ItemDragSystem::ItemDragSystem(const SystemContext &context)
 }
 
 void ItemDragSystem::Update() {
-  bIsBuildingPlaced = false;
+  isBuildingPlaced = false;
 
   if (!ImGui::GetIO().WantCaptureMouse) return;
 
   const ImGuiPayload *payload_ptr = ImGui::GetDragDropPayload();
 
   // Handle item dragging
-  if (!bIsPreviewingBuilding && payload_ptr != nullptr &&
+  if (!isPreviewingBuilding && payload_ptr != nullptr &&
       payload_ptr->DataSize == sizeof(ItemPayload)) {
     ItemPayload *itemPayload = static_cast<ItemPayload *>(payload_ptr->Data);
 
@@ -57,7 +57,7 @@ void ItemDragSystem::Update() {
         CreatePreviewEntity(itemPayload->id);
       }
     }
-  } else if (bIsPreviewingBuilding &&
+  } else if (isPreviewingBuilding &&
              (payload_ptr == nullptr ||
               payload_ptr->DataSize != sizeof(ItemPayload))) {
     DestroyPreviewEntity();
@@ -66,7 +66,7 @@ void ItemDragSystem::Update() {
 }
 
 void ItemDragSystem::UpdatePreviewEntity() {
-  if (!bIsPreviewingBuilding) {
+  if (!isPreviewingBuilding) {
     return;
   }
 
@@ -89,12 +89,12 @@ void ItemDragSystem::UpdatePreviewEntity() {
 
 void ItemDragSystem::CreatePreviewEntity(ItemID itemID) {
   // Destroy existing preview entity if it exists
-  if (previewEntity != Entity::Null() || bIsBuildingPlaced) {
+  if (previewEntity != Entity::Null() || isBuildingPlaced) {
     DestroyPreviewEntity();
     return;
   }
 
-  bIsPreviewingBuilding = true;
+  isPreviewingBuilding = true;
   previewEntity = registry->CreateEntity();
 
   // Determine building size
@@ -136,7 +136,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
   const ItemDatabase &db = ItemDatabase::instance();
 
   // Check if we're dragging to place building
-  if (player != Entity::Null() && bIsPreviewingBuilding &&
+  if (player != Entity::Null() && isPreviewingBuilding &&
       previewingItemID != ItemID::None &&
       db.IsOfCategory(event.payload.id, ItemCategory::Buildable)) {
     Vec2 tileIndex = world->GetTileIndexFromWorldPosition(event.worldPos);
@@ -159,7 +159,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
     }
 
     DestroyPreviewEntity();
-    bIsBuildingPlaced = true;
+    isBuildingPlaced = true;
   }
 
   // Handle non-buildable item drop (create item entity on ground)
@@ -188,7 +188,7 @@ void ItemDragSystem::ItemDropEventHandler(const ItemDropInWorldEvent &event) {
 
 void ItemDragSystem::DestroyPreviewEntity() {
   if (previewEntity != Entity::Null()) {
-    bIsPreviewingBuilding = false;
+    isPreviewingBuilding = false;
     previewingItemID = ItemID::None;
     registry->DestroyEntity(previewEntity);
     previewEntity = Entity::Null();

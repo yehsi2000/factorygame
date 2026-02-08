@@ -7,12 +7,12 @@ struct TransformComponent {
   Vec2f position;
   Vec2f scale;
   float rotation;  // Rotation in degrees
-  bool bIsDirty;
+  bool isDirty;
 
   constexpr TransformComponent() = default;
 
   constexpr explicit TransformComponent(Vec2f position, Vec2f scale = {1.f, 1.f},
                                float rotation = 0.f)
-      : position(position), scale(scale), rotation(rotation), bIsDirty(false) {
+      : position(position), scale(scale), rotation(rotation), isDirty(false) {
         };
 };
