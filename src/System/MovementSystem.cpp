@@ -25,11 +25,11 @@ MovementSystem::MovementSystem(const SystemContext& context)
       timerManager(context.timerManager),
       eventDispatcher(context.eventDispatcher),
       world(context.world),
-      bIsServer(context.bIsServer),
+      isServer(context.isServer),
       pendingMoves(context.pendingMoves) {}
 
 void MovementSystem::Update(float deltaTime) {
-  if (bIsServer) {
+  if (isServer) {
     ServerUpdate(deltaTime);
   } else {
     // ClientUpdate(deltaTime);
@@ -52,7 +52,7 @@ void MovementSystem::ServerUpdate(float deltaTime) {
       int ix = inputManager->GetXAxis();
       int iy = inputManager->GetYAxis();
 
-      if (playerStateComp.bIsMining) ix = 0, iy = 0;
+      if (playerStateComp.isMining) ix = 0, iy = 0;
 
       uint8_t bit{0};
       if (ix > 0)
@@ -94,7 +94,7 @@ void MovementSystem::ServerUpdate(float deltaTime) {
     if (registry->HasComponent<AnimationComponent>(e)) {
       auto& anim = registry->GetComponent<AnimationComponent>(e);
       if (ix == 0 && iy == 0) {
-        if (!psc.bIsMining)
+        if (!psc.isMining)
           util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
       } else {
         util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);

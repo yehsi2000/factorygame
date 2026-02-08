@@ -12,15 +12,8 @@ struct AnimationComponent {
 
   int currentFrameIndex;
   float frameTimer;
-  bool bIsPlaying;
+  bool isPlaying;
   SDL_Texture *lastTexture;
 };
 
 // TODO : Let animation manager hold the data. Component just points it.
-
-// struct AnimationComponent {
-//   AnimationName currentAnim;
-//   int currentFrameIndex;
-//   float frameTimer;
-//   bool bIsPlaying;
-// };

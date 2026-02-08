@@ -45,7 +45,7 @@ class World {
   EventDispatcher* eventDispatcher;
   EntityFactory* factory;
   Entity localPlayer;
-  bool bIsServer;
+  bool isServer;
 
  public:
   World(Registry* registry, WorldAssetManager* worldAssetManager,
@@ -120,7 +120,7 @@ class World {
   bool IsTilePassable(Vec2 tileIdx);
 
   void GeneratePlayer(clientid_t clientID, Vec2f worldPos,
-                      bool bIsLocalPlayer = false);
+                      bool isLocalPlayer = false);
   inline Entity GetLocalPlayer() const { return localPlayer; }
   inline Entity GetPlayerByClientID(clientid_t clientID) const {
     auto it = clientPlayerMap.find(clientID);

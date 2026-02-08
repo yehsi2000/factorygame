@@ -92,7 +92,7 @@ class WindowsServerImpl : public ServerImpl {
   std::unordered_map<clientid_t, ClientInfo *> idToInfoMap;
   ThreadSafeQueue<RecvPacketPtr> *recvQueue;
   ThreadSafeQueue<SendRequestPtr> *sendQueue;
-  bool bIsRunning;
+  bool isRunning;
 
   static void PacketSendHelper(ClientInfo *client, char *sendbuffer,
                                std::size_t packet_size) {
@@ -369,6 +369,18 @@ class WindowsServerImpl : public ServerImpl {
       return false;
     }
 
+    int nodelay = 1;
+    res = setsockopt(listenSocket, IPPROTO_TCP, TCP_NODELAY,
+                     reinterpret_cast<const char *>(&nodelay),
+                     sizeof(nodelay));
+    if (res == SOCKET_ERROR) {
+      std::cerr << "setsockopt(TCP_NODELAY) failed: " << WSAGetLastError()
+                << std::endl;
+      closesocket(listenSocket);
+      WSACleanup();
+      return false;
+    }
+
     SOCKADDR_IN serverAddr{};
     serverAddr.sin_family = PF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
@@ -410,7 +422,7 @@ class WindowsServerImpl : public ServerImpl {
   }
 
   void Start() override {
-    bIsRunning = true;
+    isRunning = true;
     if (serverThreadHandle != INVALID_HANDLE_VALUE) return;
     serverThreadHandle = (HANDLE)_beginthreadex(
         nullptr, 0, &WindowsServerImpl::StartServer, this, 0, nullptr);
@@ -419,7 +431,7 @@ class WindowsServerImpl : public ServerImpl {
   void StartThread() {
     std::cout << "IOCP server started." << std::endl;
 
-    while (bIsRunning) {
+    while (isRunning) {
       SOCKADDR_IN clientAddr;
       int addrLen = sizeof(SOCKADDR_IN);
 
@@ -467,7 +479,7 @@ class WindowsServerImpl : public ServerImpl {
   }
 
   void Stop() override {
-    bIsRunning = false;
+    isRunning = false;
     closesocket(listenSocket);
     CloseHandle(serverThreadHandle);
 

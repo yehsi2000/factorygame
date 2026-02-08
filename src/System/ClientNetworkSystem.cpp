@@ -125,8 +125,7 @@ void ClientNetworkSystem::ChatBroadcastHandler(const uint8_t* rp,
   }
 }
 
-// Push all snapshots (including local) into buffers. Do not write Transform
-// here
+// Push all snapshots(including local) into buffers. Do not write to Transform
 void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
                                                    double now) {
   const uint16_t count = util::Read16BigEnd(rp);
@@ -237,9 +236,9 @@ void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
   auto& trans = registry->GetComponent<TransformComponent>(localPlayer);
 
   trans.position.x =
-      util::Lerp(trans.position.x, pred.predictedX, kCatchUpSpeed * deltaTime);
+      util::Lerp(trans.position.x, pred.predictedX, catchUpSpeed * deltaTime);
   trans.position.y =
-      util::Lerp(trans.position.y, pred.predictedY, kCatchUpSpeed * deltaTime);
+      util::Lerp(trans.position.y, pred.predictedY, catchUpSpeed * deltaTime);
 }
 
 static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
@@ -288,9 +287,7 @@ static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
 
 // Remote interpolation for non-local players
 void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
-  const double renderTimestamp = now - kInterpolationDelay;
-
-  bool did_log_interp = false;
+  const double renderTimestamp = now - interpolationDelay;
 
   for (Entity e : registry->view<InterpBufferComponent, TransformComponent,
                                    AnimationComponent, SpriteComponent>()) {
@@ -303,24 +300,25 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
     uint8_t f;
     if (!SampleBufferAt(buf, renderTimestamp, x, y, f)) continue;
 
-    // if (!did_log_interp && buf.count > 0) {
-    //   const auto& newest =
-    //       buf.samples[(buf.tail + buf.count - 1) % InterpBufferComponent::N];
-    //   const auto& oldest = buf.samples[buf.tail];
-    //   std::cout << std::format(
-    //       "[Interp] now={:.3f} renderT={:.3f} | buf_count={} "
-    //       "oldest_t={:.3f} newest_t={:.3f} | old_pos=({:.2f}, {:.2f}) "
-    //       "new_pos=({:.2f}, {:.2f})\n",
-    //       now, renderTimestamp, buf.count, oldest.t, newest.t,
-    //       trans.position.x, trans.position.y, x, y);
-    //   did_log_interp = true;
-    // }
+#ifdef LOG_INTERP
+    if (buf.count > 0) {
+      const auto& newest =
+          buf.samples[(buf.tail + buf.count - 1) % InterpBufferComponent::N];
+      const auto& oldest = buf.samples[buf.tail];
+      std::cout << std::format(
+          "[Interp] now={:.3f} renderT={:.3f} | buf_count={} "
+          "oldest_t={:.3f} newest_t={:.3f} | old_pos=({:.2f}, {:.2f}) "
+          "new_pos=({:.2f}, {:.2f})\n",
+          now, renderTimestamp, buf.count, oldest.t, newest.t,
+          trans.position.x, trans.position.y, x, y);
+    }
+#endif
 
     auto& anim = registry->GetComponent<AnimationComponent>(e);
     auto& psc = registry->GetComponent<PlayerStateComponent>(e);
     if (std::abs(trans.position.x - x) < 0.01f &&
         std::abs(trans.position.y - y) < 0.01f) {
-      if (!psc.bIsMining)
+      if (!psc.isMining)
         util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
     } else {
       util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);
@@ -456,7 +454,7 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
     auto& anim = registry->GetComponent<AnimationComponent>(localPlayer);
     auto& psc = registry->GetComponent<PlayerStateComponent>(localPlayer);
     if (ix == 0 && iy == 0) {
-      if (!psc.bIsMining)
+      if (!psc.isMining)
         util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
     } else {
       util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);

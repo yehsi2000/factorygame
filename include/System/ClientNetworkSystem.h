@@ -63,7 +63,7 @@ class ClientNetworkSystem {
 
   // For client-side prediction and server reconciliation
   RingBuffer<InputCommand, 64> pendingInputQueue;
-  static constexpr float kCatchUpSpeed = 20.f;
-  static constexpr double kInterpolationDelay = 0.1;
+  static constexpr float catchUpSpeed = 20.f;
+  static constexpr double interpolationDelay = 0.1;
   uint16_t inputSequenceNumber = 0;
 };

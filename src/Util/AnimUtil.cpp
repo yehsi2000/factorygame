@@ -5,13 +5,13 @@
 namespace util {
 
 void SetAnimation(AnimationName name, AnimationComponent &animComp,
-                  bool bPlay) {
+                  bool doPlay) {
   if (animComp.currentAnimation != name) {
     animComp.currentAnimation = name;
     animComp.currentFrameIndex = 0;
     animComp.frameTimer = 0.f;
   }
-  animComp.bIsPlaying = bPlay;
+  animComp.isPlaying = doPlay;
 }
 
 // TODO : should store animation data somewhere else like asset

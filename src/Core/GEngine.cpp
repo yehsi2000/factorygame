@@ -60,7 +60,7 @@ void GEngine::Run() {
   // Push the initial state directly instead of using the deferred ChangeState
   PushState(std::make_unique<MainMenuState>());
 
-  while (bIsRunning) {
+  while (isRunning) {
     curTime = steady_clock::now();
     deltaTime =
         duration<float, milliseconds::period>(curTime - prevTime).count();
@@ -76,7 +76,7 @@ void GEngine::Run() {
     }
 
     if (inputManager->IsQuit()) {
-      bIsRunning = false;
+      isRunning = false;
     }
 
     inputManager->UpdateContinuousState();

@@ -79,9 +79,9 @@ class ClientState : public IGameState {
   std::thread recvThread;
   std::thread sendThread;
   std::size_t clientID;
-  std::atomic<bool> bIsReceiving;
-  std::atomic<bool> bIsSending;
-  bool bIsQuit;
+  std::atomic<bool> isReceiving;
+  std::atomic<bool> isSending;
+  bool isQuit;
 
   std::unique_ptr<AnimationSystem> animationSystem;
   std::unique_ptr<AssemblingMachineSystem> assemblingMachineSystem;

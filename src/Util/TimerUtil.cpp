@@ -7,7 +7,7 @@ namespace util {
 
 void AttachTimer(Registry* registry, TimerManager* timerManager,
                  Entity entity, TimerId id, float duration,
-                 bool bIsRepeating) {
+                 bool isRepeating) {
   // Ensure the entity has a TimerComponent. If not, add one.
   if (!registry || !timerManager) return;
   if (!registry->HasComponent<TimerComponent>(entity)) {
@@ -22,7 +22,7 @@ void AttachTimer(Registry* registry, TimerManager* timerManager,
   }
 
   // Create the new timer in the manager and get a handle.
-  TimerHandle handle = timerManager->CreateTimer(id, duration, bIsRepeating);
+  TimerHandle handle = timerManager->CreateTimer(id, duration, isRepeating);
 
   // Store the handle in the entity's component.
   timerComp.timers[timerIndex] = handle;

@@ -49,7 +49,7 @@ class UISystem {
   explicit UISystem(const SystemContext& context);
   ~UISystem();
   void Update();
-  inline void ToggleInventory() { bIsShowingInventory = !bIsShowingInventory; }
+  inline void ToggleInventory() { isShowingInventory = !isShowingInventory; }
 
  private:
   void ChatWindow();
@@ -66,10 +66,10 @@ class UISystem {
   std::unique_ptr<EventHandle> newChatHandle;
   std::unordered_map<clientid_t, std::string>* clientNameMap;
   ItemPayload payload;
-  bool bIsShowingInventory = false;
-  bool bIsShowingChatInput = false;
-  // bool bDemoShow = true;
-  bool bIsServer;
+  bool isShowingInventory = false;
+  bool isShowingChatInput = false;
+  // bool showDemo = true;
+  bool isServer;
   std::shared_ptr<std::string> playerChat;
   std::list<std::string> chatLog;
 };

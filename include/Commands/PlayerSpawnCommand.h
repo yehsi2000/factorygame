@@ -9,17 +9,17 @@
 
 class PlayerSpawnCommand : public Command {
  public:
-  PlayerSpawnCommand(clientid_t clientID, bool bIsLocalPlayer)
-      : clientID(clientID), bIsLocalPlayer(bIsLocalPlayer) {};
+  PlayerSpawnCommand(clientid_t clientID, bool isLocalPlayer)
+      : clientID(clientID), isLocalPlayer(isLocalPlayer) {};
 
   ~PlayerSpawnCommand() = default;
 
   void Execute(Registry* registry, EventDispatcher* eventDispatcher,
                World* world) override {
-    world->GeneratePlayer(clientID, {}, bIsLocalPlayer);
+    world->GeneratePlayer(clientID, {}, isLocalPlayer);
   }
 
  private:
   clientid_t clientID;
-  bool bIsLocalPlayer;
+  bool isLocalPlayer;
 };

@@ -88,7 +88,7 @@ class ServerState : public IGameState {
   std::unique_ptr<InteractionSystem> interactionSystem;
   std::unique_ptr<UISystem> uiSystem;
 
-  bool bIsQuit = false;
+  bool isQuit = false;
 
  public:
   ServerState();

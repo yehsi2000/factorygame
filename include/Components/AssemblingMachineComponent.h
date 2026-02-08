@@ -22,8 +22,8 @@ struct AssemblingMachineComponent {
   
   std::unordered_map<ItemID, int> outputInventory;
   
-  bool bIsAnimating;
+  bool isAnimating;
   
-  bool bIsShowingUI;
-  bool bRecipeSelected;
+  bool isShowingUI;
+  bool isRecipeSelected;
 };

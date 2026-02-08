@@ -16,13 +16,13 @@ enum class MouseButton {
  */
 struct InputState {
     // Mouse button state
-    bool bIsLeftMouseDown = false;
-    bool bIsRightMouseDown = false;
-    bool bIsLeftMousePressed = false; // True for one frame on press
-    bool bIsRightMousePressed = false; // True for one frame on press
-    bool bIsLeftMouseReleased = false; // True for one frame on release
-    bool bIsRightMouseReleased = false; // True for one frame on release
-    bool bIsDraggedFromUI = false;
+    bool isLeftMouseDown = false;
+    bool isRightMouseDown = false;
+    bool isLeftMousePressed = false; // True for one frame on press
+    bool isRightMousePressed = false; // True for one frame on press
+    bool isLeftMouseReleased = false; // True for one frame on release
+    bool isRightMouseReleased = false; // True for one frame on release
+    bool isDraggedFromUI = false;
 
     Vec2 mousePos = {0, 0};
     Vec2 mouseDelta = {0, 0};
@@ -30,5 +30,5 @@ struct InputState {
 
     Vec2 axis = {0, 0};
 
-    bool bIsQuit = false;
+    bool isQuit = false;
 };

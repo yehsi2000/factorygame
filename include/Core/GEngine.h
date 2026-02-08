@@ -26,7 +26,7 @@ class GEngine {
   std::unique_ptr<WorldAssetManager> worldAssetManager;
   std::unique_ptr<InputManager> inputManager;
 
-  bool bIsRunning = true;
+  bool isRunning = true;
   // For deferred state changes
   std::unique_ptr<IGameState> pendingState = nullptr;
   bool changeStateRequested = false;
@@ -55,6 +55,6 @@ class GEngine {
     return worldAssetManager.get();
   }
   inline InputManager *GetInputManager() { return inputManager.get(); }
-  inline void Stop() { bIsRunning = false; }
+  inline void Stop() { isRunning = false; }
   inline bool IsChangeRequested() const { return changeStateRequested; }
 };

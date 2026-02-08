@@ -83,12 +83,12 @@ void ServerState::Init(GEngine* engine) {
       sendQueue.get();  // Pass to server-specific send queue
   systemContext.server = server.get();
   systemContext.clientNameMap = &clientNameMap;
-  systemContext.bIsServer = true;
+  systemContext.isServer = true;
 
   InitCoreSystem();
 
   eventDispatcher->Subscribe<QuitEvent>(
-      [this](QuitEvent e) { bIsQuit = true; });
+      [this](QuitEvent e) { isQuit = true; });
 
   // TODO : Move Server player generation to be handled by menu ui
   world->GeneratePlayer(0, {0.f, 0.f}, true);
@@ -119,20 +119,13 @@ void ServerState::InitCoreSystem() {
 void ServerState::Cleanup() {}
 
 void ServerState::Update(float deltaTime) {
-  if (bIsQuit) {
+  if (isQuit) {
     if (!gEngine->IsChangeRequested())
       gEngine->ChangeState(std::make_unique<MainMenuState>());
     return;  // The state is now being destroyed, so we should not continue.
   }
 
   inputSystem->Update();
-  // Process all pending commands.
-  while (!commandQueue->IsEmpty()) {
-    std::unique_ptr<Command> command = commandQueue->Dequeue();
-    if (command) {
-      command->Execute(registry.get(), eventDispatcher.get(), world.get());
-    }
-  }
 
   networkSystem->Update(deltaTime);
   itemDragSystem->Update();
@@ -149,6 +142,14 @@ void ServerState::Update(float deltaTime) {
   resourceNodeSystem->Update();
 
   cameraSystem->Update(deltaTime);
+
+  // Process all pending commands.
+  while (!commandQueue->IsEmpty()) {
+    std::unique_ptr<Command> command = commandQueue->Dequeue();
+    if (command) {
+      command->Execute(registry.get(), eventDispatcher.get(), world.get());
+    }
+  }
 
   renderSystem->Update();
   uiSystem->Update();  // Display UI on very top
