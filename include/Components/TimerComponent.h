@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <array>
 #include <cstdint>
 
@@ -14,7 +14,7 @@ constexpr TimerHandle INVALID_TIMER_HANDLE = 0;
 enum class TimerId : int {
   Mine,
   AssemblingMachineCraft,
-  MaxTimers // Represents the maximum number of timer types.
+  MaxTimers  // Represents the maximum number of timer types.
 };
 
 constexpr std::size_t MAX_TIMERS_PER_ENTITY =

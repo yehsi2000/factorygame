@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 #include <vector>
 
@@ -7,7 +7,8 @@
 #include "DataStruct/ObjectPool.h"
 
 /**
- * @brief Manages the lifecycle of all TimerInstance objects in the game, centralizing the logic and memory management. 
+ * @brief Manages the lifecycle of all TimerInstance objects in the game,
+ * centralizing the logic and memory management.
  */
 class TimerManager {
  public:
@@ -15,17 +16,17 @@ class TimerManager {
 
   /**
    * @brief Creates a new timer and returns a handle to it.
-   * 
+   *
    * @param id TimerId to represent purpose of is timer.
    * @param duration How long does this timer take to expire.
    * @param isRepeating If true, repeat timer after it's expiration.
-   * @return TimerHandle 
+   * @return TimerHandle
    */
   TimerHandle CreateTimer(TimerId id, float duration, bool isRepeating);
 
   /**
    * @brief Retrieves a pointer to a timer instance from its handle.
-   * 
+   *
    * @param handle Timer identifier
    * @return TimerInstance* nullptr if the handle is invalid.
    */
@@ -33,7 +34,7 @@ class TimerManager {
 
   /**
    * @brief Destroys a timer instance, returning it to the pool.
-   * 
+   *
    * @param handle Handle of timer to destroy
    */
   void DestroyTimer(TimerHandle handle);
@@ -49,15 +50,15 @@ class TimerManager {
   std::vector<std::unique_ptr<TimerInstance>> handleToInstanceMap;
 
   /**
-   * @brief A queue of free handles to reuse for new timers, preventing handle reuse issues.
-   * 
+   * @brief A queue of free handles to reuse for new timers, preventing handle
+   * reuse issues.
+   *
    */
   std::vector<TimerHandle> freeHandles;
 
-  // 
   /**
    * @brief The next handle to assign if the free list is empty.
-   * 
+   *
    */
   TimerHandle nextHandle;
 };

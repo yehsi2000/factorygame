@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include "DataStruct/Type.h"
 
 namespace util {

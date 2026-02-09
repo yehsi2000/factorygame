@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <vector>
 
 #include "Core/Item.h"

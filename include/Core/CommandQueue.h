@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 #include <queue>
 
@@ -7,9 +7,9 @@
 
 /**
  * @brief A queue for deferred execution of commands.
- * @details This class provides a thread-safe way to enqueue commands from various
- *          systems. The main engine loop dequeues and executes these commands at a
- *          safe point in the frame, preventing race conditions and ensuring
+ * @details This class provides a thread-safe way to enqueue commands from
+ * various systems. The main engine loop dequeues and executes these commands at
+ * a safe point in the frame, preventing race conditions and ensuring
  *          deterministic state changes.
  */
 class CommandQueue {

@@ -1,5 +1,5 @@
 #pragma once
- 
+
 class GEngine;
 
 /**
@@ -9,7 +9,7 @@ class GEngine;
  * are called when the game transitions into or out of a state. This allows for
  * state-specific logic to be cleanly separated.
  */
- 
+
 class IGameState {
  public:
   virtual ~IGameState() = default;

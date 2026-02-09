@@ -6,11 +6,10 @@
 #include "Core/Chunk.h"
 #include "SDL_image.h"
 
-
 WorldAssetManager::WorldAssetManager(SDL_Renderer *renderer)
     : renderer(renderer) {}
 
-SDL_Texture *WorldAssetManager::CreateChunkTexture(Chunk& chunk) {
+SDL_Texture *WorldAssetManager::CreateChunkTexture(Chunk &chunk) {
   SDL_Texture *chunkTexture = SDL_CreateTexture(
       renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
       CHUNK_WIDTH * TILE_PIXEL_SIZE, CHUNK_HEIGHT * TILE_PIXEL_SIZE);
@@ -38,18 +37,15 @@ SDL_Texture *WorldAssetManager::CreateChunkTexture(Chunk& chunk) {
           srcRect = {0, 0, 64, 64};
           break;
         case TileType::Grass:
-          tilesetTexture =
-              getTexture("assets/img/tile/grass.png");
+          tilesetTexture = getTexture("assets/img/tile/grass.png");
           srcRect = {0, 0, 64, 64};
           break;
         case TileType::Water:
-          tilesetTexture =
-              getTexture("assets/img/tile/water.png");
+          tilesetTexture = getTexture("assets/img/tile/water.png");
           srcRect = {0, 0, 64, 64};
           break;
         case TileType::Stone:
-          tilesetTexture =
-              getTexture("assets/img/tile/stone.png");
+          tilesetTexture = getTexture("assets/img/tile/stone.png");
           srcRect = {0, 0, 64, 64};
           break;
         default:

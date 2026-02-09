@@ -1,12 +1,11 @@
 #include "Core/Socket.h"
 
-#include "Core/SocketImpl.h"
-
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <cstddef>
 
+#include "Core/SocketImpl.h"
 
 // Include the platform-specific implementation files
 #if defined(_WIN32)

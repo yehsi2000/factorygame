@@ -8,8 +8,8 @@
 namespace util {
 
 double dist(Vec2f a, Vec2f b) {
-  double dx = static_cast<double>(a.x - b.x);
-  double dy = static_cast<double>(a.y - b.y);
+  auto dx = static_cast<double>(a.x - b.x);
+  auto dy = static_cast<double>(a.y - b.y);
   return static_cast<double>(std::sqrt(dx * dx + dy * dy));
 }
 

@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 #include <vector>
 
@@ -31,15 +31,15 @@ class GEngine {
   std::unique_ptr<IGameState> pendingState = nullptr;
   bool changeStateRequested = false;
 
-  GEngine(const GEngine &) = delete;
-  GEngine &operator=(const GEngine &) = delete;
-  GEngine(GEngine &&) = delete;
-  GEngine &operator=(GEngine &&) = delete;
   std::vector<std::unique_ptr<IGameState>> gameStates;
 
  public:
   GEngine(SDL_Window *window, SDL_Renderer *renderer, TTF_Font *font);
   ~GEngine();
+  GEngine(const GEngine &) = delete;
+  GEngine &operator=(const GEngine &) = delete;
+  GEngine(GEngine &&) = delete;
+  GEngine &operator=(GEngine &&) = delete;
 
   void PushState(std::unique_ptr<IGameState> state);
   void PopState();

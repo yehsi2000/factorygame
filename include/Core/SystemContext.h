@@ -1,9 +1,11 @@
 #pragma once
 
+#include <string>
+#include <unordered_map>
+
 #include "Core/Packet.h"
 #include "DataStruct/ThreadSafeQueue.h"
-#include <unordered_map>
-#include <string>
+
 
 // Forward declarations
 class AssetManager;
@@ -36,10 +38,14 @@ struct SystemContext {
   InputManager* inputManager = nullptr;
   EntityFactory* entityFactory = nullptr;
   TimerManager* timerManager = nullptr;
-  ThreadSafeQueue<RecvPacketPtr>* serverRecvQueue = nullptr; // For incoming packets (both client and server)
-  ThreadSafeQueue<SendRequestPtr>* serverSendQueue = nullptr; // For server outgoing packets (needs SendRequestPtr)
-  ThreadSafeQueue<PacketPtr>* clientRecvQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
-  ThreadSafeQueue<PacketPtr>* clientSendQueue = nullptr;   // For client outgoing packets (only needs PacketPtr)
+  ThreadSafeQueue<RecvPacketPtr>* serverRecvQueue =
+      nullptr;  // For incoming packets (both client and server)
+  ThreadSafeQueue<SendRequestPtr>* serverSendQueue =
+      nullptr;  // For server outgoing packets (needs SendRequestPtr)
+  ThreadSafeQueue<PacketPtr>* clientRecvQueue =
+      nullptr;  // For client outgoing packets (only needs PacketPtr)
+  ThreadSafeQueue<PacketPtr>* clientSendQueue =
+      nullptr;  // For client outgoing packets (only needs PacketPtr)
   ThreadSafeQueue<MoveAppliedPtr>* pendingMoves = nullptr;
   std::unordered_map<clientid_t, std::string>* clientNameMap = nullptr;
   Server* server = nullptr;

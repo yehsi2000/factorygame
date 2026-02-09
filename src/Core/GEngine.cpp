@@ -14,7 +14,6 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
-
 GEngine::GEngine(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font)
     : gWindow(window),
       gRenderer(renderer),

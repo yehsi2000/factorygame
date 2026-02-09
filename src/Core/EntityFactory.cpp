@@ -18,7 +18,6 @@
 #include "Core/World.h"
 #include "Util/AnimUtil.h"
 
-
 EntityFactory::EntityFactory(Registry *registry, AssetManager *assetManager)
     : registry(registry), assetManager(assetManager) {}
 
@@ -152,7 +151,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
 }
 
 Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
-                                     clientid_t clientID, bool isLocalPlayer) {
+                                   clientid_t clientID, bool isLocalPlayer) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Entity player = registry->CreateEntity();

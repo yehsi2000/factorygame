@@ -5,7 +5,7 @@
 
 #include "SDL_image.h"
 
-AssetManager::AssetManager(SDL_Renderer* renderer): renderer(renderer) {}
+AssetManager::AssetManager(SDL_Renderer *renderer) : renderer(renderer) {}
 
 SDL_Texture *AssetManager::getTexture(const std::string &path) {
   auto it = textureCache.find(path);

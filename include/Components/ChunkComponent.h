@@ -1,5 +1,5 @@
 #pragma once
- 
+
 struct SDL_Texture;
 
 struct ChunkComponent {

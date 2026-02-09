@@ -24,7 +24,6 @@
 #include "imgui.h"
 #include "imgui_stdlib.h"
 
-
 UISystem::UISystem(const SystemContext &context)
     : assetManager(context.assetManager),
       eventDispatcher(context.eventDispatcher),
@@ -276,7 +275,7 @@ void UISystem::Inventory() {
                 ImGui::AcceptDragDropPayload("DND_ITEM")) {
           IM_ASSERT(payload->DataSize == sizeof(ItemPayload));
 
-          ItemPayload *payload_ptr = static_cast<ItemPayload *>(payload->Data);
+          auto *payload_ptr = static_cast<ItemPayload *>(payload->Data);
 
           if (payload_ptr->owner != localPlayer) {
             if (registry->HasComponent<InventoryComponent>(
@@ -389,8 +388,7 @@ void UISystem::AssemblingMachineUI() {
             if (ImGui::BeginDragDropTarget()) {
               if (const ImGuiPayload *payload =
                       ImGui::AcceptDragDropPayload("DND_ITEM")) {
-                ItemPayload *item_payload =
-                    static_cast<ItemPayload *>(payload->Data);
+                auto *item_payload = static_cast<ItemPayload *>(payload->Data);
 
                 if (item_payload->id == ingredient.itemId) {
                   eventDispatcher->Publish(AssemblyAddInputEvent(

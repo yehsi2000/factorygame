@@ -67,9 +67,6 @@ int main() {
       std::chrono::duration<double> logicDuration = logicEnd - frameStart;
       double logicSeconds = logicDuration.count();
 
-      // 2. Cap FPS to 60 (Hybrid Sleep + Spin for precision) -> REMOVED
-      // Measuring raw performance now.
-
       auto frameEnd = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> frameDuration = frameEnd - frameStart;
       batchTotalTime += frameDuration.count();

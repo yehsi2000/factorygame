@@ -4,7 +4,6 @@
 #include <typeindex>
 #include <vector>
 
-
 EventHandle::EventHandle(EventDispatcher* eventDispatcher,
                          std::type_index typeIndex, std::size_t id)
     : eventDispatcher(eventDispatcher), typeIndex(typeIndex), callbackID(id) {}

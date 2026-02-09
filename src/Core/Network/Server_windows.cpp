@@ -252,8 +252,9 @@ class WindowsServerImpl : public ServerImpl {
             ReleaseSRWLockExclusive(&clientMapSRW);
 
             completionKey->Release();
-            client_ok = false; // Mark client as not ok to prevent re-posting WSARecv
-            break; // Exit parsing loop
+            client_ok =
+                false;  // Mark client as not ok to prevent re-posting WSARecv
+            break;      // Exit parsing loop
           }
 
           if (current_buffer_size < packet_size) {
@@ -305,9 +306,6 @@ class WindowsServerImpl : public ServerImpl {
           std::cerr << "Client and overlap object mismatch!" << std::endl;
         }
 
-        // std::cout << "Bytes sent: " << pSocketOverlapped->bytesSent
-        //           << std::endl;
-
         completionKey->Release();
       }
     }
@@ -344,7 +342,7 @@ class WindowsServerImpl : public ServerImpl {
   }
 
  public:
-  WindowsServerImpl() : iocpHandle(NULL) {}
+  WindowsServerImpl() : iocpHandle(nullptr) {}
   ~WindowsServerImpl() override { Stop(); }
 
   bool Init(ThreadSafeQueue<RecvPacketPtr> *recvQ,
@@ -371,8 +369,7 @@ class WindowsServerImpl : public ServerImpl {
 
     int nodelay = 1;
     res = setsockopt(listenSocket, IPPROTO_TCP, TCP_NODELAY,
-                     reinterpret_cast<const char *>(&nodelay),
-                     sizeof(nodelay));
+                     reinterpret_cast<const char *>(&nodelay), sizeof(nodelay));
     if (res == SOCKET_ERROR) {
       std::cerr << "setsockopt(TCP_NODELAY) failed: " << WSAGetLastError()
                 << std::endl;
@@ -489,8 +486,7 @@ class WindowsServerImpl : public ServerImpl {
     WaitForMultipleObjects(static_cast<DWORD>(threadPool.size()),
                            threadPool.data(), TRUE, INFINITE);
 
-    for (std::size_t i = 0; i < threadPool.size(); ++i)
-      CloseHandle(threadPool[i]);
+    for (auto &i : threadPool) CloseHandle(i);
 
     CloseHandle(iocpHandle);
 

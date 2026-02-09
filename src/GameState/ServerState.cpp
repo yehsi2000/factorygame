@@ -88,7 +88,7 @@ void ServerState::Init(GEngine* engine) {
   InitCoreSystem();
 
   eventDispatcher->Subscribe<QuitEvent>(
-      [this](QuitEvent e) { isQuit = true; });
+      [this](const QuitEvent& e) { isQuit = true; });
 
   // TODO : Move Server player generation to be handled by menu ui
   world->GeneratePlayer(0, {0.f, 0.f}, true);

@@ -1,9 +1,10 @@
 #pragma once
- 
-#include <memory>
+
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
+
 
 class SocketImpl;
 
@@ -15,23 +16,22 @@ class SocketImpl;
  * and data transfer.
  */
 class Socket {
-    std::unique_ptr<SocketImpl> pimpl;
+  std::unique_ptr<SocketImpl> pimpl;
 
-public:
-    Socket();
-    ~Socket();
-    
-    Socket(Socket&&) noexcept;
-    Socket& operator=(Socket&&) noexcept;
+ public:
+  Socket();
+  ~Socket();
 
-    bool Init();
-    uint64_t Connect(std::string ip, int port);
-    int Send(uint8_t* buffer, std::size_t size);
-    int Receive(uint8_t* buffer, std::size_t size);
-    void Close();
+  Socket(Socket&&) noexcept;
+  Socket& operator=(Socket&&) noexcept;
 
+  bool Init();
+  uint64_t Connect(std::string ip, int port);
+  int Send(uint8_t* buffer, std::size_t size);
+  int Receive(uint8_t* buffer, std::size_t size);
+  void Close();
 
-private:
-    Socket(const Socket&) = delete;
-    Socket& operator=(const Socket&) = delete;
+ private:
+  Socket(const Socket&) = delete;
+  Socket& operator=(const Socket&) = delete;
 };

@@ -1,7 +1,3 @@
-#include <iostream>
-
-#include "Core/ServerImpl.h"
-
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
@@ -12,9 +8,9 @@
 #include <vector>
 
 #include "Core/Packet.h"
+#include "Core/ServerImpl.h"
 #include "DataStruct/ThreadSafeQueue.h"
 #include "Util/PacketUtil.h"
-
 
 #ifdef __linux__
 
@@ -26,7 +22,8 @@ class LinuxServerImpl : public ServerImpl {
   LinuxServerImpl() : epoll_fd(-1) {}
   ~LinuxServerImpl() = default;
 
-  bool Init(ThreadSafeQueue<RecvPacketPtr>* recvQ, ThreadSafeQueue<SendRequestPtr>* sendQ) override {
+  bool Init(ThreadSafeQueue<RecvPacketPtr>* recvQ,
+            ThreadSafeQueue<SendRequestPtr>* sendQ) override {
     // Placeholder for Linux epoll initialization
     std::cout << "Server initialized (Linux placeholder)." << std::endl;
     return true;

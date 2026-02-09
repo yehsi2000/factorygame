@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <vector>
 
 #include "Core/Entity.h"
@@ -17,7 +17,7 @@ constexpr int CHUNK_HEIGHT = 8;
  * dynamically based on player proximity.
  */
 class Chunk {
-public:
+ public:
   Chunk(int _chunkX, int _chunkY);
   Vec2 GetLocalTileIndex(int worldTileX, int worldTileY) const;
   TileData *GetTile(int localX, int localY);
@@ -26,6 +26,6 @@ public:
   const int chunkY;
   Entity chunkEntity = Entity::Null();
 
-private:
+ private:
   std::vector<TileData> tiles;
 };

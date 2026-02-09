@@ -55,7 +55,8 @@ class WindowsSocketImpl : public SocketImpl {
       connectSocket = socket(addrIter->ai_family, addrIter->ai_socktype,
                              addrIter->ai_protocol);
       if (connectSocket == INVALID_SOCKET) {
-        std::cerr << "Error at socket() error code: " << WSAGetLastError() << std::endl;
+        std::cerr << "Error at socket() error code: " << WSAGetLastError()
+                  << std::endl;
         continue;
       }
 
@@ -76,7 +77,8 @@ class WindowsSocketImpl : public SocketImpl {
     addrIter = nullptr;
 
     if (connectSocket == INVALID_SOCKET) {
-      std::cerr << "Unable to connect to server after trying all addresses" << std::endl;
+      std::cerr << "Unable to connect to server after trying all addresses"
+                << std::endl;
       return 0;
     }
 
@@ -88,7 +90,8 @@ class WindowsSocketImpl : public SocketImpl {
   int Send(uint8_t* buffer, std::size_t size) override {
     int res = send(connectSocket, reinterpret_cast<char*>(buffer), size, 0);
     if (res == SOCKET_ERROR) {
-      std::cerr << "Error at send() error code: " << WSAGetLastError() << std::endl;
+      std::cerr << "Error at send() error code: " << WSAGetLastError()
+                << std::endl;
       Close();
     }
     return res;

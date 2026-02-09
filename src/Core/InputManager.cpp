@@ -5,7 +5,8 @@
 #include "Core/InputManager.h"
 #include "imgui.h"
 
-InputManager::InputManager(SDL_Window* window) : window(window), io(ImGui::GetIO()) {
+InputManager::InputManager(SDL_Window* window)
+    : window(window), io(ImGui::GetIO()) {
   currentKeyState = SDL_GetKeyboardState(nullptr);
   SDL_GetKeyboardState(&numKeys);
   prevKeyState.resize(numKeys);

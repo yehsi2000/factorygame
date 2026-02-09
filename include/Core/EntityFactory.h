@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include "Core/Entity.h"
 #include "Core/Packet.h"
 #include "DataStruct/Type.h"
@@ -22,12 +22,13 @@ class EntityFactory {
  public:
   EntityFactory(Registry* registry, AssetManager* assetManager);
   virtual ~EntityFactory();
-  
+
   virtual Entity CreateAssemblingMachine(World* world, Vec2f worldPos);
   virtual Entity CreateAssemblingMachine(World* world, Vec2 tileIndex);
 
   virtual Entity CreateMiningDrill(World* world, Vec2f worldPos);
   virtual Entity CreateMiningDrill(World* world, Vec2 tileIndex);
 
-  virtual Entity CreatePlayer(World *world, Vec2f worldPos, clientid_t clientID, bool isLocalPlayer);
+  virtual Entity CreatePlayer(World* world, Vec2f worldPos, clientid_t clientID,
+                              bool isLocalPlayer);
 };

@@ -45,7 +45,7 @@ void ItemDragSystem::Update() {
   // Handle item dragging
   if (!isPreviewingBuilding && payload_ptr != nullptr &&
       payload_ptr->DataSize == sizeof(ItemPayload)) {
-    ItemPayload *itemPayload = static_cast<ItemPayload *>(payload_ptr->Data);
+    auto *itemPayload = static_cast<ItemPayload *>(payload_ptr->Data);
 
     // Only handle dragging from player inventory
     if (itemPayload->owner == world->GetLocalPlayer() &&
@@ -71,10 +71,9 @@ void ItemDragSystem::UpdatePreviewEntity() {
   }
 
   float zoom = util::GetCameraZoom(registry);
-  Vec2f mouseWorldPos =
-      util::ScreenToWorld(Vec2f(inputManager->GetMousePosition()),
-                          util::GetCameraPosition(registry),
-                          inputManager->GetScreenSize(), zoom);
+  Vec2f mouseWorldPos = util::ScreenToWorld(
+      Vec2f(inputManager->GetMousePosition()),
+      util::GetCameraPosition(registry), inputManager->GetScreenSize(), zoom);
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(mouseWorldPos);
 

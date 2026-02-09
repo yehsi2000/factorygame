@@ -1,10 +1,11 @@
 ﻿#pragma once
- 
+
 #include <cstdint>
 
 // Simple POD for local prediction/smoothing
 struct NetPredictionComponent {
-  // Predicted simulation position from local input (do not write to Transform directly)
+  // Predicted simulation position from local input (do not write to Transform
+  // directly)
   float predictedX;
   float predictedY;
 

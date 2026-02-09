@@ -1,6 +1,7 @@
 #pragma once
- 
+
 /**
- * @brief // Marks components inactive to ignore entities that currently does nothing.
+ * @brief // Marks components inactive to ignore entities that currently does
+ * nothing.
  */
 struct InactiveComponent {};

@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -76,8 +76,7 @@ struct AssemblyAddInputEvent : public Event {
 };
 
 struct AssemblyTakeOutputEvent : public Event {
-  AssemblyTakeOutputEvent(Entity machine, Entity target, ItemID item,
-                          int amt)
+  AssemblyTakeOutputEvent(Entity machine, Entity target, ItemID item, int amt)
       : machine(machine), target(target), item(item), amount(amt) {}
   Entity machine;
   Entity target;
@@ -99,7 +98,8 @@ struct ToggleChatInputEvent : public Event {
 };
 
 struct SendChatEvent : public Event {
-  explicit SendChatEvent(std::shared_ptr<std::string> msg) : message(std::move(msg)) {}
+  explicit SendChatEvent(std::shared_ptr<std::string> msg)
+      : message(std::move(msg)) {}
   std::shared_ptr<std::string> message;
 };
 

@@ -1,12 +1,7 @@
 #pragma once
 
 struct DebugRectComponent {
-  int offsetX;
-  int offsetY;
-  int width;
-  int height;
-  int r;
-  int g;
-  int b;
-  int a;
+  int offsetX, offsetY;
+  int width, height;
+  int r, g, b, a;
 };

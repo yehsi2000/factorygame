@@ -85,7 +85,7 @@ void ClientState::Init(GEngine* engine) {
   InitCoreSystem();
 
   GameEndEventHandle =
-      eventDispatcher->Subscribe<QuitEvent>([this](QuitEvent e) {
+      eventDispatcher->Subscribe<QuitEvent>([this](const QuitEvent& e) {
         isQuit = true;  // Signal the main thread to quit
       });
 
@@ -115,7 +115,7 @@ void ClientState::SocketReceiveWorker() {
         connectionSocket->Receive(messageBuffer.data(), messageBuffer.size());
 
     if (res == 0) {
-      // connection closed
+      // Connection closed
       std::cout << "Connection closed by server.\n";
       isReceiving = false;
       isSending = false;
@@ -141,12 +141,11 @@ void ClientState::SocketSendWorker() {
     while (isSending) {
       std::optional<PacketPtr> packet = sendQueue->WaitAndPop();
       if (!packet.has_value()) return;
-      const uint8_t* rp = packet.value().get()->data();
+      const uint8_t* rp = packet.value()->data();
       std::size_t packetSize;
       PACKET packetId;
       util::GetHeader(rp, packetId, packetSize);
-      // std::cout << "sent packetSize : " << packetSize << std::endl;
-      connectionSocket->Send(packet.value().get()->data(), packetSize);
+      connectionSocket->Send(packet.value()->data(), packetSize);
     }
   } catch (const std::runtime_error& e) {
     std::cout << "Send thread ending due to queue shutdown: " << e.what()

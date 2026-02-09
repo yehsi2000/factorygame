@@ -9,7 +9,6 @@
 
 #include "Core/Entity.h"
 
-
 /**
  * @brief Interface for component arrays.
  * @details Provides a common interface for type-erased storage of components.

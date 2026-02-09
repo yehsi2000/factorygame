@@ -73,21 +73,6 @@ class Registry {
             componentArrays[compTypeId].get());
       }
 
-      // It really doesn't exist
-
-      // check if it's triviality for performance
-
-      // if constexpr (!std::is_trivially_default_constructible_v<T>) {
-      //   NotTriviallyCopyable<T> t;
-      // }
-
-      // if constexpr (!std::is_trivially_copyable_v<T>) {
-      //   NotTriviallyCopyable<T> t;
-      // }
-      // if constexpr (!std::is_trivially_destructible_v<T>) {
-      //   NotTriviallyDestructible<T> t;
-      // }
-
       // expand the componentArray container
       if (componentArrays.size() <= compTypeId) {
         componentArrays.resize(compTypeId + 1);
@@ -104,7 +89,8 @@ class Registry {
   }
 
  public:
-  explicit Registry(EventDispatcher *dispatcher) : eventDispatcher(dispatcher) {}
+  explicit Registry(EventDispatcher *dispatcher)
+      : eventDispatcher(dispatcher) {}
 
   /**
    * @brief Creates a new entity.
@@ -227,9 +213,10 @@ class Registry {
     (arrays.push_back(GetComponentArray<TComponent>()), ...);
 
     // Find smallest array
-    auto minArray = std::min_element(arrays.begin(), arrays.end(), [](const auto &a, const auto &b) {
-      return a->GetSize() < b->GetSize();
-    });
+    auto minArray = std::min_element(arrays.begin(), arrays.end(),
+                                     [](const auto &a, const auto &b) {
+                                       return a->GetSize() < b->GetSize();
+                                     });
 
     std::vector<Entity> result = (*minArray)->GetAllEntities();
 

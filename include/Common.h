@@ -1,8 +1,8 @@
 #pragma once
- 
+
 /**
  * @brief Collection of common constants across the project.
- * 
+ *
  */
 
 constexpr int IRON_SPRITESHEET_HEIGHT = 8;
@@ -14,7 +14,9 @@ constexpr int ICONSIZE_TINY = 8;
 
 constexpr int ICONSIZE_MID_XSTART = ICONSIZE_BIG;
 constexpr int ICONSIZE_SMALL_XSTART = ICONSIZE_BIG + ICONSIZE_MID;
-constexpr int ICONSIZE_TINY_XSTART = ICONSIZE_BIG + ICONSIZE_MID + ICONSIZE_SMALL;
+constexpr int ICONSIZE_TINY_XSTART =
+    ICONSIZE_BIG + ICONSIZE_MID + ICONSIZE_SMALL;
 
-constexpr int ICONSPRITE_WIDTH = ICONSIZE_BIG + ICONSIZE_MID + ICONSIZE_SMALL + ICONSIZE_TINY;
+constexpr int ICONSPRITE_WIDTH =
+    ICONSIZE_BIG + ICONSIZE_MID + ICONSIZE_SMALL + ICONSIZE_TINY;
 constexpr int ICONSPRITE_HEIGHT = ICONSIZE_BIG;

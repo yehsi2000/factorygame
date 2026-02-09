@@ -1,5 +1,5 @@
-﻿#pragma once
- 
+#pragma once
+
 #include <cstddef>
 #include <memory>
 #include <tuple>

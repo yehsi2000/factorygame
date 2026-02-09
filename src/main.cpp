@@ -18,14 +18,14 @@ int main(int argc, char *argv[]) {
 
   SDL_Window *window = SDL_CreateWindow("FactoryGame", SDL_WINDOWPOS_CENTERED,
                                         SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
-  if (window == NULL) {
+  if (window == nullptr) {
     std::cout << "Could not create window:" << SDL_GetError() << ".\n";
     exit(-1);
   }
 
   SDL_Renderer *renderer = SDL_CreateRenderer(
       window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-  if (renderer == NULL) {
+  if (renderer == nullptr) {
     std::cout << "Could not create renderer:" << SDL_GetError() << ".\n";
     exit(-1);
   }
@@ -40,23 +40,23 @@ int main(int argc, char *argv[]) {
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.Fonts->FontLoaderFlags = ImGuiFreeTypeBuilderFlags_Bold;
 
-  TTF_Font *font = TTF_OpenFont("assets\\fonts\\NotoSansKR-VF.ttf", 16);
-  if (font == NULL) {
-    TTF_Font *font = TTF_OpenFont("C:\\Windows\\Fonts\\Gulim.ttc", 16);
-    if (font == NULL) {
+  TTF_Font *font = TTF_OpenFont(R"(assets\fonts\NotoSansKR-VF.ttf)", 16);
+  if (font == nullptr) {
+    TTF_Font *font = TTF_OpenFont(R"(C:\Windows\Fonts\Gulim.ttc)", 16);
+    if (font == nullptr) {
       printf("Could not open font! (%s)\n", TTF_GetError());
       return -1;
     } else {
-      io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Gulim.ttc");
+      io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\Gulim.ttc)");
     }
   } else {
-    io.Fonts->AddFontFromFileTTF("assets\\fonts\\NotoSansKR-VF.ttf");
+    io.Fonts->AddFontFromFileTTF(R"(assets\fonts\NotoSansKR-VF.ttf)");
   }
 
   ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer2_Init(renderer);
 
-  // start engine
+  // Start engine
   try {
     GEngine engine(window, renderer, font);
     engine.Run();
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "Engine initialization failed!" << std::endl;
   }
 
-  // close all system
+  // Close all system
   ImGui_ImplSDLRenderer2_Shutdown();
   ImGui_ImplSDL2_Shutdown();
   ImGui::DestroyContext();

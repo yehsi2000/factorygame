@@ -1,6 +1,4 @@
 #pragma once
- 
-
 
 #include <cstddef>
 #include <cstdint>
@@ -127,8 +125,8 @@ inline void GetHeader(const uint8_t*& beginPtr, enum PACKET& packetID,
   size = Read16BigEnd(beginPtr);
 }
 
-inline PacketPtr ChatBroadcastPacket(const std::shared_ptr<std::string>& message,
-                                     clientid_t senderId) {
+inline PacketPtr ChatBroadcastPacket(
+    const std::shared_ptr<std::string>& message, clientid_t senderId) {
   const std::size_t payload = sizeof(clientid_t) + message->size();
   const std::size_t total = sPacketHeader + payload;
   PacketPtr packet = std::make_unique<Packet>(total);
@@ -139,7 +137,8 @@ inline PacketPtr ChatBroadcastPacket(const std::shared_ptr<std::string>& message
   return packet;
 }
 
-inline PacketPtr ChatBroadcastPacket(const std::shared_ptr<std::string>& message) {
+inline PacketPtr ChatBroadcastPacket(
+    const std::shared_ptr<std::string>& message) {
   return ChatBroadcastPacket(message, 0);
 }
 

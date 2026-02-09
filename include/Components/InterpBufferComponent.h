@@ -3,7 +3,7 @@
 
 struct InterpBufferComponent {
   struct Sample {
-    double t;     // seconds (steady clock)
+    double t;  // seconds (steady clock)
     float x, y;
     uint8_t facing;
   };

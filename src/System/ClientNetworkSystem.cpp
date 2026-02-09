@@ -7,8 +7,8 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
-#include <map>
 #include <iostream>
+#include <map>
 #include <memory>
 
 #include "Commands/PlayerDisconnectedCommnad.h"
@@ -30,6 +30,7 @@
 #include "Util/AnimUtil.h"
 #include "Util/MathUtil.h"
 #include "Util/PacketUtil.h"
+
 
 ClientNetworkSystem::ClientNetworkSystem(const SystemContext& context)
     : assetManager(context.assetManager),
@@ -290,7 +291,7 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
   const double renderTimestamp = now - interpolationDelay;
 
   for (Entity e : registry->view<InterpBufferComponent, TransformComponent,
-                                   AnimationComponent, SpriteComponent>()) {
+                                 AnimationComponent, SpriteComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing
     if (registry->HasComponent<LocalPlayerComponent>(e)) continue;
 
@@ -309,8 +310,8 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
           "[Interp] now={:.3f} renderT={:.3f} | buf_count={} "
           "oldest_t={:.3f} newest_t={:.3f} | old_pos=({:.2f}, {:.2f}) "
           "new_pos=({:.2f}, {:.2f})\n",
-          now, renderTimestamp, buf.count, oldest.t, newest.t,
-          trans.position.x, trans.position.y, x, y);
+          now, renderTimestamp, buf.count, oldest.t, newest.t, trans.position.x,
+          trans.position.y, x, y);
     }
 #endif
 
@@ -339,7 +340,7 @@ void ClientNetworkSystem::Update(float deltaTime) {
 
   std::vector<PacketPtr> packets;
   PacketPtr p;
-  while(recvQueue->TryPop(p)) {
+  while (recvQueue->TryPop(p)) {
     packets.push_back(std::move(p));
   }
 
@@ -350,7 +351,7 @@ void ClientNetworkSystem::Update(float deltaTime) {
     const uint8_t* rp = packet->data();
     PACKET packetId = static_cast<PACKET>(*rp);
 
-    switch(packetId) {
+    switch (packetId) {
       // State-like packets: only the last one matters
       case TRANSFORM_SNAPSHOT:
       case CLIENT_MOVE_RES:
@@ -504,7 +505,8 @@ void ClientNetworkSystem::SendMoveRequest(float deltaTime) {
   sendQueue->Push(std::move(packet));
 }
 
-void ClientNetworkSystem::SendMessage(const std::shared_ptr<std::string>& message) {
+void ClientNetworkSystem::SendMessage(
+    const std::shared_ptr<std::string>& message) {
   PacketPtr packet = std::make_unique<Packet>(sPacketHeader + message->size());
 
   uint8_t* p = packet.get()->data();

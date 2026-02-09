@@ -6,16 +6,13 @@ enum class ItemID {
 
   IronOre,
   CopperOre,
-  // Stone,
-  // Wood,
 
   IronPlate,
   CopperPlate,
 
   MiningDrill,
   AssemblingMachine,
-  // ConveyorBelt,
-  // Smelter,
+
   MaxItemID
 };
 
@@ -30,7 +27,6 @@ enum class ItemCategory { Ore, Ingot, Buildable, Invalid };
 enum class OreType {
   Iron = 0,
   Copper,
-  // Coal,
-  // Stone,
+
   MaxOreType
 };

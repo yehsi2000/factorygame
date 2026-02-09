@@ -1,8 +1,8 @@
 #pragma once
- 
+
+#include <cstddef>
 #include <functional>
 #include <memory>
-#include <cstddef>
 #include <queue>
 
 template <typename T>
@@ -17,7 +17,7 @@ class ObjectPool {
 
   /**
    * @brief Get an object from the pool or create a new one if pool is empty
-   * 
+   *
    * @return std::unique_ptr<T> Object inside the pool
    */
   std::unique_ptr<T> Acquire() {
@@ -32,12 +32,11 @@ class ObjectPool {
 
   /**
    * @brief Return an object to the pool
-   * @details Reset the object to a default state if needed. This depends on the specific object type.
+   * @details Reset the object to a default state if needed. This depends on the
+   * specific object type.
    * @param object Returned Object
    */
-  void Release(std::unique_ptr<T> object) {
-    pool.push(std::move(object));
-  }
+  void Release(std::unique_ptr<T> object) { pool.push(std::move(object)); }
 
   std::size_t Size() const { return pool.size(); }
 
@@ -49,7 +48,7 @@ class ObjectPool {
 
   /**
    * @brief Pre-warm the pool
-   * 
+   *
    * @param count Desired object pool size
    */
   void PreAllocate(std::size_t count) {

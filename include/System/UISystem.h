@@ -68,7 +68,6 @@ class UISystem {
   ItemPayload payload;
   bool isShowingInventory = false;
   bool isShowingChatInput = false;
-  // bool showDemo = true;
   bool isServer;
   std::shared_ptr<std::string> playerChat;
   std::list<std::string> chatLog;

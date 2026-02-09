@@ -1,12 +1,8 @@
 #pragma once
- 
+
 #include <cstdint>
 #include <memory>
 #include <vector>
-
-// struct Packet{
-//   std::unique_ptr<uint8_t[]> data;
-// };
 
 using clientid_t = uint64_t;
 using Packet = std::vector<uint8_t>;
@@ -94,7 +90,6 @@ struct MoveApplied {
 using RecvPacketPtr = std::unique_ptr<RecvPacket>;
 using SendRequestPtr = std::unique_ptr<SendRequest>;
 using MoveAppliedPtr = std::unique_ptr<MoveApplied>;
-
 /**
  * @brief Defines the unique identifiers for each packet type.
  */

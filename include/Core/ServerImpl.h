@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include "Core/Packet.h"
 #include "DataStruct/ThreadSafeQueue.h"
 
@@ -11,10 +11,11 @@
 - * compilation times.
  */
 class ServerImpl {
-public:
-    virtual ~ServerImpl() = default;
-    virtual bool Init(ThreadSafeQueue<RecvPacketPtr>* recvQ, ThreadSafeQueue<SendRequestPtr>* sendQ) = 0;
-    virtual void StartSend() = 0;
-    virtual void Start() = 0;
-    virtual void Stop() = 0;
+ public:
+  virtual ~ServerImpl() = default;
+  virtual bool Init(ThreadSafeQueue<RecvPacketPtr>* recvQ,
+                    ThreadSafeQueue<SendRequestPtr>* sendQ) = 0;
+  virtual void StartSend() = 0;
+  virtual void Start() = 0;
+  virtual void Stop() = 0;
 };

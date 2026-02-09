@@ -1,8 +1,8 @@
 #pragma once
- 
+
+#include <cstddef>
 #include <functional>
 #include <memory>
-#include <cstddef>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -14,23 +14,24 @@
  * When the handle is destroyed, the subscription is automatically removed.
  */
 class EventHandle {
-public:
+ public:
   EventHandle(class EventDispatcher *eventDispatcher, std::type_index typeIndex,
               std::size_t id);
   ~EventHandle();
 
-private:
+ private:
   class EventDispatcher *eventDispatcher;
   std::type_index typeIndex;
   std::size_t callbackID;
 };
 
 /**
- * @brief Manages event subscriptions and publications for immediate, synchronous communication.
- * @details Systems can subscribe to specific event types. When an event is published,
- *          the eventDispatcher immediately invokes all registered callback functions for that event type.
- *          Subscriptions are managed by EventHandle objects, which automatically unsubscribe
- *          upon destruction.
+ * @brief Manages event subscriptions and publications for immediate,
+ * synchronous communication.
+ * @details Systems can subscribe to specific event types. When an event is
+ * published, the eventDispatcher immediately invokes all registered callback
+ * functions for that event type. Subscriptions are managed by EventHandle
+ * objects, which automatically unsubscribe upon destruction.
  */
 class EventDispatcher {
   friend class EventHandle;
@@ -42,22 +43,22 @@ class EventDispatcher {
       listeners;
   CallbackID nextCallbackID = 1;
 
-public:
+ public:
   EventDispatcher() = default;
   EventDispatcher(const EventDispatcher &) = delete;
   EventDispatcher &operator=(const EventDispatcher &) = delete;
 
-  // 
-  // Returns a 
   /**
    * @brief Subscribes a callback function to a specific event type.
-   * 
+   *
    * @tparam EventType Event class to subscribe to.
    * @param callback Callback function when given event is published.
-   * @return EventHandle handle that automatically unsubscribes when it goes out of scope.
+   * @return EventHandle handle that automatically unsubscribes when it goes out
+   * of scope.
    */
   template <typename EventType>
-  std::unique_ptr<EventHandle> Subscribe(std::function<void(const EventType &)> callback) {
+  std::unique_ptr<EventHandle> Subscribe(
+      std::function<void(const EventType &)> callback) {
     CallbackID id = nextCallbackID++;
     listeners[typeid(EventType)].emplace_back(
         id, [cb = std::move(callback)](const Event &evt) {
@@ -70,7 +71,7 @@ public:
 
   /**
    * @brief Publishes an event to all subscribed listeners immediately.
-   * 
+   *
    * @param event Event to broadcast to all subscribers
    */
   void Publish(const Event &event) {
@@ -82,12 +83,12 @@ public:
     }
   }
 
-private:
-/**
- * @brief Called by EventHandle destructor to remove the subscription.
- * 
- * @param ti typeid of given Event
- * @param id ID Callback function to remove
- */
+ private:
+  /**
+   * @brief Called by EventHandle destructor to remove the subscription.
+   *
+   * @param ti typeid of given Event
+   * @param id ID Callback function to remove
+   */
   void Unsubscribe(const std::type_index &ti, CallbackID id);
 };

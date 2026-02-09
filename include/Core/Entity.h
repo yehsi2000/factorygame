@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <type_traits>
 #include <limits>
+#include <type_traits>
 
 struct Entity {
   using IdType = std::uint32_t;

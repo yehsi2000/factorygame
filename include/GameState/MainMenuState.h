@@ -1,12 +1,11 @@
 #pragma once
- 
+
 #include "GameState/IGameState.h"
 
 class GEngine;
 struct SDL_Window;
 struct SDL_Renderer;
 struct TTF_Font;
-
 
 /**
  * @brief Represents the main menu state of the game.

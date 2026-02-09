@@ -232,8 +232,6 @@ void World::LoadChunk(int chunkX, int chunkY) {
     }
     activeChunks.insert({it->first, chunk});
     chunkCache.erase(it);
-    // std::cout << "Reloaded Chunk at (" << chunk.chunkX << ", " <<
-    // chunk.chunkY << ")\n";
   } else {
     Chunk chunk(chunkX, chunkY);
     GenerateChunk(chunk);
@@ -256,8 +254,6 @@ void World::UnloadChunk(Chunk &chunk) {
       }
     }
   }
-  // std::cout << "Unloaded Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
-  // << ")\n";
 }
 
 void World::GenerateChunk(Chunk &chunk) {
@@ -339,7 +335,7 @@ void World::GenerateChunk(Chunk &chunk) {
         if (tile->occupyingEntity == Entity::Null()) {
           Entity oreNode = registry->CreateEntity();
 
-          rsrc_amt_t oreAmount = static_cast<rsrc_amt_t>(
+          auto oreAmount = static_cast<rsrc_amt_t>(
               static_cast<float>(maxironOreAmount) * oreValue);
 
           registry->EmplaceComponent<TransformComponent>(
@@ -355,14 +351,13 @@ void World::GenerateChunk(Chunk &chunk) {
                    worldTileY);
           textComp.color = SDL_Color{255, 255, 255, 255};
           textComp.isDirty = true;  // for initial draw
+          textComp.texture = nullptr;
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
-          // textComp.texture = nullptr;
 
           SDL_Texture *spritesheet =
               worldAssetManager->getTexture("assets/img/entity/iron-ore.png");
           SpriteComponent spriteComp{};
           spriteComp.texture = spritesheet;
-          // tile->debugValue = oreAmount;
 
           int richnessIndex =
               (IRON_SPRITESHEET_HEIGHT - 1) -
@@ -389,9 +384,9 @@ void World::GenerateChunk(Chunk &chunk) {
   chunk.chunkEntity = chunkEntity;
 
   // Calculate world position of the chunk (top-left corner)
-  float worldX =
+  auto worldX =
       static_cast<float>(chunk.chunkX * CHUNK_WIDTH * TILE_PIXEL_SIZE);
-  float worldY =
+  auto worldY =
       static_cast<float>(chunk.chunkY * CHUNK_HEIGHT * TILE_PIXEL_SIZE);
 
   // Add transform component for positioning
@@ -403,9 +398,6 @@ void World::GenerateChunk(Chunk &chunk) {
   chunkComp.isDirty = false;
   chunkComp.chunkTexture = worldAssetManager->CreateChunkTexture(chunk);
   registry->EmplaceComponent<ChunkComponent>(chunkEntity, chunkComp);
-
-  // std::cout << "Generated Chunk at (" << chunk.chunkX << ", " << chunk.chunkY
-  // << " id=" << chunkEntity << ")\n";
 }
 
 World::~World() = default;

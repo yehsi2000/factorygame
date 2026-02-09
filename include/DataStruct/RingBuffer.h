@@ -1,8 +1,8 @@
 #pragma once
- 
+
 #include <array>
-#include <stdexcept>
 #include <cstddef>
+#include <stdexcept>
 
 template <typename T, size_t Size>
 class RingBuffer {
@@ -69,9 +69,7 @@ class RingBuffer {
     }
   }
 
-  const std::array<T, Size>& data() const {
-    return buffer;
-  }
+  const std::array<T, Size>& data() const { return buffer; }
 
  private:
   std::array<T, Size> buffer;

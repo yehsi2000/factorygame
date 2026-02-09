@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "Core/InputState.h"
 #include "SDL_events.h"
 
@@ -16,44 +17,44 @@ struct ImGuiIO;
  * inputs.
  */
 class InputManager {
-public:
-    explicit InputManager(SDL_Window* window);
-    ~InputManager();
+ public:
+  explicit InputManager(SDL_Window* window);
+  ~InputManager();
 
-    void PrepareForNewFrame();
+  void PrepareForNewFrame();
 
-    void ProcessEvent(const SDL_Event& event);
+  void ProcessEvent(const SDL_Event& event);
 
-    void UpdateContinuousState();
+  void UpdateContinuousState();
 
-    // Keyboard queries
-    bool IsKeyDown(SDL_Scancode key) const;
-    bool IsKeyUp(SDL_Scancode key) const;
-    bool WasKeyPressedThisFrame(SDL_Scancode key) const;
-    bool WasKeyReleasedThisFrame(SDL_Scancode key) const;
+  // Keyboard queries
+  bool IsKeyDown(SDL_Scancode key) const;
+  bool IsKeyUp(SDL_Scancode key) const;
+  bool WasKeyPressedThisFrame(SDL_Scancode key) const;
+  bool WasKeyReleasedThisFrame(SDL_Scancode key) const;
 
-    bool IsMouseButtonDown(MouseButton button) const;
-    bool IsMouseButtonUp(MouseButton button) const;
-    bool WasMouseButtonPressed(MouseButton button) const;
-    bool WasMouseButtonReleased(MouseButton button) const;
+  bool IsMouseButtonDown(MouseButton button) const;
+  bool IsMouseButtonUp(MouseButton button) const;
+  bool WasMouseButtonPressed(MouseButton button) const;
+  bool WasMouseButtonReleased(MouseButton button) const;
 
-    Vec2 GetMousePosition() const;
-    Vec2 GetMouseDelta() const;
-    int GetMouseWheelScroll() const;
+  Vec2 GetMousePosition() const;
+  Vec2 GetMouseDelta() const;
+  int GetMouseWheelScroll() const;
 
-    Vec2 GetAxis() const;
-    int GetXAxis() const;
-    int GetYAxis() const;
-    Vec2 GetScreenSize();
+  Vec2 GetAxis() const;
+  int GetXAxis() const;
+  int GetYAxis() const;
+  Vec2 GetScreenSize();
 
-    bool IsQuit() const;
+  bool IsQuit() const;
 
-private:
-    InputState state;
-    SDL_Window* window;
-    int numKeys;
-    const ImGuiIO& io;
-    const Uint8* currentKeyState = nullptr;
-    std::vector<Uint8> prevKeyState;
-    Vec2 screenSize;
+ private:
+  InputState state;
+  SDL_Window* window;
+  int numKeys;
+  const ImGuiIO& io;
+  const Uint8* currentKeyState = nullptr;
+  std::vector<Uint8> prevKeyState;
+  Vec2 screenSize;
 };

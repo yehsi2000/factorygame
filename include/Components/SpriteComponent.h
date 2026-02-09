@@ -1,5 +1,4 @@
 #pragma once
- 
 
 #include "SDL_render.h"
 using render_order_t = unsigned int;
