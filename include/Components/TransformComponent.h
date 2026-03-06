@@ -16,3 +16,10 @@ struct TransformComponent {
                                         float rotation = 0.f)
       : position(position), scale(scale), rotation(rotation), isDirty(false) {};
 };
+
+
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+static_assert(std::is_trivially_copyable_v<TransformComponent> == true);
+static_assert(std::is_trivially_destructible_v<TransformComponent> == true);
+#endif

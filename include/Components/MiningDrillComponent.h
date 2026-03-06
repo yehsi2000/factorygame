@@ -12,3 +12,9 @@ struct MiningDrillComponent {
 
   constexpr MiningDrillComponent() = default;
 };
+
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+static_assert(std::is_trivially_copyable_v<MiningDrillComponent> == true);
+static_assert(std::is_trivially_destructible_v<MiningDrillComponent> == true);
+#endif

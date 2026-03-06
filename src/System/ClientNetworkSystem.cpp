@@ -31,7 +31,6 @@
 #include "Util/MathUtil.h"
 #include "Util/PacketUtil.h"
 
-
 ClientNetworkSystem::ClientNetworkSystem(const SystemContext& context)
     : assetManager(context.assetManager),
       eventDispatcher(context.eventDispatcher),
@@ -145,15 +144,17 @@ void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
     }
     auto& buf = registry->GetComponent<InterpBufferComponent>(e);
 
-    const auto writeIdx =
-        static_cast<uint8_t>((buf.tail + buf.count) % InterpBufferComponent::N);
-    buf.samples[writeIdx] = {now, posX, posY, facing};
-    if (buf.count < InterpBufferComponent::N) {
-      ++buf.count;
-    } else {
-      buf.tail =
-          static_cast<uint8_t>((buf.tail + 1) % InterpBufferComponent::N);
-    }
+    buf.samples.push_back({now, posX, posY, facing});
+    // const auto writeIdx =
+    //     static_cast<uint8_t>((buf.tail + buf.count) %
+    //     InterpBufferComponent::N);
+    // buf.samples[writeIdx] = {now, posX, posY, facing};
+    // if (buf.count < InterpBufferComponent::N) {
+    //   ++buf.count;
+    // } else {
+    //   buf.tail =
+    //       static_cast<uint8_t>((buf.tail + 1) % InterpBufferComponent::N);
+    // }
   }
 }
 
@@ -242,44 +243,48 @@ void ClientNetworkSystem::ApplyLocalSmoothing(float deltaTime) {
       util::Lerp(trans.position.y, pred.predictedY, catchUpSpeed * deltaTime);
 }
 
-static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
+static bool SampleBufferAt(const InterpBufferComponent& buf, double targetTime,
                            float& outX, float& outY, uint8_t& outFacing) {
-  if (buf.count == 0) return false;
+  // if (buf.count == 0) return false;
+  if (buf.samples.size() == 0) return false;
 
   // Find s0 (<= target) and s1 (>= target)
-  InterpBufferComponent::Sample s0 = buf.samples[buf.tail];
+  // InterpBufferComponent::Sample s0 = buf.samples[buf.tail];
+  InterpBufferComponent::Sample s0 = buf.samples.front();
   InterpBufferComponent::Sample s1 = s0;
   bool found = false;
 
-  for (uint8_t i = 0; i < buf.count; ++i) {
-    const auto& s = buf.samples[(buf.tail + i) % InterpBufferComponent::N];
-    if (s.t >= targetT) {
-      s1 = s;
-      if (i > 0)
-        s0 = buf.samples[(buf.tail + i - 1) % InterpBufferComponent::N];
+  const auto& sampleBuffer = buf.samples.data();
+  const auto firstIdx = buf.samples.getOldestIndex();
+  const auto sampleSize = buf.samples.size();
+
+  for (uint8_t i = 0; i < sampleSize; ++i) {
+    const auto& currentSample = sampleBuffer[(firstIdx + i) % sampleSize];
+    if (currentSample.time >= targetTime) {
+      s1 = currentSample;
+      if (i > 0) s0 = sampleBuffer[(firstIdx + i - 1) % sampleSize];
       found = true;
       break;
     }
-    s0 = s;
+    s0 = currentSample;
   }
 
   if (!found) {
-    const auto& newest =
-        buf.samples[(buf.tail + buf.count - 1) % InterpBufferComponent::N];
+    const auto& newest = buf.samples.back();
     outX = newest.x;
     outY = newest.y;
     outFacing = newest.facing;
     return true;
   }
 
-  if (s1.t <= s0.t + 1e-6) {
+  if (s1.time <= s0.time + 1e-6) {
     outX = s1.x;
     outY = s1.y;
     outFacing = s1.facing;
     return true;
   }
 
-  const double a = (targetT - s0.t) / (s1.t - s0.t);
+  const double a = (targetTime - s0.time) / (s1.time - s0.time);
   outX = static_cast<float>(s0.x + (s1.x - s0.x) * a);
   outY = static_cast<float>(s0.y + (s1.y - s0.y) * a);
   outFacing = s1.facing;
@@ -291,7 +296,7 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
   const double renderTimestamp = now - interpolationDelay;
 
   for (Entity entity : registry->view<InterpBufferComponent, TransformComponent,
-                                 AnimationComponent, SpriteComponent>()) {
+                                      AnimationComponent, SpriteComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing
     if (registry->HasComponent<LocalPlayerComponent>(entity)) continue;
 
@@ -349,7 +354,7 @@ void ClientNetworkSystem::Update(float deltaTime) {
 
   for (auto& packet : packets) {
     const uint8_t* rp = packet->data();
-    PACKET packetId = static_cast<PACKET>(*rp);
+    auto packetId = static_cast<PACKET>(*rp);
 
     switch (packetId) {
       // State-like packets: only the last one matters

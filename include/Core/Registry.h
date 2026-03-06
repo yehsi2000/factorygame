@@ -104,7 +104,7 @@ class Registry {
     assert(livingEntityCount < MAX_ENTITIES &&
            "Too many entities in existence.");
     if (availableEntities.empty()) {
-      availableEntities.push(Entity(++entityIdTop));
+      availableEntities.emplace(++entityIdTop);
     }
     Entity id = availableEntities.front();
     availableEntities.pop();
@@ -142,7 +142,7 @@ class Registry {
    */
   template <typename T>
   void AddComponent(Entity entity, T &&component) {
-    GetComponentArray<T>()->AddData(entity, std::move(component));
+    GetComponentArray<T>()->AddData(entity, std::forward<T>(component));
   }
 
   /**

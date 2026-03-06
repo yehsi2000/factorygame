@@ -26,3 +26,9 @@ struct CameraComponent {
         cameraStartPos{0.0f, 0.0f},
         zoom(1.0f) {}
 };
+
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+static_assert(std::is_trivially_copyable_v<CameraComponent> == true);
+static_assert(std::is_trivially_destructible_v<CameraComponent> == true);
+#endif

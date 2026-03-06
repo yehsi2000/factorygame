@@ -20,3 +20,9 @@ struct NetPredictionComponent {
   // Optional: initialize-once flag
   uint8_t initialized;
 };
+
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+static_assert(std::is_trivially_copyable_v<NetPredictionComponent> == true);
+static_assert(std::is_trivially_destructible_v<NetPredictionComponent> == true);
+#endif

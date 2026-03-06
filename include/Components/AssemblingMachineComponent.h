@@ -13,8 +13,6 @@ enum class AssemblingMachineState {
   OutputFull
 };
 
-// TODO : make trivially copyable, destructable
-
 struct AssemblingMachineComponent {
   RecipeID currentRecipe;
 
@@ -29,3 +27,10 @@ struct AssemblingMachineComponent {
   bool isShowingUI;
   bool isRecipeSelected;
 };
+
+// TODO : make trivially copyable, destructable
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+// static_assert(std::is_trivially_copyable_v<AssemblingMachineComponent> == true);
+// static_assert(std::is_trivially_destructible_v<AssemblingMachineComponent> == true);
+#endif

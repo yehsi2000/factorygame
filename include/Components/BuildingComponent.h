@@ -4,9 +4,6 @@
 
 #include "DataStruct/Type.h"
 
-
-// TODO : make trivially copyable, destructable
-
 struct BuildingComponent {
   int width = 1;
   int height = 1;
@@ -15,3 +12,11 @@ struct BuildingComponent {
   // This is calculated during placement and stored for cleanup during removal
   std::vector<Vec2> occupiedTiles;
 };
+
+// TODO : make trivially copyable, destructable
+
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+// static_assert(std::is_trivially_copyable_v<BuildingComponent> == true);
+// static_assert(std::is_trivially_destructible_v<BuildingComponent> == true);
+#endif

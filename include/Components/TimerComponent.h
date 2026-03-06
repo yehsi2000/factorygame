@@ -44,3 +44,12 @@ struct TimerComponent {
 struct TimerExpiredTag {
   TimerId expiredId;
 };
+
+#ifndef DISABLE_COMP_TYPECHECK
+#include <type_traits>
+static_assert(std::is_trivially_copyable_v<TimerComponent> == true);
+static_assert(std::is_trivially_destructible_v<TimerComponent> == true);
+
+static_assert(std::is_trivially_copyable_v<TimerExpiredTag> == true);
+static_assert(std::is_trivially_destructible_v<TimerExpiredTag> == true);
+#endif

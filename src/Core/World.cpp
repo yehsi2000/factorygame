@@ -371,8 +371,8 @@ void World::GenerateChunk(Chunk& chunk) {
           spriteComp.srcRect = {0, richnessIndex * 128, 128, 128};
           spriteComp.renderRect = {0, 0, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE};
           registry->EmplaceComponent<SpriteComponent>(oreNode, spriteComp);
-          registry->AddComponent<ResourceNodeComponent>(
-              oreNode, ResourceNodeComponent{oreAmount, OreType::Iron});
+          registry->EmplaceComponent<ResourceNodeComponent>(oreNode, oreAmount,
+                                                            OreType::Iron);
           tile->oreEntity = oreNode;
           tile->type = TileType::Stone;
         }

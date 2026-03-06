@@ -13,22 +13,23 @@
 #include "Components/SpriteComponent.h"
 #include "Components/TransformComponent.h"
 #include "Core/AssetManager.h"
+#include "Core/Entity.h"
 #include "Core/Registry.h"
 #include "Core/TileData.h"
 #include "Core/World.h"
 #include "Util/AnimUtil.h"
 
-EntityFactory::EntityFactory(Registry *registry, AssetManager *assetManager)
+EntityFactory::EntityFactory(Registry* registry, AssetManager* assetManager)
     : registry(registry), assetManager(assetManager) {}
 
-Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2f worldPos) {
+Entity EntityFactory::CreateAssemblingMachine(World* world, Vec2f worldPos) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
   return CreateAssemblingMachine(world, tileIndex);
 }
 
-Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
+Entity EntityFactory::CreateAssemblingMachine(World* world, Vec2 tileIndex) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   if (!world->HasNoOcuupyingEntity(tileIndex, 2, 2)) {
@@ -49,7 +50,7 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
 
   world->OccupyTile(entity, tileIndex, 2, 2);
 
-  SDL_Texture *spritesheet =
+  SDL_Texture* spritesheet =
       assetManager->getTexture("assets/img/entity/assembling-machine.png");
 
   SpriteComponent sprite{};
@@ -79,14 +80,14 @@ Entity EntityFactory::CreateAssemblingMachine(World *world, Vec2 tileIndex) {
   return entity;
 }
 
-Entity EntityFactory::CreateMiningDrill(World *world, Vec2f worldPos) {
+Entity EntityFactory::CreateMiningDrill(World* world, Vec2f worldPos) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Vec2 tileIndex = world->GetTileIndexFromWorldPosition(worldPos);
   return CreateMiningDrill(world, tileIndex);
 }
 
-Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
+Entity EntityFactory::CreateMiningDrill(World* world, Vec2 tileIndex) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   if (!world->HasNoOcuupyingEntity(tileIndex, 1, 1)) {
@@ -115,7 +116,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   world->OccupyTile(entity, tileIndex, 1, 1);
 
   // Add sprite component
-  SDL_Texture *spritesheet =
+  SDL_Texture* spritesheet =
       assetManager->getTexture("assets/img/entity/mining-drill.png");
 
   SpriteComponent sprite{};
@@ -141,7 +142,7 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
 
   MiningDrillComponent drill{};
 
-  if (TileData *tile = world->GetTileAtTileIndex(tileIndex)) {
+  if (TileData* tile = world->GetTileAtTileIndex(tileIndex)) {
     drill.oreEntity = tile->oreEntity;
   }
   registry->AddComponent<MiningDrillComponent>(entity, std::move(drill));
@@ -150,29 +151,27 @@ Entity EntityFactory::CreateMiningDrill(World *world, Vec2 tileIndex) {
   return entity;
 }
 
-Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
+Entity EntityFactory::CreatePlayer(World* world, Vec2f worldPos,
                                    clientid_t clientID, bool isLocalPlayer) {
   if (registry == nullptr || world == nullptr) return Entity::Null();
 
   Entity player = registry->CreateEntity();
   registry->EmplaceComponent<TransformComponent>(player, worldPos);
 
-  SDL_Texture *playerIdleSpritesheet =
+  SDL_Texture* playerIdleSpritesheet =
       assetManager->getTexture("assets/img/character/Miner_IdleAnimation.png");
-  SDL_Texture *playerWalkSpritesheet =
+  SDL_Texture* playerWalkSpritesheet =
       assetManager->getTexture("assets/img/character/Miner_WalkAnimation.png");
-  SDL_Texture *playerMiningRightSpritesheet = assetManager->getTexture(
+  SDL_Texture* playerMiningRightSpritesheet = assetManager->getTexture(
       "assets/img/character/Miner_MiningRightAnimation.png");
-  SDL_Texture *playerMiningDownSpritesheet = assetManager->getTexture(
+  SDL_Texture* playerMiningDownSpritesheet = assetManager->getTexture(
       "assets/img/character/Miner_MiningDownAnimation.png");
 
-  registry->AddComponent<SpriteComponent>(
-      player, SpriteComponent{playerIdleSpritesheet,
-                              {0, 0, 16, 16},
-                              {-TILE_PIXEL_SIZE / 2, -TILE_PIXEL_SIZE / 2,
-                               TILE_PIXEL_SIZE, TILE_PIXEL_SIZE},
-                              SDL_FLIP_NONE,
-                              render_order_t(100)});
+  registry->EmplaceComponent<SpriteComponent>(
+      player, playerIdleSpritesheet, SDL_Rect{0, 0, 16, 16},
+      SDL_Rect{-TILE_PIXEL_SIZE / 2, -TILE_PIXEL_SIZE / 2, TILE_PIXEL_SIZE,
+               TILE_PIXEL_SIZE},
+      SDL_FLIP_NONE, render_order_t(100));
 
   // Set Player Animation
   AnimationComponent anim{};
@@ -190,11 +189,8 @@ Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
 
   registry->EmplaceComponent<MovementComponent>(player, 300.f);
 
-  PlayerStateComponent playerState{};
-  playerState.isMining = false;
-  playerState.interactingEntity = Entity::Null();
-  playerState.clientID = clientID;
-  registry->AddComponent<PlayerStateComponent>(player, std::move(playerState));
+  registry->EmplaceComponent<PlayerStateComponent>(player, false,
+                                                   Entity::Null(), clientID);
 
   if (isLocalPlayer) {
     registry->EmplaceComponent<LocalPlayerComponent>(player, clientID);
@@ -204,11 +200,10 @@ Entity EntityFactory::CreatePlayer(World *world, Vec2f worldPos,
   registry->EmplaceComponent<MovableComponent>(player);
 
   // HACK : Starting Item for testing lots of entity
-  registry->AddComponent<InventoryComponent>(
-      player, InventoryComponent{.row = 4,
-                                 .column = 4,
-                                 .items = {{ItemID::AssemblingMachine, 100},
-                                           {ItemID::MiningDrill, 100}}});
+  registry->EmplaceComponent<InventoryComponent>(
+      player, 4, 4,
+      std::vector<std::pair<ItemID, int>>{{ItemID::AssemblingMachine, 100},
+                                          {ItemID::MiningDrill, 100}});
   return player;
 }
 
