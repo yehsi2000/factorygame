@@ -9,6 +9,7 @@
 #include <queue>
 #include <shared_mutex>
 
+#include "Components/InactiveComponent.h"
 #include "Core/ComponentArray.h"
 #include "Core/Event.h"
 #include "Core/EventDispatcher.h"
@@ -108,6 +109,7 @@ class Registry {
     Entity id = availableEntities.front();
     availableEntities.pop();
     livingEntityCount++;
+    AddComponent(id, InactiveComponent{false});
     return id;
   }
 

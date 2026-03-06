@@ -145,7 +145,7 @@ void ClientNetworkSystem::TransformSnapshotHandler(const uint8_t* rp,
     }
     auto& buf = registry->GetComponent<InterpBufferComponent>(e);
 
-    const uint8_t writeIdx =
+    const auto writeIdx =
         static_cast<uint8_t>((buf.tail + buf.count) % InterpBufferComponent::N);
     buf.samples[writeIdx] = {now, posX, posY, facing};
     if (buf.count < InterpBufferComponent::N) {
@@ -290,13 +290,13 @@ static bool SampleBufferAt(const InterpBufferComponent& buf, double targetT,
 void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
   const double renderTimestamp = now - interpolationDelay;
 
-  for (Entity e : registry->view<InterpBufferComponent, TransformComponent,
+  for (Entity entity : registry->view<InterpBufferComponent, TransformComponent,
                                  AnimationComponent, SpriteComponent>()) {
     // Skip local here; handled by ApplyLocalSmoothing
-    if (registry->HasComponent<LocalPlayerComponent>(e)) continue;
+    if (registry->HasComponent<LocalPlayerComponent>(entity)) continue;
 
-    auto& buf = registry->GetComponent<InterpBufferComponent>(e);
-    auto& trans = registry->GetComponent<TransformComponent>(e);
+    auto& buf = registry->GetComponent<InterpBufferComponent>(entity);
+    auto& trans = registry->GetComponent<TransformComponent>(entity);
     float x, y;
     uint8_t f;
     if (!SampleBufferAt(buf, renderTimestamp, x, y, f)) continue;
@@ -315,8 +315,8 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
     }
 #endif
 
-    auto& anim = registry->GetComponent<AnimationComponent>(e);
-    auto& psc = registry->GetComponent<PlayerStateComponent>(e);
+    auto& anim = registry->GetComponent<AnimationComponent>(entity);
+    auto& psc = registry->GetComponent<PlayerStateComponent>(entity);
     if (std::abs(trans.position.x - x) < 0.01f &&
         std::abs(trans.position.y - y) < 0.01f) {
       if (!psc.isMining)
@@ -328,7 +328,7 @@ void ClientNetworkSystem::ApplyRemoteInterpolation(double now) {
     trans.position.x = x;
     trans.position.y = y;
 
-    auto& spr = registry->GetComponent<SpriteComponent>(e);
+    auto& spr = registry->GetComponent<SpriteComponent>(entity);
     spr.flip = (f == 1) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
   }
 }

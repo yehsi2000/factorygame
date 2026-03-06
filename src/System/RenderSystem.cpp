@@ -21,15 +21,15 @@
 #include "SDL_ttf.h"
 #include "Util/CameraUtil.h"
 
-RenderSystem::RenderSystem(const SystemContext &context, SDL_Renderer *renderer,
-                           TTF_Font *font)
+RenderSystem::RenderSystem(const SystemContext& context, SDL_Renderer* renderer,
+                           TTF_Font* font)
     : registry(context.registry),
       renderer(renderer),
       world(context.world),
       font(font) {
   entityDestroyedEventHandle =
       context.eventDispatcher->Subscribe<EntityDestroyedEvent>(
-          [this](const auto &event) { this->OnEntityDestroyed(event); });
+          [this](const auto& event) { this->OnEntityDestroyed(event); });
 }
 
 void RenderSystem::Update() {
@@ -56,9 +56,9 @@ void RenderSystem::Update() {
   RenderDebugRect(cameraPos, screenSize, zoom);
 }
 
-void RenderSystem::OnEntityDestroyed(const EntityDestroyedEvent &event) {
+void RenderSystem::OnEntityDestroyed(const EntityDestroyedEvent& event) {
   if (registry->HasComponent<TextComponent>(event.entity)) {
-    auto &text = registry->GetComponent<TextComponent>(event.entity);
+    auto& text = registry->GetComponent<TextComponent>(event.entity);
     if (text.texture) {
       SDL_DestroyTexture(text.texture);
       text.texture = nullptr;
@@ -71,11 +71,12 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   auto chunkView = registry->view<ChunkComponent, TransformComponent>();
 
   for (Entity entity : chunkView) {
-    if (registry->HasComponent<InactiveComponent>(entity)) {
+    if (registry->HasComponent<InactiveComponent>(entity) &&
+        registry->GetComponent<InactiveComponent>(entity).isInactive)
       continue;
-    }
-    const auto &chunk = registry->GetComponent<ChunkComponent>(entity);
-    const auto &transform = registry->GetComponent<TransformComponent>(entity);
+
+    const auto& chunk = registry->GetComponent<ChunkComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
 
     // Convert world position to screen position
     Vec2f screenPos =
@@ -83,8 +84,7 @@ void RenderSystem::RenderChunks(Vec2f cameraPos, Vec2 screenSize, float zoom) {
 
     Vec2 chunkPixelSize{CHUNK_WIDTH * TILE_PIXEL_SIZE,
                         CHUNK_HEIGHT * TILE_PIXEL_SIZE};
-    Vec2f chunkTextureSize{chunkPixelSize.x * zoom,
-                                    chunkPixelSize.y * zoom};
+    Vec2f chunkTextureSize{chunkPixelSize.x * zoom, chunkPixelSize.y * zoom};
     // Cull chunks that are off-screen
     if (IsOffScreen(screenPos, screenSize, chunkTextureSize)) {
       continue;
@@ -112,35 +112,37 @@ void RenderSystem::RenderEntities(Vec2f cameraPos, Vec2 screenSize,
   std::vector<std::pair<Entity, int>> entitiesWithOrder;
 
   for (Entity entity : view) {
-    if (registry->HasComponent<InactiveComponent>(entity) ||
+    if ((registry->HasComponent<InactiveComponent>(entity) &&
+         registry->GetComponent<InactiveComponent>(entity).isInactive) ||
         registry->HasComponent<ChunkComponent>(entity) ||
         registry->HasComponent<BuildingPreviewComponent>(entity)) {
       continue;
     }
 
-    const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
+    const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
     entitiesWithOrder.emplace_back(entity, sprite.renderOrder);
   }
 
   // Sort entities by render order (lower values rendered first)
   std::sort(
       entitiesWithOrder.begin(), entitiesWithOrder.end(),
-      [](const std::pair<Entity, int> &a, const std::pair<Entity, int> &b) {
+      [](const std::pair<Entity, int>& a, const std::pair<Entity, int>& b) {
         return a.second < b.second;
       });
 
   // Render sorted entities
-  for (const auto &pair : entitiesWithOrder) {
+  for (const auto& pair : entitiesWithOrder) {
     Entity entity = pair.first;
-    const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
-    const auto &transform = registry->GetComponent<TransformComponent>(entity);
+    const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
 
     // Convert world position to screen position
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
-    Vec2f entitySize = {static_cast<float>(sprite.renderRect.w) * transform.scale.x * zoom,
-                        static_cast<float>(sprite.renderRect.h) * transform.scale.y * zoom};
+    Vec2f entitySize = {
+        static_cast<float>(sprite.renderRect.w) * transform.scale.x * zoom,
+        static_cast<float>(sprite.renderRect.h) * transform.scale.y * zoom};
 
     // Simple culling - skip entities that are clearly off-screen
     if (IsOffScreen(screenPos, screenSize, entitySize)) {
@@ -166,8 +168,8 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
   for (Entity entity : registry->view<TextComponent, TransformComponent>()) {
     if (registry->HasComponent<DebugRectComponent>(entity)) continue;
     // TODO :remove render invalid text
-    auto &text = registry->GetComponent<TextComponent>(entity);
-    const auto &transform = registry->GetComponent<TransformComponent>(entity);
+    auto& text = registry->GetComponent<TextComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
 
@@ -175,13 +177,14 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
       continue;
     }
 
-    if (registry->HasComponent<InactiveComponent>(entity)) {
+    if (registry->HasComponent<InactiveComponent>(entity) &&
+        registry->GetComponent<InactiveComponent>(entity).isInactive) {
 // Special case for inactive entities, render "inactive" text
 // This part is not cached as it's a temporary state overlay
 #ifdef DEBUG_TEXT
-      SDL_Surface *textSurface =
+      SDL_Surface* textSurface =
           TTF_RenderUTF8_Blended(font, "inactive", SDL_Color{255, 0, 0, 255});
-      SDL_Texture *textTexture =
+      SDL_Texture* textTexture =
           SDL_CreateTextureFromSurface(renderer, textSurface);
 
       SDL_Rect textRect;
@@ -204,7 +207,7 @@ void RenderSystem::RenderTexts(Vec2f cameraPos, Vec2 screenSize, float zoom) {
         text.texture = nullptr;
       }
 
-      SDL_Surface *textSurface =
+      SDL_Surface* textSurface =
           TTF_RenderUTF8_Blended(font, text.text, text.color);
       if (textSurface) {
         text.texture = SDL_CreateTextureFromSurface(renderer, textSurface);
@@ -234,13 +237,14 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
       registry->view<BuildingPreviewComponent, TransformComponent>();
 
   for (Entity entity : previewView) {
-    if (registry->HasComponent<InactiveComponent>(entity)) {
+    if (registry->HasComponent<InactiveComponent>(entity) &&
+        registry->GetComponent<InactiveComponent>(entity).isInactive) {
       continue;
     }
 
-    const auto &preview =
+    const auto& preview =
         registry->GetComponent<BuildingPreviewComponent>(entity);
-    const auto &transform = registry->GetComponent<TransformComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
 
     Vec2 tileindex = world->GetTileIndexFromWorldPosition(transform.position);
     // Render colored tile backgrounds
@@ -279,7 +283,7 @@ void RenderSystem::RenderBuildingPreviews(Vec2f cameraPos, Vec2 screenSize,
 
     // Render the building sprite if available and placement is valid
     if (registry->HasComponent<SpriteComponent>(entity)) {
-      const auto &sprite = registry->GetComponent<SpriteComponent>(entity);
+      const auto& sprite = registry->GetComponent<SpriteComponent>(entity);
 
       Vec2f screenPos =
           util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
@@ -307,12 +311,13 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
   auto debugView = registry->view<DebugRectComponent, TransformComponent>();
 
   for (Entity entity : debugView) {
-    if (registry->HasComponent<InactiveComponent>(entity)) {
+    if (registry->HasComponent<InactiveComponent>(entity) &&
+        registry->GetComponent<InactiveComponent>(entity).isInactive) {
       continue;
     }
 
-    const auto &debug = registry->GetComponent<DebugRectComponent>(entity);
-    const auto &transform = registry->GetComponent<TransformComponent>(entity);
+    const auto& debug = registry->GetComponent<DebugRectComponent>(entity);
+    const auto& transform = registry->GetComponent<TransformComponent>(entity);
 
     Vec2f screenPos =
         util::WorldToScreen(transform.position, cameraPos, screenSize, zoom);
@@ -330,7 +335,7 @@ void RenderSystem::RenderDebugRect(Vec2f cameraPos, Vec2 screenSize,
 
 RenderSystem::~RenderSystem() {
   for (Entity entity : registry->view<TextComponent>()) {
-    auto &text = registry->GetComponent<TextComponent>(entity);
+    auto& text = registry->GetComponent<TextComponent>(entity);
     if (text.texture) {
       SDL_DestroyTexture(text.texture);
       text.texture = nullptr;

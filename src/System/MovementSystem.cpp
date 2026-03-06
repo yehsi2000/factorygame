@@ -72,17 +72,20 @@ void MovementSystem::ServerUpdate(float deltaTime) {
   }
 
   // Apply movement for all players using current input state
-  for (Entity e :
+  for (Entity entity :
        registry
            ->view<MovableComponent, MovementComponent, TransformComponent>()) {
-    if (registry->HasComponent<InactiveComponent>(e)) continue;
-    if (!registry->HasComponent<PlayerStateComponent>(e)) continue;
-    if (!registry->HasComponent<InputStateComponent>(e)) continue;
+    if (registry->HasComponent<InactiveComponent>(entity) &&
+        registry->GetComponent<InactiveComponent>(entity).isInactive)
+      continue;
 
-    auto& psc = registry->GetComponent<PlayerStateComponent>(e);
-    auto& trans = registry->GetComponent<TransformComponent>(e);
-    const auto& move = registry->GetComponent<MovementComponent>(e);
-    auto& in = registry->GetComponent<InputStateComponent>(e);
+    if (!registry->HasComponent<PlayerStateComponent>(entity)) continue;
+    if (!registry->HasComponent<InputStateComponent>(entity)) continue;
+
+    auto& psc = registry->GetComponent<PlayerStateComponent>(entity);
+    auto& trans = registry->GetComponent<TransformComponent>(entity);
+    const auto& move = registry->GetComponent<MovementComponent>(entity);
+    auto& in = registry->GetComponent<InputStateComponent>(entity);
 
     int ix = 0, iy = 0;
     if (in.inputBit & static_cast<uint8_t>(EPlayerInput::RIGHT)) ix++;
@@ -91,8 +94,8 @@ void MovementSystem::ServerUpdate(float deltaTime) {
     if (in.inputBit & static_cast<uint8_t>(EPlayerInput::DOWN)) iy--;
 
     // Animation and facing if present
-    if (registry->HasComponent<AnimationComponent>(e)) {
-      auto& anim = registry->GetComponent<AnimationComponent>(e);
+    if (registry->HasComponent<AnimationComponent>(entity)) {
+      auto& anim = registry->GetComponent<AnimationComponent>(entity);
       if (ix == 0 && iy == 0) {
         if (!psc.isMining)
           util::SetAnimation(AnimationName::PLAYER_IDLE, anim, true);
@@ -100,8 +103,8 @@ void MovementSystem::ServerUpdate(float deltaTime) {
         util::SetAnimation(AnimationName::PLAYER_WALK, anim, true);
       }
     }
-    if (registry->HasComponent<SpriteComponent>(e)) {
-      auto& spr = registry->GetComponent<SpriteComponent>(e);
+    if (registry->HasComponent<SpriteComponent>(entity)) {
+      auto& spr = registry->GetComponent<SpriteComponent>(entity);
       if (ix > 0)
         spr.flip = SDL_FLIP_NONE;
       else if (ix < 0)
@@ -131,9 +134,10 @@ void MovementSystem::ClientUpdate(float deltaTime) {
   for (Entity entity :
        registry
            ->view<MovableComponent, MovementComponent, TransformComponent>()) {
-    if (registry->HasComponent<InactiveComponent>(entity)) {
+    if (registry->HasComponent<InactiveComponent>(entity) &&
+        registry->GetComponent<InactiveComponent>(entity).isInactive)
       continue;
-    }
+
     const auto& move = registry->GetComponent<MovementComponent>(entity);
 
     auto& trans = registry->GetComponent<TransformComponent>(entity);

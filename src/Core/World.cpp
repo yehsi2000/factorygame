@@ -22,10 +22,11 @@
 #include "DataStruct/Type.h"
 #include "FastNoiseLite.h"
 #include "SDL_ttf.h"
+#include "Util/ComponentUtil.h"
 
-World::World(Registry *registry, WorldAssetManager *worldAssetManager,
-             EntityFactory *factory, EventDispatcher *eventDispatcher,
-             TTF_Font *font, bool isServer)
+World::World(Registry* registry, WorldAssetManager* worldAssetManager,
+             EntityFactory* factory, EventDispatcher* eventDispatcher,
+             TTF_Font* font, bool isServer)
     : registry(registry),
       factory(factory),
       worldAssetManager(worldAssetManager),
@@ -83,11 +84,11 @@ void World::GeneratePlayer(clientid_t clientID, Vec2f pos, bool isLocal) {
   clientPlayerMap[clientID] = player;
 }
 
-TileData *World::GetTileAtWorldPosition(Vec2f position) {
+TileData* World::GetTileAtWorldPosition(Vec2f position) {
   return GetTileAtWorldPosition(position.x, position.y);
 }
 
-TileData *World::GetTileAtWorldPosition(float worldX, float worldY) {
+TileData* World::GetTileAtWorldPosition(float worldX, float worldY) {
   return GetTileAtTileIndex(GetTileIndexFromWorldPosition(worldX, worldY));
 }
 
@@ -102,11 +103,11 @@ Vec2 World::GetTileIndexFromWorldPosition(float worldX, float worldY) const {
   return {tileX, tileY};
 }
 
-TileData *World::GetTileAtTileIndex(Vec2 tileIndex) {
+TileData* World::GetTileAtTileIndex(Vec2 tileIndex) {
   return GetTileAtTileIndex(tileIndex.x, tileIndex.y);
 }
 
-TileData *World::GetTileAtTileIndex(int tileX, int tileY) {
+TileData* World::GetTileAtTileIndex(int tileX, int tileY) {
   int chunkX = std::floor(static_cast<float>(tileX) / CHUNK_WIDTH);
   int chunkY = std::floor(static_cast<float>(tileY) / CHUNK_HEIGHT);
 
@@ -128,7 +129,7 @@ bool World::IsTilePassable(Vec2f worldPos) {
   return IsTilePassable(GetTileIndexFromWorldPosition(worldPos));
 }
 bool World::IsTilePassable(Vec2 tileIdx) {
-  TileData *tile = GetTileAtTileIndex(tileIdx);
+  TileData* tile = GetTileAtTileIndex(tileIdx);
   if (tile->type == TileType::Water || tile->type == TileType::Invalid)
     return false;
   if (tile->occupyingEntity != Entity::Null() &&
@@ -150,8 +151,8 @@ bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width, int height) {
       int checkY = tileY + dy;
 
       // Get tile data (const cast is safe here since we're only checking)
-      TileData *tile =
-          const_cast<World *>(this)->GetTileAtTileIndex(checkX, checkY);
+      TileData* tile =
+          const_cast<World*>(this)->GetTileAtTileIndex(checkX, checkY);
       if (!tile) {
         return false;  // Tile doesn't exist (chunk not loaded)
       }
@@ -164,7 +165,7 @@ bool World::HasNoOcuupyingEntity(int tileX, int tileY, int width, int height) {
         return false;  // Cannot build on water or invalid tiles
       }
 
-      auto &playertrans =
+      auto& playertrans =
           registry->GetComponent<TransformComponent>(localPlayer);
       if (tile == GetTileAtWorldPosition(playertrans.position)) return false;
     }
@@ -186,7 +187,7 @@ void World::OccupyTile(Entity entity, int tileX, int tileY, int width,
       int checkX = tileX + dx;
       int checkY = tileY + dy;
 
-      TileData *tile = GetTileAtTileIndex(checkX, checkY);
+      TileData* tile = GetTileAtTileIndex(checkX, checkY);
       if (tile) {
         tile->occupyingEntity = entity;
         occupiedTiles.push_back({checkX, checkY});
@@ -196,16 +197,16 @@ void World::OccupyTile(Entity entity, int tileX, int tileY, int width,
 
   // Store occupied tiles in the building component for cleanup
   if (registry->HasComponent<BuildingComponent>(entity)) {
-    auto &building = registry->GetComponent<BuildingComponent>(entity);
+    auto& building = registry->GetComponent<BuildingComponent>(entity);
     building.occupiedTiles = occupiedTiles;
   }
 }
 
 void World::RemoveBuilding(Entity entity,
-                           const std::vector<Vec2> &occupiedTiles) {
+                           const std::vector<Vec2>& occupiedTiles) {
   // Clear all tiles that this building occupied
-  for (const Vec2 &tileIndex : occupiedTiles) {
-    TileData *tile = GetTileAtTileIndex(tileIndex);
+  for (const Vec2& tileIndex : occupiedTiles) {
+    TileData* tile = GetTileAtTileIndex(tileIndex);
     if (tile && tile->occupyingEntity == entity) {
       tile->occupyingEntity = Entity::Null();
     }
@@ -215,18 +216,19 @@ void World::RemoveBuilding(Entity entity,
 void World::LoadChunk(int chunkX, int chunkY) {
   auto it = chunkCache.find({chunkX, chunkY});
   if (it != chunkCache.end()) {
-    Chunk &chunk = it->second;
-    // Reactivate entities
-    registry->RemoveComponent<InactiveComponent>(chunk.chunkEntity);
+    Chunk& chunk = it->second;
+
+    util::SetEntityInactivatity(*registry, chunk.chunkEntity, false);
+
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
       for (int x = 0; x < CHUNK_WIDTH; ++x) {
-        TileData *tile = chunk.GetTile(x, y);
+        TileData* tile = chunk.GetTile(x, y);
         if (tile) {
-          if (tile->occupyingEntity != Entity::Null() &&
-              registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
-            registry->RemoveComponent<InactiveComponent>(tile->occupyingEntity);
+          if (tile->occupyingEntity != Entity::Null())
+            util::SetEntityInactivatity(*registry, tile->occupyingEntity,
+                                        false);
           if (tile->oreEntity != Entity::Null())
-            registry->RemoveComponent<InactiveComponent>(tile->oreEntity);
+            util::SetEntityInactivatity(*registry, tile->oreEntity, false);
         }
       }
     }
@@ -239,24 +241,23 @@ void World::LoadChunk(int chunkX, int chunkY) {
   }
 }
 
-void World::UnloadChunk(Chunk &chunk) {
+void World::UnloadChunk(Chunk& chunk) {
   // Deactivate entities
-  registry->EmplaceComponent<InactiveComponent>(chunk.chunkEntity);
+  util::SetEntityInactivatity(*registry, chunk.chunkEntity, true);
   for (int y = 0; y < CHUNK_HEIGHT; ++y) {
     for (int x = 0; x < CHUNK_WIDTH; ++x) {
-      TileData *tile = chunk.GetTile(x, y);
+      TileData* tile = chunk.GetTile(x, y);
       if (tile) {
-        if (tile->occupyingEntity != Entity::Null() &&
-            !registry->HasComponent<InactiveComponent>(tile->occupyingEntity))
-          registry->EmplaceComponent<InactiveComponent>(tile->occupyingEntity);
+        if (tile->occupyingEntity != Entity::Null())
+          util::SetEntityInactivatity(*registry, tile->occupyingEntity, true);
         if (tile->oreEntity != Entity::Null())
-          registry->EmplaceComponent<InactiveComponent>(tile->oreEntity);
+          util::SetEntityInactivatity(*registry, tile->oreEntity, true);
       }
     }
   }
 }
 
-void World::GenerateChunk(Chunk &chunk) {
+void World::GenerateChunk(Chunk& chunk) {
   FastNoiseLite noise;
   noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
   noise.SetFrequency(0.05f);
@@ -302,7 +303,7 @@ void World::GenerateChunk(Chunk &chunk) {
       registry->EmplaceComponent<TextComponent>(tileDebugRect, textComp);
 #endif
       float terrainValue = noise.GetNoise((float)worldTileX, (float)worldTileY);
-      TileData *tile = chunk.GetTile(x, y);
+      TileData* tile = chunk.GetTile(x, y);
 
       if (terrainValue < -0.2f) {
         tile->type = TileType::Water;
@@ -330,7 +331,7 @@ void World::GenerateChunk(Chunk &chunk) {
 
       if (oreValue > oreThreshold &&
           chunk.GetTile(x, y)->type != TileType::Water) {
-        TileData *tile = chunk.GetTile(x, y);
+        TileData* tile = chunk.GetTile(x, y);
 
         if (tile->occupyingEntity == Entity::Null()) {
           Entity oreNode = registry->CreateEntity();
@@ -354,7 +355,7 @@ void World::GenerateChunk(Chunk &chunk) {
           textComp.texture = nullptr;
           registry->EmplaceComponent<TextComponent>(oreNode, textComp);
 
-          SDL_Texture *spritesheet =
+          SDL_Texture* spritesheet =
               worldAssetManager->getTexture("assets/img/entity/iron-ore.png");
           SpriteComponent spriteComp{};
           spriteComp.texture = spritesheet;
