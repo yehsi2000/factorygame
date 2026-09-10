@@ -6,6 +6,9 @@
 #include "Core/Registry.h"
 #include "Core/World.h"
 
+#include <algorithm>
+#include <cmath>
+
 CameraSystem::CameraSystem(const SystemContext &context)
     : registry(context.registry),
       world(context.world),
@@ -80,9 +83,17 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
   }
 
   if (inputManager->GetMouseWheelScroll() != 0) {
-    camera.zoom =
-        (1 + ((inputManager->GetMouseWheelScroll()) * 0.05f)) * camera.zoom;
-    // inputManager->mouseWheel = {0, 0};
+    // Zooming must stay symmetric and bounded. Multiplying by (1 + step) is
+    // asymmetric -- one notch out then one notch in leaves you at 0.9975 --
+    // and repeated zooming out asymptotes to 0, while WorldToScreen divides
+    // by zoom. exp() makes a round trip cancel exactly; the clamp keeps the
+    // denominator sane and avoids float precision loss when zoomed in.
+    constexpr float kZoomStep = 0.05f;
+    constexpr float kZoomMin = 0.25f;
+    constexpr float kZoomMax = 4.0f;
+    camera.zoom = std::clamp(
+        camera.zoom * std::exp(inputManager->GetMouseWheelScroll() * kZoomStep),
+        kZoomMin, kZoomMax);
   }
 
   // Continue dragging
@@ -116,7 +127,8 @@ void CameraSystem::UpdateCameraDrag(float deltaTime) {
         // Gradually reduce offset when player moves
         camera.offset.x *= 0.95f;
         camera.offset.y *= 0.95f;
-        if (abs(camera.offset.x) < 0.1f && abs(camera.offset.y) < 0.1f) {
+        if (std::fabs(camera.offset.x) < 0.1f &&
+            std::fabs(camera.offset.y) < 0.1f) {
           camera.offset = {0.0f, 0.0f};
         }
       }

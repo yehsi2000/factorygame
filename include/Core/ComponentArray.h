@@ -69,22 +69,36 @@ class ComponentArray : public IComponentArray {
     return sparse[pageIdx]->data();
   }
 
+  // True when `idx` is a real dense slot that currently belongs to `entity`.
+  // Comparing against dense[idx] (not just the id) is what rejects stale
+  // handles: a recycled id carries a bumped generation.
+  bool IsLiveSlot(uint32_t idx, Entity entity) const {
+    return idx != TOMBSTONE && idx < dense.size() && dense[idx] == entity;
+  }
+
  public:
   bool HasEntity(Entity entity) const override {
     std::size_t page = entity.Id() / PAGE_SIZE;
     std::size_t offset = entity.Id() % PAGE_SIZE;
     auto *p = GetPage(page);
     if (!p) return false;
-    uint32_t idx = p[offset];
-    return idx < dense.size() && dense[idx] == entity;
+    return IsLiveSlot(p[offset], entity);
   }
 
   void AddData(Entity entity, T &&component) {
-    // assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
-    //        "Component added to same entity more than once.");
     std::size_t page = entity.Id() / PAGE_SIZE;
     std::size_t offset = entity.Id() % PAGE_SIZE;
     auto *p = GetPageRequired(page);
+
+    // Re-adding overwrites the existing slot instead of pushing a second
+    // dense entry. A duplicate would make every view() of this type return
+    // the entity twice and leak the orphaned slot forever.
+    const uint32_t existing = p[offset];
+    if (IsLiveSlot(existing, entity)) {
+      componentArray[existing] = std::move(component);
+      return;
+    }
+
     p[offset] = static_cast<uint32_t>(dense.size());
     dense.push_back(entity);
     componentArray.push_back(std::move(component));
@@ -92,17 +106,21 @@ class ComponentArray : public IComponentArray {
 
   template <typename... Args>
   void EmplaceData(Entity entity, Args &&...args) {
-    // assert(entityToIndexMap.find(entity) == entityToIndexMap.end() &&
-    //        "Component added to same entity more than once.");
     std::size_t page = entity.Id() / PAGE_SIZE;
     std::size_t offset = entity.Id() % PAGE_SIZE;
     auto *p = GetPageRequired(page);
+
+    const uint32_t existing = p[offset];
+    if (IsLiveSlot(existing, entity)) {
+      componentArray[existing] = T(std::forward<Args>(args)...);
+      return;
+    }
+
     p[offset] = static_cast<uint32_t>(dense.size());
     dense.push_back(entity);
     componentArray.emplace_back(std::forward<Args>(args)...);
   }
 
-  // TODO : lazy removal
   void RemoveData(Entity entity) {
     std::size_t page = entity.Id() / PAGE_SIZE;
     std::size_t offset = entity.Id() % PAGE_SIZE;
@@ -110,6 +128,11 @@ class ComponentArray : public IComponentArray {
     if (!p) return;
 
     uint32_t idx = p[offset];
+
+    // Nothing to remove: never added, already removed, or a stale handle
+    // whose id was recycled. Without this, idx would be TOMBSTONE and the
+    // swap below would write out of bounds.
+    if (!IsLiveSlot(idx, entity)) return;
 
     Entity lastEntity = dense.back();
     std::size_t lastPage = lastEntity.Id() / PAGE_SIZE;
@@ -125,6 +148,12 @@ class ComponentArray : public IComponentArray {
   }
 
   T &GetData(Entity entity) {
+    // Reading a component the entity does not have -- or reading through a
+    // stale handle whose id was recycled -- indexes a TOMBSTONE and is an
+    // out-of-bounds access. Callers must check HasComponent first.
+    assert(HasEntity(entity) &&
+           "GetComponent on an entity without this component, or via a stale "
+           "handle. Guard with HasComponent.");
     std::size_t page = entity.Id() / PAGE_SIZE;
     std::size_t offset = entity.Id() % PAGE_SIZE;
     return componentArray[sparse[page]->at(offset)];
