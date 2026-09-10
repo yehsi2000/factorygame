@@ -15,15 +15,6 @@
 
 constexpr long long MAX_ENTITIES = 1000000;
 
-template <typename T>
-struct NotTriviallyDefaultConstructable;
-
-template <typename T>
-struct NotTriviallyCopyable;
-
-template <typename T>
-struct NotTriviallyDestructible;
-
 /**
  * @brief The core of the Entity-Component-System (ECS) architecture.
  * @details Manages the lifecycle of all entities and the storage of their

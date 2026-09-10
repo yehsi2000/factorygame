@@ -5,8 +5,10 @@
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
+#include "Core/ComponentTraits.h"
 #include "Core/Entity.h"
 
 /**
@@ -35,6 +37,15 @@ class IComponentArray {
 
 template <typename T>
 class ComponentArray : public IComponentArray {
+  static_assert(
+      is_component_storage_compatible_v<T>,
+      "ECS components must be trivially copyable and destructible. "
+      "Explicitly allow intentional exceptions through ComponentTraits<T>.");
+  static_assert(std::is_move_constructible_v<T>,
+                "ECS components must be move constructible.");
+  static_assert(std::is_move_assignable_v<T>,
+                "ECS components must be move assignable.");
+
  private:
   static constexpr std::size_t PAGE_SIZE =
       4096;  // Pagination for memory reduction
