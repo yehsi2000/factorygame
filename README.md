@@ -277,7 +277,7 @@ if (error > 0.1f) {  // 오차 감지
 
 **해결책**:
 
-- **Thread-Safe Queue**: 네트워크 스레드와 게임 로직 스레드 간의 안전한 데이터 전달을 보장하는 동시에 conditional variable을 이용해 불필요한 경합과 Spinlock에 의한 CPU 소모를 줄이는 thread safe queue구현
+- **Thread-Safe Queue**: 네트워크 스레드와 게임 로직 스레드 간의 안전한 데이터 전달을 보장하는 동시에 lock-free ramalhete queue(xenium lib)와 semaphore를 이용해 불필요한 경합과 Spinlock에 의한 CPU 소모를 줄이는 thread safe queue구현
 
 ### 월드 생성 및 관리
 
