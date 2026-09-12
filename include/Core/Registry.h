@@ -16,15 +16,6 @@
 
 constexpr long long MAX_ENTITIES = 1000000;
 
-template <typename T>
-struct NotTriviallyDefaultConstructable;
-
-template <typename T>
-struct NotTriviallyCopyable;
-
-template <typename T>
-struct NotTriviallyDestructible;
-
 /**
  * @brief The core of the Entity-Component-System (ECS) architecture.
  * @details Manages the lifecycle of all entities and the storage of their
@@ -38,14 +29,23 @@ class Registry {
 
   uint32_t livingEntityCount = 0;
   uint32_t entityIdTop = 0;
-  std::atomic<std::size_t> typeCounter = 0;
 
   std::vector<std::unique_ptr<IComponentArray>> componentArrays{};
   EventDispatcher *eventDispatcher;
 
+  // Component type ids must be unique across EVERY Registry instance.
+  // The id is cached in a function-local static (shared process-wide), so the
+  // counter feeding it must be shared too -- a per-instance counter lets a
+  // second Registry reissue an id that is already taken by a different type.
+
+  static std::size_t NextComponentTypeID() {
+    static std::atomic<std::size_t> counter{0};
+    return counter++;
+  }
+
   template <typename T>
-  std::size_t GetComponentTypeID() {
-    const static std::size_t typeID = typeCounter++;
+  static std::size_t GetComponentTypeID() {
+    const static std::size_t typeID = NextComponentTypeID();
     return typeID;
   }
 
@@ -214,16 +214,21 @@ class Registry {
     std::vector<IComponentArray *> arrays;
     (arrays.push_back(GetComponentArray<TComponent>()), ...);
 
-    // Find smallest array
-    auto minArray = std::min_element(arrays.begin(), arrays.end(),
-                                     [](const auto &a, const auto &b) {
-                                       return a->GetSize() < b->GetSize();
-                                     });
+    // Find smallest array to seed the candidate set
+    const std::size_t minIdx =
+        std::min_element(arrays.begin(), arrays.end(),
+                         [](const auto &a, const auto &b) {
+                           return a->GetSize() < b->GetSize();
+                         }) -
+        arrays.begin();
 
-    std::vector<Entity> result = (*minArray)->GetAllEntities();
+    std::vector<Entity> result = arrays[minIdx]->GetAllEntities();
 
-    // Prune entities which doesn't have all components passed
-    for (size_t i = 1; i < arrays.size(); ++i) {
+    // Prune entities which don't have all components passed.
+    // Every array must be checked except the one the candidates came from --
+    // starting at 1 silently skips arrays[0] whenever it isn't the smallest.
+    for (std::size_t i = 0; i < arrays.size(); ++i) {
+      if (i == minIdx) continue;
       result.erase(std::remove_if(result.begin(), result.end(),
                                   [&](Entity entity) {
                                     return !arrays[i]->HasEntity(entity);

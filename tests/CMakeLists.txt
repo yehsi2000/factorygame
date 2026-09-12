@@ -5,6 +5,7 @@
 set(TEST_LIST
     math
     ecs
+    component_traits
 )
 
 set(BUILT_TESTS "")

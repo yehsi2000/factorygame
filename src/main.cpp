@@ -41,18 +41,29 @@ int main(int argc, char *argv[]) {
       ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.Fonts->FontLoaderFlags = ImGuiFreeTypeBuilderFlags_Bold;
 
-  TTF_Font *font = TTF_OpenFont(R"(assets\fonts\NotoSansKR-VF.ttf)", 16);
+  // Forward slashes work on Windows too; backslashes are a literal filename
+  // on POSIX. The fallback must assign to the outer `font` rather than shadow
+  // it -- otherwise GEngine receives a null font even when the fallback
+  // succeeds.
+  const char *kFontPath = "assets/fonts/NotoSansKR-VF.ttf";
+  const char *kFallbackFontPath = "C:\\Windows\\Fonts\\Gulim.ttc";
+
+  TTF_Font *font = nullptr;
+  const char *loadedFontPath = kFontPath;
+  font = TTF_OpenFont(kFontPath, 16);
   if (font == nullptr) {
-    TTF_Font *font = TTF_OpenFont(R"(C:\Windows\Fonts\Gulim.ttc)", 16);
-    if (font == nullptr) {
-      printf("Could not open font! (%s)\n", TTF_GetError());
-      return -1;
-    } else {
-      io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\Gulim.ttc)");
-    }
-  } else {
-    io.Fonts->AddFontFromFileTTF(R"(assets\fonts\NotoSansKR-VF.ttf)");
+    std::cout << "Could not open '" << kFontPath << "': " << TTF_GetError()
+              << " -- trying fallback.\n";
+    loadedFontPath = kFallbackFontPath;
+    font = TTF_OpenFont(kFallbackFontPath, 16);
   }
+
+  if (font == nullptr) {
+    std::cout << "Could not open font! (" << TTF_GetError() << ")\n";
+    return -1;
+  }
+
+  io.Fonts->AddFontFromFileTTF(loadedFontPath);
 
   ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer2_Init(renderer);

@@ -290,7 +290,7 @@ void ServerNetworkSystem::Unicast(clientid_t clientID, PacketPtr packet) {
   SendRequestPtr request = std::make_unique<SendRequest>();
   request->type = ESendType::UNICAST;
   request->targetClientId = clientID;
-  request->packet = std::move(*packet.release());
+  request->packet = std::move(*packet);
   sendQueue->Push(std::move(request));
   server->StartSend();
 }
@@ -299,7 +299,7 @@ void ServerNetworkSystem::Broadcast(PacketPtr packet) {
   SendRequestPtr request = std::make_unique<SendRequest>();
   request->type = ESendType::BROADCAST;
   request->targetClientId = 0;
-  request->packet = std::move(*packet.release());
+  request->packet = std::move(*packet);
   sendQueue->Push(std::move(request));
   server->StartSend();
 }
